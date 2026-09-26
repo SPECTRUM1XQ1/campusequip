@@ -1,7 +1,7 @@
 <?php
 define('APP_INIT', true);
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../includes/auth_check.php';
 requireRole('borrower');
 
 $pageTitle = 'Home Overview';
@@ -9,16 +9,16 @@ $pageTitle = 'Home Overview';
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <?php include __DIR__ . '/../includes/html-head.php'; ?>
+    <?php include __DIR__ . '/../../includes/html-head.php'; ?>
 </head>
 <body>
 
     <div class="dashboard-layout">
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        <?php include __DIR__ . '/../includes/sidebar.php'; ?>
+        <?php include __DIR__ . '/../../includes/sidebar.php'; ?>
 
         <main class="main-content">
-            <?php include __DIR__ . '/../includes/topbar.php'; ?>
+            <?php include __DIR__ . '/../../includes/topbar.php'; ?>
 
             <!--
                 TEMPORARY DATA BELOW.
@@ -115,7 +115,7 @@ $pageTitle = 'Home Overview';
 
                     <div class="section-header">
                         <h3 class="section-title">Available Items</h3>
-                        <a href="/campusequip/borrower/catalog.php" class="section-link">View All</a>
+                        <a href="/campusequip/public/borrower/catalog.php" class="section-link">View All</a>
                     </div>
 
                     <div class="card-container">
@@ -171,6 +171,6 @@ $pageTitle = 'Home Overview';
         </main>
     </div>
 
-    <?php include __DIR__ . '/../includes/footer.php'; ?>
+    <?php include __DIR__ . '/../../includes/footer.php'; ?>
 </body>
 </html>

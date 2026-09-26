@@ -1,7 +1,7 @@
 <?php
 define('APP_INIT', true);
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../includes/auth_check.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../includes/auth_check.php';
 requireRole('borrower');
 
 $pageTitle = 'Saved Items';
@@ -9,16 +9,16 @@ $pageTitle = 'Saved Items';
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <?php include __DIR__ . '/../includes/html-head.php'; ?>
+    <?php include __DIR__ . '/../../includes/html-head.php'; ?>
 </head>
 <body>
 
     <div class="dashboard-layout">
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        <?php include __DIR__ . '/../includes/sidebar.php'; ?>
+        <?php include __DIR__ . '/../../includes/sidebar.php'; ?>
 
         <main class="main-content">
-            <?php include __DIR__ . '/../includes/topbar.php'; ?>
+            <?php include __DIR__ . '/../../includes/topbar.php'; ?>
 
             <!--
                 TEMPORARY DATA. Replace with a query joining wishlist_items
@@ -156,6 +156,6 @@ $pageTitle = 'Saved Items';
         </main>
     </div>
 
-    <?php include __DIR__ . '/../includes/footer.php'; ?>
+    <?php include __DIR__ . '/../../includes/footer.php'; ?>
 </body>
 </html>

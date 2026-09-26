@@ -8,7 +8,12 @@ if (!defined('APP_INIT')) {
  */
 
 define('APP_NAME', 'CampusEquip');
-define('APP_URL', 'http://localhost/campusequip'); // adjust if your htdocs folder name differs
+// Every browser-facing page now lives under public/, so APP_URL points
+// straight at it — code elsewhere can just do APP_URL . '/login.php'
+// instead of repeating '/public/' everywhere. api/ is NOT under public/,
+// so API calls in JS use their own separate '/campusequip/api/...' paths.
+define('APP_URL', 'http://localhost/campusequip/public'); // adjust if your htdocs folder name differs
+define('API_URL', 'http://localhost/campusequip/api');
 
 // Fallback business rules — used until the System Settings module reads these
 // from the database instead. Keep in sync with equipment_catalog defaults.

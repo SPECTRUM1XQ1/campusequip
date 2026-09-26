@@ -778,6 +778,20 @@ body {
     margin-top: 0.25rem;
 }
 
+.text-muted { color: var(--text-muted); }
+
+.coming-soon-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    text-align: center;
+    padding: 3rem 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.coming-soon-card i { font-size: 2.5rem; color: var(--text-muted); }
+.coming-soon-card h3 { margin: 1rem 0 0.5rem; color: var(--text-main); }
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
