@@ -1,6 +1,6 @@
 <?php
 define('APP_INIT', true);
-require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/../config/config.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -8,10 +8,10 @@ if (session_status() === PHP_SESSION_NONE) {
 
 if (isset($_SESSION['user_id'])) {
     $dest = in_array($_SESSION['role'], ['staff', 'admin'], true)
-        ? '/campusequip/admin/dashboard.php'
-        : '/campusequip/borrower/dashboard.php';
+        ? '/campusequip/public/staff/dashboard.php'
+        : '/campusequip/public/borrower/dashboard.php';
     header('Location: ' . $dest);
 } else {
-    header('Location: ' . APP_URL . '/auth/login.php');
+    header('Location: ' . APP_URL . '/login.php');
 }
 exit;

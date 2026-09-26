@@ -8,8 +8,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 if (isset($_SESSION['user_id'])) {
     $dest = in_array($_SESSION['role'], ['staff', 'admin'], true)
-        ? '/campusequip/admin/dashboard.php'
-        : '/campusequip/borrower/dashboard.php';
+        ? '/campusequip/public/staff/dashboard.php'
+        : '/campusequip/public/borrower/dashboard.php';
     header('Location: ' . $dest);
     exit;
 }
@@ -21,7 +21,7 @@ if (isset($_SESSION['user_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In — CampusEquip</title>
-    <link rel="stylesheet" href="/campusequip/assets/css/style.css">
+    <link rel="stylesheet" href="/campusequip/public/assets/css/style.css">
 </head>
 
 <body>
@@ -54,15 +54,15 @@ if (isset($_SESSION['user_id'])) {
                 </form>
                 <div class="toggle-view-text">
                     New to CampusEquip?
-                    <a href="/campusequip/auth/signup.php" class="link-text"
+                    <a href="/campusequip/public/signup.php" class="link-text"
                         style="text-transform: uppercase; margin-left: 4px;">SIGN UP</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="/campusequip/assets/js/snackbar.js"></script>
-    <script src="/campusequip/assets/js/auth.js"></script>
+    <script src="/campusequip/public/assets/js/snackbar.js"></script>
+    <script src="/campusequip/public/assets/js/auth.js"></script>
 </body>
 
 </html>

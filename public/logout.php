@@ -9,5 +9,5 @@ if (session_status() === PHP_SESSION_NONE) {
 $_SESSION = [];
 session_destroy();
 
-header('Location: ' . APP_URL . '/auth/login.php');
+header('Location: ' . APP_URL . '/login.php');
 exit;

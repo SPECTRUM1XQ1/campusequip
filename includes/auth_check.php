@@ -12,7 +12,7 @@ if (session_status() === PHP_SESSION_NONE) {
 function requireLogin(): void
 {
     if (!isset($_SESSION['user_id'])) {
-        header('Location: ' . APP_URL . '/auth/login.php');
+        header('Location: ' . APP_URL . '/login.php');
         exit;
     }
 }
