@@ -29,7 +29,7 @@ class Reservation{
     }
     function listForBorrower(int $borrowerId) : array {
         $stm = $this->db->prepare(
-            'SELECT r.*, c,model 
+            'SELECT r.*, c.model 
             FROM reservations r 
             JOIN equipment_catalog ec ON ec.catalog_id = r.catalog_id 
             WHERE r.borrower = :borrower_id 
@@ -40,21 +40,21 @@ class Reservation{
     }
     function listPending(): array {
         $stm = $this->db->query(
-            "SELECT r.*, c.model_name, u,first_name, u.last_name
+            "SELECT r.*, ec.model_name, u,first_name, u.last_name
             FROM reservations r
             JOIN equipment_catalog ec ON ec.catalog_id = r.catalog_id
-            JOIN user u ON u.user_id = r.borrower_id
+            JOIN users u ON u.user_id = r.borrower_id
             WHERE r.status = 'pending' 
             ORDER BY r.requested_at ASC"
         );
         return $stm->fetchAll(PDO::FETCH_ASSOC);
     }
     function countPending() : int {
-        return (int) $this->db->query(" SELECT COUNT(*) FROM reservations WHERE status = 'pending")->fetchColumn();
+        return (int) $this->db->query(" SELECT COUNT(*) FROM reservations WHERE status = 'pending'")->fetchColumn();
     }
     function hasDataConflict(int $itemId,string $startAt,string $endAt) : bool {
         $stm = $this->db->prepare(
-            "SELECT reservation_id FROM reservation WHERE item_id = :item_id
+            "SELECT reservation_id FROM reservations WHERE item_id = :item_id
             AND status IN ('approved', 'checked_out')
             AND start_at < :end_at
             AND end_at > :start_at"
@@ -68,7 +68,7 @@ class Reservation{
     }
     function approve(int $reservationId, int $itemId, int $reviewerId): array {
         $stm = $this->db->prepare('SELECT * FROM reservations WHERE reservation_id = :id');
-        $stm->execute([':id' => $itemId]);
+        $stm->execute([':id' => $reservationId]);
         $reservation = $stm->fetch(PDO::FETCH_ASSOC);
         if (!$reservation) {
             return ['success' => false,'message'=> 'Reservation not Found. '];
@@ -83,27 +83,28 @@ class Reservation{
         }
         $stm = $this->db->prepare(
             "UPDATE reservations 
-            SET status = 'approved', item_id = :item_id, review_by = :reviewer_id, review_at = reviewer_id, reviewed_at  = NOW() WHERE reservation_id = :id");
+            SET status = 'approved', item_id = :item_id, review_by = :review_by, reviewed_at  = NOW() WHERE reservation_id = :id");
         $stm->execute([
-            '::item_id' => $itemId,
+            ':item_id' => $itemId,
             ':reviewed_by' => $reviewerId,
             ':id' => $reservationId 
         ]);
         //Unit is Reserved
-        $this->db->prepare("UPDATE serialize_items SET status = 'reserve' WHERE item_id = :id")->execute([':id' => $itemId]);
+        $this->db->prepare("UPDATE serialized_items SET status = 'reserved' WHERE item_id = :id")->execute([':id' => $itemId]);
         $this->log($reservationId, $itemId, $reviewerId, 'approved');
         return ['success'=> true];
     }
     function decline(int $reservationId, int $reviewerId, string $reason): array {
         $stm = $this->db->prepare(
             "UPDATE reservation 
-            SET status = 'decline' decline_reason = :reason, reviewed_by = reviewed_id, reviewed_at = NOW()"
+            SET status = 'declined', decline_reason = :reason, reviewed_by = :reviewed_id, reviewed_at = NOW()
+            WHERE reservation_id = :id AND status = 'pending'"
         );
 
         $stm->execute([
             ':reason' => $reason, 
-            ':reviewer_id'=> $reviewerId, '
-            id'=> $reservationId
+            ':reviewed_id'=> $reviewerId, 
+            'id'=> $reservationId
         ]);
 
         if ($stm->rowCount() === 0) {
@@ -116,7 +117,7 @@ class Reservation{
         $stm = $this->db->prepare(
             "UPDATE reservations 
             SET status = 'cancelled'
-            WHERE reservation_id = :id AND borrower_id = :borrower_id AND status In ('pending', 'approve')"
+            WHERE reservation_id = :id AND borrower_id = :borrower_id AND status In ('pending', 'approved')"
         );
         $stm->execute([
             ':id'=> $reservationId,
