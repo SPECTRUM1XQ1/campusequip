@@ -14,22 +14,24 @@ $isStaff = in_array($role, ['staff', 'admin'], true);
 
 $navItems = $isStaff
     ? [
-        ['label' => 'Dashboard',          'icon' => 'ph-house',                     'href' => '/campusequip/public/staff/dashboard.php'],
-        ['label' => 'Request & Pending',  'icon' => 'ph-hourglass',                 'href' => '/campusequip/public/staff/requests.php'],
-        ['label' => 'Checkout & Return',  'icon' => 'ph-arrows-left-right',         'href' => '/campusequip/public/staff/checkouts.php'],
-        ['label' => 'Transaction Log',    'icon' => 'ph-clock-counter-clockwise',   'href' => '/campusequip/public/staff/logs.php'],
+        ['label' => 'Dashboard', 'icon' => 'ph-house', 'href' => '/campusequip/public/admin/dashboard.php'],
+        ['label' => 'Request & Pending', 'icon' => 'ph-hourglass','href' => '/campusequip/public/admin/requests.php'],
+        ['label' => 'Checkout & Return', 'icon' => 'ph-arrows-left-right', 'href' => '/campusequip/public/admin/checkouts.php'],
+        ['label' => 'Serialize Item',  'icon' => 'ph-arrows-left-right', 'href' => '/campusequip/public/admin/checkouts.php'],
+        ['label' => 'Equipment Catalog',  'icon' => 'ph-arrows-left-right', 'href' => '/campusequip/public/admin/checkouts.php'],
+        ['label' => 'Transaction Log', 'icon' => 'ph-clock-counter-clockwise','href' => '/campusequip/public/admin/logs.php'],
       ]
     : [
-        ['label' => 'Home',               'icon' => 'ph-house',            'href' => '/campusequip/public/borrower/dashboard.php'],
-        ['label' => 'Equipment Catalog',  'icon' => 'ph-book-open',        'href' => '/campusequip/public/borrower/catalog.php'],
-        ['label' => 'Saved Item',         'icon' => 'ph-bookmark-simple',  'href' => '/campusequip/public/borrower/wishlist.php'],
-        ['label' => 'Borrowing History',  'icon' => 'ph-clock-counter-clockwise', 'href' => '/campusequip/public/borrower/my_requests.php'],
+        ['label' => 'Home', 'icon' => 'ph-house','href' => '/campusequip/public/borrower/dashboard.php'],
+        ['label' => 'Equipment Catalog','icon' => 'ph-book-open','href' => '/campusequip/public/borrower/catalog.php'],
+        ['label' => 'Saved Item', 'icon' => 'ph-bookmark-simple', 'href' => '/campusequip/public/borrower/wishlist.php'],
+        ['label' => 'Borrowing History','icon' => 'ph-clock-counter-clockwise', 'href' => '/campusequip/public/borrower/my_requests.php'],
       ];
 
 // Admin-only extra links, appended after the shared staff items.
 if ($role === 'admin') {
-    $navItems[] = ['label' => 'User Management', 'icon' => 'ph-users',    'href' => '/campusequip/public/admin/users.php'];
-    $navItems[] = ['label' => 'System Settings',  'icon' => 'ph-gear',    'href' => '/campusequip/public/admin/settings.php'];
+    $navItems[] = ['label' => 'User Management', 'icon' => 'ph-users', 'href' => '/campusequip/public/admin/users.php'];
+    $navItems[] = ['label' => 'System Settings',  'icon' => 'ph-gear', 'href' => '/campusequip/public/admin/settings.php'];
 }
 ?>
 <aside class="sidebar" id="sidebar">
