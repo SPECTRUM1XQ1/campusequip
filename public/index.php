@@ -8,7 +8,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 if (isset($_SESSION['user_id'])) {
     $dest = in_array($_SESSION['role'], ['staff', 'admin'], true)
-        ? '/campusequip/public/staff/dashboard.php'
+        ? '/campusequip/public/admin/dashboard.php'
         : '/campusequip/public/borrower/dashboard.php';
     header('Location: ' . $dest);
 } else {
