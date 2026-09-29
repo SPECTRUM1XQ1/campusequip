@@ -12,9 +12,7 @@ define('APP_NAME', 'CampusEquip');
 // straight at it — code elsewhere can just do APP_URL . '/login.php'
 // instead of repeating '/public/' everywhere. api/ is NOT under public/,
 // so API calls in JS use their own separate '/campusequip/api/...' paths.
-define('APP_URL', 'http://localhost/campusequip/public'); // adjust if your htdocs folder name differs
-define('API_URL', 'http://localhost/campusequip/api');
-
+define('APP_URL', 'http://localhost/campusequip/public/login.php'); // adjust if your htdocs folder name differs
 // Fallback business rules — used until the System Settings module reads these
 // from the database instead. Keep in sync with equipment_catalog defaults.
 define('DEFAULT_MAX_LOAN_DAYS', 3);
