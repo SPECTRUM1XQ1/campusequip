@@ -12,8 +12,7 @@ $initials  = strtoupper(substr($nameParts[0] ?? 'U', 0, 1) . substr($nameParts[c
 
 $isStaff = in_array($role, ['staff', 'admin'], true);
 
-$navItems = $isStaff
-    ? [
+$navItems = $isStaff ? [
         ['label' => 'Dashboard', 'icon' => 'ph-house', 'href' => '/campusequip/public/admin/dashboard.php'],
         ['label' => 'Request & Pending', 'icon' => 'ph-hourglass','href' => '/campusequip/public/admin/requests.php'],
         ['label' => 'Checkout & Return', 'icon' => 'ph-arrows-left-right', 'href' => '/campusequip/public/admin/checkouts.php'],
@@ -21,7 +20,7 @@ $navItems = $isStaff
         ['label' => 'Equipment Catalog',  'icon' => 'ph-arrows-left-right', 'href' => '/campusequip/public/admin/checkouts.php'],
         ['label' => 'Transaction Log', 'icon' => 'ph-clock-counter-clockwise','href' => '/campusequip/public/admin/logs.php'],
       ]
-    : [
+      : [
         ['label' => 'Home', 'icon' => 'ph-house','href' => '/campusequip/public/borrower/dashboard.php'],
         ['label' => 'Equipment Catalog','icon' => 'ph-book-open','href' => '/campusequip/public/borrower/catalog.php'],
         ['label' => 'Saved Item', 'icon' => 'ph-bookmark-simple', 'href' => '/campusequip/public/borrower/wishlist.php'],
@@ -37,9 +36,9 @@ if ($role === 'admin') {
 <aside class="sidebar" id="sidebar">
     <div style="display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; padding: 24px; color: white;">
         <span class="campus-equip-logo">
-            <span class="chip-icon"></span>
+            <span class="chip-icon">`</span>
         </span>
-        CampusEquip
+        Campus Equip
     </div>
 
     <div class="user-profile-card">
@@ -54,10 +53,9 @@ if ($role === 'admin') {
     </div>
 
     <nav class="nav-section">
-        <div class="nav-label">Navigation</div>
+        <div class="nav-label"><p>Main Menu</p></div>
         <?php foreach ($navItems as $item): ?>
-            <a href="<?= htmlspecialchars($item['href']) ?>"
-               class="nav-link <?= basename($item['href']) === $currentPage ? 'active' : '' ?>">
+            <a href="<?= htmlspecialchars($item['href']) ?> "class="nav-link <?= basename($item['href']) === $currentPage ? 'active' : '' ?>">
                 <i class="ph <?= htmlspecialchars($item['icon']) ?>"></i> <?= htmlspecialchars($item['label']) ?>
             </a>
         <?php endforeach; ?>
