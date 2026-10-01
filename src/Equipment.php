@@ -12,18 +12,26 @@ class Equipment {
         $stm = $this->db->query('SELECT *  FROM categories ORDER BY category_name ASC');
         return $stm->fetchAll(PDO::FETCH_ASSOC);
     }   
-    public function listCatalog(?string $search = null, ?int $categoryId = null): array {
-        if (!$search === null) {
-            $stm = $this->db->query('SELECT model_name FROM equipment_catalog WH');
-            $stm->execute();
-        }
 
-        if (!$categoryId === null) {
-            $stm = $this->db->prepare('SELECT ');
-            $stm->execute([''=> $categoryId]);
-            return $stm->fetchAll(PDO::FETCH_ASSOC);
-        }  
-        return['success' => true, 'category_id' => $categoryId];
+    public function listCatalog(?string $search = null, ?int $categoryId = null): array {
+        $condition = [];
+        $param = [];
+        if ($search !== null) {
+            $condition[] = 'model_name LIKE :search';
+            $param[] = '%'. $search .'%';
+        }
+            
+        if ($categoryId !== null) {
+            $condition[] = 'category_id = :id';
+            $param[':id'] = $categoryId;
+        }
+        $sql = 'SELECT * FROM equipmwnt_catalog';  
+        if (!empty($condition)) {
+            $sql .= ' WHERE '. implode(' AND ', $condition);
+        }
+        $stm = $this->db->prepare($sql);
+        $stm->execute($param);
+        return $stm->fetchAll(PDO::FETCH_ASSOC);
     }
     public function getCatalogDetail(int $catalogId): ?array {
 
