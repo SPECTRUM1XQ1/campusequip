@@ -34,7 +34,16 @@ class Equipment {
         return $stm->fetchAll(PDO::FETCH_ASSOC);
     }
     public function getCatalogDetail(int $catalogId): ?array {
-
+        $stm = $this->db->prepare(
+            "SELECT ec.*, c.category_name, 
+            COUNT(si.item_id) AS total_units,
+            SUM(CASE WHEN si.status = 'available' THEN 1 ELSE 0 END) AS available_units
+            FROM equipment_catalog ec
+            LEFT JOIN categories c ON ec.category_id = c.category_id 
+            LEFT JOIN serialized_items si ON ec.catalog_id = si.catalog_id
+            WHERE ec.catalog_id = :id GROUP BY ec.catalog_id");
+        $stm->execute([':id' => $catalogId]);
+        return $stm->fetch(PDO::FETCH_ASSOC) ?: null;
     }
     public function addCatalogModel(array $data): array {
         $stm = $this->db->prepare("INSERT INTO equipment_catalog(model_name, category_id, max_loan_days, late_fine_rate, description, created_at) 
