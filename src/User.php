@@ -88,4 +88,7 @@ class User{
 
         return ['success' => true, 'role' => $user['role']];
     }
+    public function listAll(?string $roleFilter = null): array {}
+    public function getById(int $userId): ?array {}
+    public function updateRole(int $userId, string $newRole): array {}
 }
