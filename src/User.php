@@ -88,7 +88,57 @@ class User{
 
         return ['success' => true, 'role' => $user['role']];
     }
-    public function listAll(?string $roleFilter = null): array {}
-    public function getById(int $userId): ?array {}
-    public function updateRole(int $userId, string $newRole): array {}
+    public function listAll(?string $roleFilter = null): array {
+        $sql = 'SELECT user_id, last_name, first_name, middle_name, email, role, id_number, phone, created_at FROM users';
+        $param =[];
+        $allRoles = ['staff', 'admin', 'borrower'];
+        
+        if ($roleFilter !== null && in_array($roleFilter, $allRoles, true)) {
+            $sql .= ' WHERE role = :role ';
+            $param[':role'] = $roleFilter;
+        }
+
+        $sql .= ' ORDER BY last_name ASC ';
+        $stm = $this->db->prepare($sql);
+        $stm->execute($param);
+
+        return $stm->fetchAll(PDO::FETCH_ASSOC);
+    }
+    public function getById(int $userId): ?array {
+        $stm = $this->db->prepare(
+            "SELECT u.user_id, u.last_name, u.first_name, u.middle_name, u.email, u.role, u.id_number, u.created_at, 
+            sp.can_approve_requests, sp.can_inspect_returns, sp.can_confirm_pickup, sp.can_manage_catalog 
+            FROM users u 
+            LEFT JOIN staff_permissios sp ON u.user_id = sp.user_id 
+            WHERE u.user_id = :user_id
+        ");
+
+        $stm->execute([':user_id' => $userId]);
+        $user = $stm->fetch(PDO::FETCH_ASSOC);
+
+        return $user ?: null;
+    }
+    public function updateRole(int $userId, string $newRole): array {
+        $allRoles = ['staff','admin', 'borrower'];
+
+        if (!in_array($newRole, $allRoles, true)) {
+            return ['success'=> false, 'message' => 'Invalid Role Specified'];
+        }
+
+        $stm = $this->db->prepare('UPDATE users SET role = :role WHERE user_id = :user_id');
+        $stm->execute([
+            ':user_id'=> $userId,
+            ':role'=> $newRole
+        ]);
+        
+        if ($newRole !== 'borrower') {
+            $permStm = $this->db->prepare(
+                "INSERT IGNORE INTO staff_permissions 
+                (user_id, can_approve_requests, can_inspect_returns, can_confirm_pickup, can_manage_catalog)
+                VALUES (:user_id, 0, 0, 0, 0)");
+            $permStm->execute([':user_id' => $userId]);
+        }
+            
+        return ['success' => true];
+    }
 }
