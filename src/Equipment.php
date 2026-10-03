@@ -18,14 +18,14 @@ class Equipment {
         $param = [];
         if ($search !== null) {
             $condition[] = 'model_name LIKE :search';
-            $param[] = '%'. $search .'%';
+            $param[':search'] = '%'. $search .'%';
         }
             
         if ($categoryId !== null) {
             $condition[] = 'category_id = :id';
             $param[':id'] = $categoryId;
         }
-        $sql = 'SELECT * FROM equipmwnt_catalog';  
+        $sql = 'SELECT * FROM equipment_catalog';  
         if (!empty($condition)) {
             $sql .= ' WHERE '. implode(' AND ', $condition);
         }
@@ -43,37 +43,40 @@ class Equipment {
             LEFT JOIN serialized_items si ON ec.catalog_id = si.catalog_id
             WHERE ec.catalog_id = :id GROUP BY ec.catalog_id");
         $stm->execute([':id' => $catalogId]);
-        return $stm->fetch(PDO::FETCH_ASSOC) ?: null;
+        return $stm->fetch(PDO::FETCH_ASSOC)  ?: null;
     }
     public function addCatalogModel(array $data): array {
-        $stm = $this->db->prepare("INSERT INTO equipment_catalog(model_name, category_id, max_loan_days, late_fine_rate, description, created_at) 
-        VALUES (:model_name. :category_id, :max_loan_day, :late_fine_rate. :description)");
-
+        $stm = $this->db->prepare("INSERT INTO equipment_catalog(model_name, category_id, max_loan_days, late_fine_rate, description) 
+        VALUES (:model_name, :category_id, :max_loan_days, :late_fine_rate, :description)");
         $stm->execute([
-            ':model_name' => $data,
-            ':category_id' => $data,
-            ':max_loan_day' => $data,
-            ':late_fine' => $data,
-            ':discription' => $data
+            ':model_name' => $data['model_name'],
+            ':category_id' => $data['category_id'],
+            ':max_loan_days' => $data['max_loan_days'] ?? 3,
+            ':late_fine_rate' => $data['late_fine_rate'] ?? 5.00,
+            ':description' => $data['description'] ?? null,
         ]); 
 
-        return['success'=> true,'category_id'=> $data['category_id']];
+        $catalogId = (int) $this->db->lastInsertId();
+        return ['success' =>  true, 'catalog_id' => $catalogId];
     }
-    public function addSerializedUnit(int $catalogId, ?string $notes, string $serialNumber, ?string $storageLocation = null): array {
+    public function addSerializedUnit(int $catalogId, string $serialNumber ,?string $notes = null, ?string $storageLocation = null): array {
         $stm = $this->db->prepare(
             "INSERT INTO serialized_items(catalog_id, serial_number, status, storage_location, condition_notes, created_at) 
              VALUES (:id, :sn, :status, :sl, :notes, NOW())                   
         ");
-        $stm->execute([
-            ':id' => $catalogId,
-            ':sn' => $serialNumber,
-            ':status' => 'available',
-            ':sl'=> $storageLocation,
-            ':notes' => $notes
-        ]);
-        $serializeId = (int) $this->db->lastInsertId();
-
-        return ['success' => true, 'serialize_id'=> $serializeId ];
+        try {
+            $stm->execute([
+                ':id' => $catalogId,
+                ':sn' => $serialNumber,
+                ':status' => 'available',
+                ':sl'=> $storageLocation,
+                ':notes' => $notes
+            ]);
+            $itemId = (int) $this->db->lastInsertId();
+        } catch (PDOException $e) {
+            return ['success'=> false, 'status' => 'error', 'message' => 'The Serial Number Is Already Exist'];
+        }
+        return ['success' => true, 'item_id'=> $itemId];
     }
 }
 ?>
