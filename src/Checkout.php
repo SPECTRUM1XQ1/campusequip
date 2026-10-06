@@ -79,7 +79,7 @@ class Checkout
         }
     }
     public function processReturn(int $checkoutId, int $receivedBy, string $returnCondition, ?string $damageNotes = null, ?string $inspectionRemarks = null): array {
-        $stm = $this->db->prepare("SELECT reservation_id, item_id, due_at ,returned_at FROM checkouts WHERE checkout_id = :checkout_id");
+        $stm = $this->db->prepare("SELECT reservation_id, item_id, due_at, returned_at FROM checkouts WHERE checkout_id = :checkout_id");
         $stm->execute([':checkout_id' => $checkoutId]);
         $checkout = $stm->fetch(PDO::FETCH_ASSOC);
     
@@ -113,7 +113,7 @@ class Checkout
             ]);
 
             $resUpdateStm = $this->db->prepare('UPDATE reservations SET status = :status WHERE reservation_id = :reservation_id');
-            $resUpdateStm->execute(['reservation_id' => $checkout['reservation_id'], ':status' => 'returned']);
+            $resUpdateStm->execute([':reservation_id' => $checkout['reservation_id'], ':status' => 'returned']);
 
             if ($returnCondition === 'good') {
                 $itemUpdateStm = $this->db->prepare("UPDATE serialized_items SET status = 'available' WHERE item_id = :item_id" );
@@ -124,14 +124,13 @@ class Checkout
                 $itemUpdateStm = $this->db->prepare("UPDATE serialized_items SET status = 'maintenance' WHERE item_id = :item_id");
                 $itemUpdateStm->execute([':item_id' => $checkout['item_id']]);
             }
-
-            date_default_timezone_set('Asia/Manila');
-            if(date('Y-m-d H:i:s') > $checkout['due_at']){
-                $lateReturnStm = $this->db->prepare("UPDATE transaction_logs SET action_type = 'returned_late' WHERE reservation_id = :reservation_id  ");
-                $lateReturnStm->execute([':reservation_id' => $checkout['reservation_id']]);
-            }
-
-            $this->transactionLog->record($checkoutId, $checkout['item_id'] ,$receivedBy, 'returned', $inspectionRemarks);
+            $actionType = (date('Y-m-d H:i:s') > $checkout['due_at']) ? 'returned_late' : 'returned';
+            $this->transactionLog->record(
+                $checkout['reservation_id'], 
+                $checkout['item_id'], 
+                $receivedBy, 
+                $actionType,
+                $inspectionRemarks);
             $this->db->commit();
             return[
                 'success' => true,
@@ -145,35 +144,37 @@ class Checkout
             return ['success' => false, 'message' => 'Return failed: ' . $th->getMessage()];
         }
     }
-    public function getByReservation(int $reservationId): ?array {}
+    public function getByReservation(int $reservationId): ?array {
+        $stm = $this->db->prepare(
+            "SELECT c.*, si.serial_number, 
+                        si.storage_location,
+                        si.condition_notes
+            FROM checkouts c
+            LEFT JOIN serialized_items si ON c.item_id = si.item_id   
+            WHERE c.reservation_id = :reservation_id ");
+        $stm->execute([':reservation_id'=> $reservationId]);
+        return $stm->fetch(PDO::FETCH_ASSOC) ?:null;
+    }
     public function listActive(): array {
         $stm = $this->db->query(
-            "SELECT COUNT(status) 
-             FROM reservations 
-             WHERE status = 'checked_out' 
-             GROUP BY status");
-        $stm->execute();
+            "SELECT c.*, r.borrower_id, si.serial_number
+             FROM checkouts c
+             LEFT JOIN reservations r ON c.reservation_id =  r.reservation_id
+             LEFT JOIN  serialized_items si ON c.item_id = si.item_id
+             WHERE c.returned_at IS NULL
+             ORDER BY c.checked_out_at DESC");
+
         return $stm->fetchAll(PDO::FETCH_ASSOC);
     }
     public function listOverdue(): array {
         $stm = $this->db->query(
-            "SELECT 
-                c.checkout_id, 
-                c.reservation_id, 
-                c.item_id, 
-                c.issued_by 
-                si.serial_number
-                u.user_id
-                u.last_name
-                u.first_name
-                u.middle_name 
-            FROM checkouts c 
-            LEFT JOIN serialized_items si ON c.checkout_id = si.serial_number
-            LEFT JOIN users u ON u.user_id = c.issued_by
-            WHERE due_at > checked_out_at");   
-        $stm->execute();   
-        $stm->fetchAll(PDO::FETCH_ASSOC);
+            "SELECT c.*, r.borrower_id, si.serial_number
+             FROM checkouts c
+             LEFT JOIN reservations r ON c.reservation_id =  r.reservation_id
+             LEFT JOIN  serialized_items si ON c.item_id = si.item_id
+             WHERE c.returned_at IS NULL AND c.due_at < NOW()
+             ORDER BY c.due_at ASC");
+
         return $stm->fetchAll(PDO::FETCH_ASSOC);
     }
-}
-?> 
+} 
