@@ -1,0 +1,153 @@
++-------------------------+
+| Tables_in_campusequipdb |
++-------------------------+
+| categories              |
+| checkouts               |
+| equipment_catalog       |
+| fines                   |
+| reservations            |
+| serialized_items        |
+| staff_permissions       |
+| transaction_logs        |
+| users                   |
+| wishlist_items          |
++-------------------------+
+
+wishlist_items:
++-------------+------------------+------+-----+---------------------+----------------+
+| Field       | Type             | Null | Key | Default             | Extra          |
++-------------+------------------+------+-----+---------------------+----------------+
+| wishlist_id | int(10) unsigned | NO   | PRI | NULL                | auto_increment |
+| user_id     | int(10) unsigned | NO   | MUL | NULL                |                |
+| catalog_id  | int(10) unsigned | NO   | MUL | NULL                |                |
+| created_at  | timestamp        | NO   |     | current_timestamp() |                |
++-------------+------------------+------+-----+---------------------+----------------+
+
+users:
++---------------+----------------------------------+------+-----+---------------------+----------------+
+| Field         | Type                             | Null | Key | Default             | Extra          |
++---------------+----------------------------------+------+-----+---------------------+----------------+
+| user_id       | int(10) unsigned                 | NO   | PRI | NULL                | auto_increment |
+| last_name     | varchar(30)                      | NO   |     | NULL                |                |
+| first_name    | varchar(20)                      | NO   |     | NULL                |                |
+| middle_name   | varchar(20)                      | NO   |     | NULL                |                |
+| email         | varchar(100)                     | NO   | UNI | NULL                |                |
+| password_hash | varchar(255)                     | NO   |     | NULL                |                |
+| role          | enum('borrower','staff','admin') | NO   |     | borrower            |                |
+| id_number     | varchar(30)                      | YES  | UNI | NULL                |                |
+| phone         | varchar(20)                      | YES  |     | NULL                |                |
+| created_at    | timestamp                        | NO   |     | current_timestamp() |                |
++---------------+----------------------------------+------+-----+---------------------+----------------+
+
+transaction_logs:
++------------------+------------------------------------------------------------------------------------------------------------------------------------+------+-----+---------------------+----------------+
+| Field            | Type                                                                                                                               | Null | Key | Default             | Extra          |
++------------------+------------------------------------------------------------------------------------------------------------------------------------+------+-----+---------------------+----------------+
+| log_id           | int(10) unsigned                                                                                                                   | NO   | PRI | NULL                | auto_increment |
+| reservation_id   | int(10) unsigned                                                                                                                   | YES  | MUL | NULL                |                |
+| item_id          | int(10) unsigned                                                                                                                   | YES  | MUL | NULL                |                |
+| fine_id          | int(10) unsigned                                                                                                                   | YES  | MUL | NULL                |                |
+| actor_id         | int(10) unsigned                                                                                                                   | NO   | MUL | NULL                |                |
+| action_type      | enum('requested','approved','declined','cancelled','handover','returned','returned_late','fine_charged','fine_paid','fine_waived') | NO   |     | NULL                |                |
+| remarks          | text                                                                                                                               | YES  |     | NULL                |                |
+| serial_snapshot  | varchar(100)                                                                                                                       | YES  |     | NULL                |                |
+| action_timestamp | timestamp                                                                                                                          | NO   | MUL | current_timestamp() |                |
++------------------+------------------------------------------------------------------------------------------------------------------------------------+------+-----+---------------------+----------------+
+
+staff_permissions:
++----------------------+------------------+------+-----+---------------------+-------------------------------+
+| Field                | Type             | Null | Key | Default             | Extra                         |
++----------------------+------------------+------+-----+---------------------+-------------------------------+
+| staff_permission_id  | int(10) unsigned | NO   | PRI | NULL                | auto_increment                |
+| user_id              | int(10) unsigned | NO   | UNI | NULL                |                               |
+| can_approve_requests | tinyint(1)       | NO   |     | 0                   |                               |
+| can_inspect_returns  | tinyint(1)       | NO   |     | 0                   |                               |
+| can_confirm_pickup   | tinyint(1)       | NO   |     | 0                   |                               |
+| can_manage_catalog   | tinyint(1)       | NO   |     | 0                   |                               |
+| granted_by           | int(10) unsigned | YES  | MUL | NULL                |                               |
+| updated_at           | timestamp        | NO   |     | current_timestamp() | on update current_timestamp() |
++----------------------+------------------+------+-----+---------------------+-------------------------------+
+
+serialized_items:
++------------------+--------------------------------------------------------------------+------+-----+---------------------+----------------+
+| Field            | Type                                                               | Null | Key | Default             | Extra          |
++------------------+--------------------------------------------------------------------+------+-----+---------------------+----------------+
+| item_id          | int(10) unsigned                                                   | NO   | PRI | NULL                | auto_increment |
+| catalog_id       | int(10) unsigned                                                   | NO   | MUL | NULL                |                |
+| serial_number    | varchar(100)                                                       | NO   | UNI | NULL                |                |
+| status           | enum('available','reserved','checked_out','maintenance','retired') | NO   | MUL | available           |                |
+| storage_location | varchar(100)                                                       | YES  |     | NULL                |                |
+| condition_notes  | text                                                               | YES  |     | NULL                |                |
+| created_at       | timestamp                                                          | NO   |     | current_timestamp() |                |
++------------------+--------------------------------------------------------------------+------+-----+---------------------+----------------+
+
+reservations:
++----------------+----------------------------------------------------------------------------+------+-----+---------------------+----------------+
+| Field          | Type                                                                       | Null | Key | Default             | Extra          |
++----------------+----------------------------------------------------------------------------+------+-----+---------------------+----------------+
+| reservation_id | int(10) unsigned                                                           | NO   | PRI | NULL                | auto_increment |
+| catalog_id     | int(10) unsigned                                                           | NO   | MUL | NULL                |                |
+| item_id        | int(10) unsigned                                                           | YES  | MUL | NULL                |                |
+| borrower_id    | int(10) unsigned                                                           | NO   | MUL | NULL                |                |
+| status         | enum('pending','approved','declined','cancelled','checked_out','returned') | NO   | MUL | pending             |                |
+| purpose        | text                                                                       | YES  |     | NULL                |                |
+| start_at       | datetime                                                                   | NO   |     | NULL                |                |
+| end_at         | datetime                                                                   | NO   |     | NULL                |                |
+| pickup_at      | datetime                                                                   | YES  |     | NULL                |                |
+| decline_reason | varchar(255)                                                               | YES  |     | NULL                |                |
+| terms_accepted | tinyint(1)                                                                 | NO   |     | 0                   |                |
+| requested_at   | timestamp                                                                  | NO   |     | current_timestamp() |                |
+| reviewed_by    | int(10) unsigned                                                           | YES  | MUL | NULL                |                |
+| reviewed_at    | datetime                                                                   | YES  |     | NULL                |                |
++----------------+----------------------------------------------------------------------------+------+-----+---------------------+----------------+
+
+fines
++----------------+--------------------------------+------+-----+---------+----------------+
+| Field          | Type                           | Null | Key | Default | Extra          |
++----------------+--------------------------------+------+-----+---------+----------------+
+| fine_id        | int(10) unsigned               | NO   | PRI | NULL    | auto_increment |
+| reservation_id | int(10) unsigned               | NO   | MUL | NULL    |                |
+| amount_due     | decimal(10,2)                  | NO   |     | NULL    |                |
+| payment_status | enum('unpaid','paid','waived') | NO   |     | unpaid  |                |
+| paid_at        | timestamp                      | YES  |     | NULL    |                |
++----------------+--------------------------------+------+-----+---------+----------------+
+
+ equipment_catalog:
++----------------+----------------------+------+-----+---------------------+----------------+
+| Field          | Type                 | Null | Key | Default             | Extra          |
++----------------+----------------------+------+-----+---------------------+----------------+
+| catalog_id     | int(10) unsigned     | NO   | PRI | NULL                | auto_increment |
+| model_name     | varchar(150)         | NO   |     | NULL                |                |
+| category_id    | tinyint(3) unsigned  | NO   | MUL | NULL                |                |
+| max_loan_days  | smallint(5) unsigned | NO   |     | 3                   |                |
+| late_fine_rate | decimal(10,2)        | NO   |     | 5.00                |                |
+| description    | text                 | YES  |     | NULL                |                |
+| is_archived    | tinyint(1)           | NO   |     | 0                   |                |
+| created_at     | timestamp            | NO   |     | current_timestamp() |                |
++----------------+----------------------+------+-----+---------------------+----------------+
+
+checkouts:
++--------------------+----------------------------------------------+------+-----+---------+----------------+
+| Field              | Type                                         | Null | Key | Default | Extra          |
++--------------------+----------------------------------------------+------+-----+---------+----------------+
+| checkout_id        | int(10) unsigned                             | NO   | PRI | NULL    | auto_increment |
+| reservation_id     | int(10) unsigned                             | NO   | UNI | NULL    |                |
+| item_id            | int(10) unsigned                             | NO   | MUL | NULL    |                |
+| issued_by          | int(10) unsigned                             | NO   | MUL | NULL    |                |
+| id_verified        | tinyint(1)                                   | NO   |     | 0       |                |
+| checked_out_at     | datetime                                     | NO   |     | NULL    |                |
+| due_at             | datetime                                     | NO   | MUL | NULL    |                |
+| returned_at        | datetime                                     | YES  |     | NULL    |                |
+| received_by        | int(10) unsigned                             | YES  | MUL | NULL    |                |
+| return_condition   | enum('good','damaged','missing_accessories') | YES  |     | NULL    |                |
+| damage_notes       | text                                         | YES  |     | NULL    |                |
+| inspection_remarks | text                                         | YES  |     | NULL    |                |
++--------------------+----------------------------------------------+------+-----+---------+----------------+
+
+categories:
++---------------+---------------------+------+-----+---------+----------------+
+| Field         | Type                | Null | Key | Default | Extra          |
++---------------+---------------------+------+-----+---------+----------------+
+| category_id   | tinyint(3) unsigned | NO   | PRI | NULL    | auto_increment |
+| category_name | varchar(50)         | NO   | UNI | NULL    |                |
++---------------+---------------------+------+-----+---------+----------------+
