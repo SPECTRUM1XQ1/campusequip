@@ -17,20 +17,25 @@ $homeLink = $loggedIn
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Page Not Found — CampusEquip</title>
     <link rel="stylesheet" href="/campusequip/public/assets/css/style.css">
 </head>
+
 <body>
-    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; text-align:center; padding:2rem;">
+    <div
+        style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; width:100%; text-align:center; padding:2rem;">
         <div style="font-size:4rem; font-weight:800; color:var(--primary-brand); line-height:1;">404</div>
         <h2 style="margin:0.75rem 0 0.5rem;">Page not found</h2>
         <p class="text-muted" style="margin-bottom:1.75rem;">This page doesn't exist yet, or the link is incorrect.</p>
-        <a href="<?= htmlspecialchars($homeLink) ?>" class="btn-primary" style="text-decoration:none; display:inline-block; padding:11px 28px;">
+        <a href="<?= htmlspecialchars($homeLink) ?>" class="btn btn-primary"
+            style="text-decoration:none; display:inline-block; padding:0.75rem 1.5rem;">
             <?= $loggedIn ? 'Back to Dashboard' : 'Back to Sign In' ?>
         </a>
     </div>
 </body>
+
 </html>
