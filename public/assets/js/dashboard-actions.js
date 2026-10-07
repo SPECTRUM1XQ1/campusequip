@@ -17,19 +17,19 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   });
-
-  document.querySelectorAll('button').forEach(button => {
-    if (button.textContent.trim() === 'Cancel') {
-      button.addEventListener('click', function () {
-        const requestCard = this.closest('.item-card') || this.parentElement.parentElement;
-        if (requestCard) {
-          requestCard.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-          requestCard.style.opacity = '0';
-          requestCard.style.transform = 'scale(0.95)';
-          setTimeout(() => { requestCard.style.display = 'none'; }, 300);
-        }
-        if (typeof showToast === 'function') showToast('Request cancelled', 'info');
-      });
-    }
-  });
 });
+// Opens the modal by adding the 'open' class
+function openModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('open');
+  }
+}
+
+// Closes the modal by removing the 'open' class
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.remove('open');
+  }
+}
