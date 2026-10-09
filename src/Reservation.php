@@ -1,163 +1,260 @@
-<?php 
-if (!defined('APP_INT')) {
-    http_response_code(404);
+<?php
+if (!defined('APP_INIT')) {
+    http_response_code(403);
     exit;
 }
-require_once __DIR__ . '/../config/Database.php'; 
-class Reservation{
-    private PDO $db;
-    public function __construct() {
-        $this->db = Database::getConnection();
-    }
-    function create(int $borrowerId, int $catalogId, string $startAt, string $endAt, string $purpose) : array {
-        if ($endAt <= $startAt) {
-            return ['success' => false,'error'=> 'End Date Must Be After the Start Date'];   
-        }
-        $stm = $this->db->prepare('INSERT INTO reservations (catalog_id, borrower_id, status, purpose, start_at, end_at, terms_accepted)
-        VALUES(:catalog_id, :borrower_id, :status, :purpose, :start_at, :end_at, 1)');
-        $stm->execute([
-            ':catalog_id'    => $catalogId, 
-            ':borrower_id'   => $borrowerId, 
-            ':status'        => 'pending', 
-            ':purpose'       => $purpose, 
-            ':start_at'      => $startAt, 
-            ':end_at'        => $endAt, 
-        ]);
-        $reservationId = (int) $this->db->lastInsertId();
-        $this->log($reservationId, null, $borrowerId, 'requested');
 
-        return ['success'=> true,'reservation_id'=> $reservationId];
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/TransactionLog.php';
+
+class Reservation
+{
+    private PDO $db;
+    private TransactionLog $logger;
+
+    public function __construct()
+    {
+        $this->db = Database::getConnection();
+        $this->logger = new TransactionLog();
     }
-    function listForBorrower(int $borrowerId) : array {
+    public function create(int $borrowerId, int $catalogId, string $startAt, string $endAt, string $purpose): array
+    {
+        $start = strtotime($startAt);
+        $end   = strtotime($endAt);
+
+        if ($start === false || $end === false) {
+            return ['success' => false, 'message' => 'Invalid date format.'];
+        }
+        if ($end <= $start) {
+            return ['success' => false, 'message' => 'End date must be after the start date.'];
+        }
+
+        try {
+            $stm = $this->db->prepare(
+                'SELECT max_loan_days, is_archived, (DATE(:start_at) < CURDATE()) AS start_in_past
+                 FROM equipment_catalog
+                 WHERE catalog_id = :catalog_id'
+            );
+            $stm->execute([':start_at' => $startAt, ':catalog_id' => $catalogId]);
+            $catalog = $stm->fetch(PDO::FETCH_ASSOC);
+
+            if (!$catalog) {
+                return ['success' => false, 'message' => 'Equipment model not found.'];
+            }
+            if ((int) $catalog['is_archived'] === 1) {
+                return ['success' => false, 'message' => 'This equipment is no longer available for reservation.'];
+            }
+            if ((int) $catalog['start_in_past'] === 1) {
+                return ['success' => false, 'message' => 'The start date cannot be in the past.'];
+            }
+
+            $days = ($end - $start) / 86400;
+            if ($days > (int) $catalog['max_loan_days']) {
+                return ['success' => false, 'message' => 'This equipment can only be borrowed for up to ' . (int) $catalog['max_loan_days'] . ' day(s).'];
+            }
+
+            $this->db->beginTransaction();
+
+            $stm = $this->db->prepare(
+                "INSERT INTO reservations (catalog_id, borrower_id, status, purpose, start_at, end_at, terms_accepted)
+                 VALUES (:catalog_id, :borrower_id, 'pending', :purpose, :start_at, :end_at, 1)"
+            );
+            $stm->execute([
+                ':catalog_id'  => $catalogId,
+                ':borrower_id' => $borrowerId,
+                ':purpose'     => $purpose,
+                ':start_at'    => $startAt,
+                ':end_at'      => $endAt,
+            ]);
+
+            $reservationId = (int) $this->db->lastInsertId();
+
+            $this->logger->record($reservationId, null, null, $borrowerId, 'requested', $purpose);
+
+            $this->db->commit();
+            return ['success' => true, 'reservation_id' => $reservationId];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('Reservation::create failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not create the reservation. Please try again.'];
+        }
+    }
+    public function listForBorrower(int $borrowerId): array
+    {
         $stm = $this->db->prepare(
-            'SELECT r.*, ec.model 
-            FROM reservations r 
-            JOIN equipment_catalog ec ON ec.catalog_id = r.catalog_id 
-            WHERE r.borrower = :borrower_id 
-            ORDER BY r.requested_at DESC'
+            'SELECT r.*, ec.model_name
+             FROM reservations r
+             JOIN equipment_catalog ec ON ec.catalog_id = r.catalog_id
+             WHERE r.borrower_id = :borrower_id
+             ORDER BY r.requested_at DESC'
         );
         $stm->execute([':borrower_id' => $borrowerId]);
         return $stm->fetchAll(PDO::FETCH_ASSOC);
     }
-    function listPending(): array {
+    public function listPending(): array
+    {
         $stm = $this->db->query(
             "SELECT r.*, ec.model_name, u.first_name, u.last_name
-            FROM reservations r
-            JOIN equipment_catalog ec ON ec.catalog_id = r.catalog_id
-            JOIN users u ON u.user_id = r.borrower_id
-            WHERE r.status = 'pending' 
-            ORDER BY r.requested_at ASC"
+             FROM reservations r
+             JOIN equipment_catalog ec ON ec.catalog_id = r.catalog_id
+             JOIN users u ON u.user_id = r.borrower_id
+             WHERE r.status = 'pending'
+             ORDER BY r.requested_at ASC"
         );
         return $stm->fetchAll(PDO::FETCH_ASSOC);
     }
-    function countPending() : int {
-        return (int) $this->db->query(" SELECT COUNT(*) FROM reservations WHERE status = 'pending'")->fetchColumn();
+
+    public function countPending(): int
+    {
+        return (int) $this->db->query("SELECT COUNT(*) FROM reservations WHERE status = 'pending'")->fetchColumn();
     }
-    function hasDataConflict(int $itemId,string $startAt,string $endAt) : bool {
+    public function hasDateConflict(int $itemId, string $startAt, string $endAt): bool
+    {
         $stm = $this->db->prepare(
-            "SELECT reservation_id FROM reservations WHERE item_id = :item_id
-            AND status IN ('approved', 'checked_out')
-            AND start_at < :end_at
-            AND end_at > :start_at"
+            "SELECT reservation_id FROM reservations
+             WHERE item_id = :item_id
+               AND status IN ('approved', 'checked_out')
+               AND start_at < :end_at
+               AND end_at > :start_at"
         );
         $stm->execute([
-            ":item_id"=> $itemId,
-            ":start_at"=> $startAt,
-            ":end_at"=> $endAt,
+            ':item_id'  => $itemId,
+            ':start_at' => $startAt,
+            ':end_at'   => $endAt,
         ]);
         return (bool) $stm->fetch(PDO::FETCH_ASSOC);
     }
-    function approve(int $reservationId, int $itemId, int $reviewerId): array {
-        $stm = $this->db->prepare('SELECT * FROM reservations WHERE reservation_id = :id');
-        $stm->execute([':id' => $reservationId]);
-        $reservation = $stm->fetch(PDO::FETCH_ASSOC);
-        if (!$reservation) {
-            return ['success' => false,'message'=> 'Reservation not Found. '];
-        }
 
-        $stm = $this->db->prepare('SELECT catalog_id FROM serialized_items WHERE item_id = :id');
-        $stm ->execute([':id' => $itemId]);
-        $item = $stm->fetch(PDO::FETCH_ASSOC);
-        if (!$item || (int)$item['catalog_id'] !== (int)$reservation['catalog_id']) {
-            return ['success' => false, 'message' => 'Invalid unit selection for this reservation catalog.'];
-        }
+    public function approve(int $reservationId, int $itemId, int $reviewerId): array
+    {
+        try {
+            $this->db->beginTransaction();
 
-        if ($this->hasDataConflict($itemId, $reservation['start_at'], $reservation['end_at'])) {
-            return ['success'=> false,'message'=> 'That Unit is Already booked for an overlapping date range.'];
-        }
+            // Lock the reservation so two staff can't approve it at once.
+            $stm = $this->db->prepare('SELECT * FROM reservations WHERE reservation_id = :id FOR UPDATE');
+            $stm->execute([':id' => $reservationId]);
+            $reservation = $stm->fetch(PDO::FETCH_ASSOC);
 
-        $stm = $this->db->prepare(
-            "UPDATE reservations 
-            SET status = 'approved', item_id = :item_id, reviewed_by = :reviewed_by, reviewed_at  = NOW() 
-            WHERE reservation_id = :id");
-        $stm->execute([
-            ':item_id' => $itemId,
-            ':reviewed_by' => $reviewerId,
-            ':id' => $reservationId 
-        ]);
-        //Unit is Reserved
-        $this->db->prepare("UPDATE serialized_items SET status = 'reserved' WHERE item_id = :id")->execute([':id' => $itemId]);
-        $this->log($reservationId, $itemId, $reviewerId, 'approved');
-        return ['success'=> true];
+            if (!$reservation) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'Reservation not found.'];
+            }
+            if ($reservation['status'] !== 'pending') {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'Reservation is not in pending status.'];
+            }
+
+            $stm = $this->db->prepare('SELECT catalog_id, serial_number, status FROM serialized_items WHERE item_id = :id FOR UPDATE');
+            $stm->execute([':id' => $itemId]);
+            $item = $stm->fetch(PDO::FETCH_ASSOC);
+
+            if (!$item || (int) $item['catalog_id'] !== (int) $reservation['catalog_id']) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'Invalid unit selection for this reservation.'];
+            }
+            if (in_array($item['status'], ['maintenance', 'retired'], true)) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'That unit is under maintenance or retired and cannot be assigned.'];
+            }
+
+            if ($this->hasDateConflict($itemId, $reservation['start_at'], $reservation['end_at'])) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'That unit is already booked for an overlapping date range.'];
+            }
+
+            $stm = $this->db->prepare(
+                "UPDATE reservations
+                 SET status = 'approved', item_id = :item_id, reviewed_by = :reviewed_by, reviewed_at = NOW()
+                 WHERE reservation_id = :id"
+            );
+            $stm->execute([
+                ':item_id'     => $itemId,
+                ':reviewed_by' => $reviewerId,
+                ':id'          => $reservationId,
+            ]);
+
+            $this->logger->record($reservationId, $itemId, null, $reviewerId, 'approved', null, $item['serial_number']);
+
+            $this->db->commit();
+            return ['success' => true];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('Reservation::approve failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not approve the reservation. Please try again.'];
+        }
     }
-    function decline(int $reservationId, int $reviewerId, string $reason): array {
-        $stm = $this->db->prepare(
-            "UPDATE reservations
-            SET status = 'declined', decline_reason = :reason, reviewed_by = :reviewed_id, reviewed_at = NOW()
-            WHERE reservation_id = :id AND status = 'pending'"
-        );
+    public function decline(int $reservationId, int $reviewerId, string $reason): array
+    {
+        try {
+            $this->db->beginTransaction();
 
-        $stm->execute([
-            ':reason' => $reason, 
-            ':reviewed_id'=> $reviewerId, 
-            ':id'=> $reservationId
-        ]);
+            $stm = $this->db->prepare(
+                "UPDATE reservations
+                 SET status = 'declined', decline_reason = :reason, reviewed_by = :reviewed_by, reviewed_at = NOW()
+                 WHERE reservation_id = :id AND status = 'pending'"
+            );
+            $stm->execute([
+                ':reason'      => $reason,
+                ':reviewed_by' => $reviewerId,
+                ':id'          => $reservationId,
+            ]);
 
-        if ($stm->rowCount() === 0) {
-            return ['success'=> false,'message'=> 'Reservation not Found or Already Process'];
+            if ($stm->rowCount() === 0) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'Reservation not found or already processed.'];
+            }
+
+            $this->logger->record($reservationId, null, null, $reviewerId, 'declined', $reason);
+
+            $this->db->commit();
+            return ['success' => true];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('Reservation::decline failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not decline the reservation. Please try again.'];
         }
-        $this->log($reservationId, null, $reviewerId, 'declined', $reason);
-        return ['success'=> true];
     }
-    public function cancel(int $reservationId, int $borrowerId): array {
-        $stm = $this->db->prepare(
-            'SELECT item_id, status FROM reservations 
-            WHERE reservation_id = :id AND borrower_id = :borrower_id');
-        $stm->execute([
-            ':id' => $reservationId, 
-            ':borrower_id' => $borrowerId]);
-        $reservation = $stm->fetch(PDO::FETCH_ASSOC);
+    public function cancel(int $reservationId, int $borrowerId): array
+    {
+        try {
+            $this->db->beginTransaction();
 
-        if (!$reservation || !in_array($reservation['status'], ['pending', 'approved'], true)) {
-            return ['success' => false, 'message' => 'Reservation cannot be cancelled.'];
+            $stm = $this->db->prepare(
+                'SELECT item_id, status FROM reservations
+                 WHERE reservation_id = :id AND borrower_id = :borrower_id
+                 FOR UPDATE'
+            );
+            $stm->execute([
+                ':id'          => $reservationId,
+                ':borrower_id' => $borrowerId,
+            ]);
+            $reservation = $stm->fetch(PDO::FETCH_ASSOC);
+
+            if (!$reservation || !in_array($reservation['status'], ['pending', 'approved'], true)) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'Reservation cannot be cancelled.'];
+            }
+
+            $stm = $this->db->prepare("UPDATE reservations SET status = 'cancelled' WHERE reservation_id = :id");
+            $stm->execute([':id' => $reservationId]);
+
+            $itemId = $reservation['item_id'] !== null ? (int) $reservation['item_id'] : null;
+            $this->logger->record($reservationId, $itemId, null, $borrowerId, 'cancelled');
+
+            $this->db->commit();
+            return ['success' => true];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('Reservation::cancel failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not cancel the reservation. Please try again.'];
         }
-
-        $stm = $this->db->prepare(
-            "UPDATE reservations 
-             SET status = 'cancelled'
-             WHERE reservation_id = :id"
-        );
-        $stm->execute([':id' => $reservationId]);
-
-        if ($reservation['status'] === 'approved' && !empty($reservation['item_id'])) {
-            $this->db->prepare("UPDATE serialized_items SET status = 'available' WHERE item_id = :id")
-                     ->execute([':id' => $reservation['item_id']]);
-        }
-
-        $this->log($reservationId, $reservation['item_id'], $borrowerId, 'cancelled');
-        return ['success' => true];
-    }
-    private function log(int $reservationId, ?int $itemId, int $actorId, string $actionType, ?string $remark = null): void {
-        $stm = $this->db->prepare(
-            "INSERT INTO transaction_logs(reservation_id, item_id, actor_id, action_type, remarks)
-            VALUES(:reservation_id, :item_id, :actor_id, :action_type, :remark)");
-        $stm->execute([
-        ':reservation_id' => $reservationId,
-        ':item_id' => $itemId, 
-        ':actor_id' => $actorId, 
-        ':action_type'=> $actionType, 
-        ':remark'=> $remark
-        ]);
     }
 }
-?>

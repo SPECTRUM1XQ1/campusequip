@@ -25,11 +25,6 @@ class User{
         return (bool) $stmt->fetch();
     }
 
-    /**
-     * Registers a new account. Always signs up as 'borrower' — staff/admin
-     * accounts should only ever be created via admin/users.php, never here,
-     * or anyone could self-register as an admin through the public form.
-     */
     public function register(array $data): array
     {
         if ($this->emailExists($data['email'])) {
@@ -58,30 +53,22 @@ class User{
         return ['success' => true, 'message' => 'Account created. You can now sign in.'];
     }
 
-    /**
-     * Logs in by email OR id_number — the sign-in form accepts either,
-     * so a single $identifier is checked against both columns.
-     */
     public function login(string $identifier, string $password): array
     {
         $stmt = $this->db->prepare('SELECT * FROM users WHERE email = :email OR id_number = :id_number');
         $stmt->execute([':email' => $identifier, ':id_number' => $identifier]);
         $user = $stmt->fetch();
 
-        // Same generic message whether the identifier doesn't exist or the
-        // password is wrong — don't reveal which one it was.
         if (!$user || !password_verify($password, $user['password_hash'])) {
             return ['success' => false, 'message' => 'Invalid email/ID or password.'];
         }
 
-        // The users table stores last/first/middle name separately now —
-        // rebuild the single display name the rest of the app expects.
         $fullName = trim(preg_replace(
             '/\s+/', ' ',
             ($user['first_name'] ?? '') . ' ' . ($user['middle_name'] ?? '') . ' ' . ($user['last_name'] ?? '')
         ));
 
-        session_regenerate_id(true); // avoid session fixation across the privilege change
+        session_regenerate_id(true);
         $_SESSION['user_id']   = $user['user_id'];
         $_SESSION['full_name'] = $fullName;
         $_SESSION['role']      = $user['role'];
@@ -109,7 +96,7 @@ class User{
             "SELECT u.user_id, u.last_name, u.first_name, u.middle_name, u.email, u.role, u.id_number, u.created_at, 
             sp.can_approve_requests, sp.can_inspect_returns, sp.can_confirm_pickup, sp.can_manage_catalog 
             FROM users u 
-            LEFT JOIN staff_permissios sp ON u.user_id = sp.user_id 
+            LEFT JOIN staff_permissions sp ON u.user_id = sp.user_id 
             WHERE u.user_id = :user_id
         ");
 
@@ -118,27 +105,62 @@ class User{
 
         return $user ?: null;
     }
-    public function updateRole(int $userId, string $newRole): array {
-        $allRoles = ['staff','admin', 'borrower'];
+    public function updateRole(int $userId, string $newRole): array
+    {
+        $allRoles = ['staff', 'admin', 'borrower'];
 
         if (!in_array($newRole, $allRoles, true)) {
-            return ['success'=> false, 'message' => 'Invalid Role Specified'];
+            return ['success' => false, 'message' => 'Invalid role specified.'];
         }
 
-        $stm = $this->db->prepare('UPDATE users SET role = :role WHERE user_id = :user_id');
-        $stm->execute([
-            ':user_id'=> $userId,
-            ':role'=> $newRole
-        ]);
-        
-        if ($newRole !== 'borrower') {
-            $permStm = $this->db->prepare(
-                "INSERT IGNORE INTO staff_permissions 
-                (user_id, can_approve_requests, can_inspect_returns, can_confirm_pickup, can_manage_catalog)
-                VALUES (:user_id, 0, 0, 0, 0)");
-            $permStm->execute([':user_id' => $userId]);
+        try {
+            $this->db->beginTransaction();
+
+            $stm = $this->db->prepare('SELECT role FROM users WHERE user_id = :user_id FOR UPDATE');
+            $stm->execute([':user_id' => $userId]);
+            $currentRole = $stm->fetchColumn();
+
+            if ($currentRole === false) {
+                $this->db->rollBack();
+                return ['success' => false, 'message' => 'That user does not exist.'];
+            }
+
+            // The system must never end up with zero admins (nobody could fix it).
+            if ($currentRole === 'admin' && $newRole !== 'admin') {
+                $adminCount = (int) $this->db->query("SELECT COUNT(*) FROM users WHERE role = 'admin' FOR UPDATE")->fetchColumn();
+                if ($adminCount <= 1) {
+                    $this->db->rollBack();
+                    return ['success' => false, 'message' => 'There must be at least one admin.'];
+                }
+            }
+
+            $stm = $this->db->prepare('UPDATE users SET role = :role WHERE user_id = :user_id');
+            $stm->execute([':role' => $newRole, ':user_id' => $userId]);
+
+            if ($newRole === 'staff') {
+                $stm = $this->db->prepare(
+                    'INSERT IGNORE INTO staff_permissions
+                        (user_id, can_approve_requests, can_inspect_returns, can_confirm_pickup, can_manage_catalog)
+                     VALUES (:user_id, 0, 0, 0, 0)'
+                );
+                $stm->execute([':user_id' => $userId]);
+            } elseif ($newRole === 'borrower') {
+                $stm = $this->db->prepare(
+                    'UPDATE staff_permissions
+                     SET can_approve_requests = 0, can_inspect_returns = 0, can_confirm_pickup = 0, can_manage_catalog = 0
+                     WHERE user_id = :user_id'
+                );
+                $stm->execute([':user_id' => $userId]);
+            }
+
+            $this->db->commit();
+            return ['success' => true];
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('User::updateRole failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not update the role. Please try again.'];
         }
-            
-        return ['success' => true];
     }
 }
