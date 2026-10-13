@@ -27,6 +27,6 @@ if ($amount <= 0) {
     json_response(['success' => false, 'message' => 'Fine amount must be greater than zero']);
 }
 
-$result = (new Fine())->charge($checkoutId, (int) $user['user_id'], $amount, $reason !== '' ? $reason : null);
+$result = (new Fine())->charge($checkoutId, (int) $user['user_id'], $amount);
 
 json_response($result);
