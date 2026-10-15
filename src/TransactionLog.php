@@ -57,4 +57,34 @@ class TransactionLog
             ':serial_snapshot'=> $serialSnapshot,
         ]);
     }
+
+    public function listRecent(int $limit = 5): array
+    {
+        $stm = $this->db->prepare(
+            "SELECT tl.*, CONCAT(u.first_name, ' ', u.last_name) AS actor_name,
+                    r.borrower_id, CONCAT(b.first_name, ' ', b.last_name) AS borrower_name
+             FROM transaction_logs tl
+             JOIN users u ON u.user_id = tl.actor_id
+             LEFT JOIN reservations r ON r.reservation_id = tl.reservation_id
+             LEFT JOIN users b ON b.user_id = r.borrower_id
+             ORDER BY tl.action_timestamp DESC LIMIT :limit"
+        );
+        $stm->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stm->execute();
+        return $stm->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function listAll(): array
+    {
+        $sql = "SELECT tl.*, CONCAT(u.first_name, ' ', u.last_name) AS actor_name,
+                       r.borrower_id, CONCAT(b.first_name, ' ', b.last_name) AS borrower_name,
+                       f.amount_due AS fine_amount
+                FROM transaction_logs tl
+                JOIN users u ON u.user_id = tl.actor_id
+                LEFT JOIN reservations r ON r.reservation_id = tl.reservation_id
+                LEFT JOIN users b ON b.user_id = r.borrower_id
+                LEFT JOIN fines f ON f.fine_id = tl.fine_id
+                ORDER BY tl.action_timestamp DESC";
+        return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

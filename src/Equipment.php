@@ -69,6 +69,33 @@ class Equipment
         return $stm->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
+    public function getAvailabilityBreakdown(): array
+    {
+        $sql = "SELECT ec.catalog_id, ec.model_name,
+                       COUNT(si.item_id) AS total_units,
+                       SUM(CASE WHEN si.status = 'available' THEN 1 ELSE 0 END) AS available_units,
+                       SUM(CASE WHEN si.status = 'maintenance' THEN 1 ELSE 0 END) AS maintenance_units,
+                       SUM(CASE WHEN si.status = 'checked_out' THEN 1 ELSE 0 END) AS checked_out_units
+                FROM equipment_catalog ec
+                LEFT JOIN serialized_items si ON si.catalog_id = ec.catalog_id
+                WHERE ec.is_archived = 0
+                GROUP BY ec.catalog_id, ec.model_name
+                HAVING total_units > 0
+                ORDER BY total_units DESC LIMIT 5";
+        return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    public function listAllSerialized(): array
+    {
+        $sql = "SELECT si.item_id, si.catalog_id, si.serial_number, si.status,
+                       si.storage_location, si.condition_notes, ec.model_name, c.category_name
+                FROM serialized_items si
+                JOIN equipment_catalog ec ON ec.catalog_id = si.catalog_id
+                LEFT JOIN categories c ON c.category_id = ec.category_id
+                ORDER BY si.created_at DESC";
+        return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function listUnits(int $catalogId): array
     {
         $stm = $this->db->prepare(
@@ -159,6 +186,95 @@ class Equipment
 
         return ['success' => true, 'item_id' => (int) $this->db->lastInsertId()];
     }
+    // ---- Accessories (items that ship with a model) ----
+
+    public function listAccessories(int $catalogId): array
+    {
+        $stm = $this->db->prepare(
+            'SELECT accessory_id, catalog_id, accessory_name
+             FROM accessories
+             WHERE catalog_id = :catalog_id
+             ORDER BY accessory_name ASC'
+        );
+        $stm->execute([':catalog_id' => $catalogId]);
+        return $stm->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Every accessory, grouped by model: [catalog_id => [ {accessory_id, accessory_name}, ... ]].
+     * One query for pages that need the list for many models at once.
+     */
+    public function listAccessoriesGrouped(): array
+    {
+        $rows = $this->db->query(
+            'SELECT accessory_id, catalog_id, accessory_name
+             FROM accessories
+             ORDER BY accessory_name ASC'
+        )->fetchAll(PDO::FETCH_ASSOC);
+
+        $grouped = [];
+        foreach ($rows as $row) {
+            $grouped[(int) $row['catalog_id']][] = [
+                'accessory_id'   => (int) $row['accessory_id'],
+                'accessory_name' => $row['accessory_name'],
+            ];
+        }
+        return $grouped;
+    }
+
+    public function addAccessory(int $catalogId, string $name): array
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return ['success' => false, 'message' => 'Accessory name is required.'];
+        }
+        // mbstring is optional on some PHP installs; fall back to byte length (stricter, never looser).
+        $length = function_exists('mb_strlen') ? mb_strlen($name) : strlen($name);
+        if ($length > 100) {
+            return ['success' => false, 'message' => 'Accessory name must be 100 characters or less.'];
+        }
+
+        try {
+            $stm = $this->db->prepare(
+                'INSERT INTO accessories (catalog_id, accessory_name) VALUES (:catalog_id, :name)'
+            );
+            $stm->execute([':catalog_id' => $catalogId, ':name' => $name]);
+        } catch (PDOException $e) {
+            $code = (int) ($e->errorInfo[1] ?? 0);
+            if ($code === 1062) { // UNIQUE (catalog_id, accessory_name)
+                return ['success' => false, 'message' => 'That accessory is already listed for this model.'];
+            }
+            if ($code === 1452) { // catalog_id does not exist
+                return ['success' => false, 'message' => 'That equipment model does not exist.'];
+            }
+            error_log('Equipment::addAccessory failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not add the accessory.'];
+        }
+
+        return ['success' => true, 'accessory_id' => (int) $this->db->lastInsertId()];
+    }
+
+    public function removeAccessory(int $accessoryId): array
+    {
+        try {
+            $stm = $this->db->prepare('DELETE FROM accessories WHERE accessory_id = :id');
+            $stm->execute([':id' => $accessoryId]);
+        } catch (PDOException $e) {
+            // 1451 = a row in checkout_missing_accessories still points at it.
+            // The history is permanent, so the accessory can't be deleted.
+            if ((int) ($e->errorInfo[1] ?? 0) === 1451) {
+                return ['success' => false, 'message' => 'This accessory appears in past return records and cannot be deleted.'];
+            }
+            error_log('Equipment::removeAccessory failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not remove the accessory.'];
+        }
+
+        if ($stm->rowCount() === 0) {
+            return ['success' => false, 'message' => 'Accessory not found.'];
+        }
+        return ['success' => true];
+    }
+
     public function updateUnitStatus(int $itemId, string $status, ?string $notes = null): array
     {
         if (!in_array($status, ['available', 'maintenance', 'retired'], true)) {

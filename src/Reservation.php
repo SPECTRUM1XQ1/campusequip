@@ -105,6 +105,64 @@ class Reservation
         );
         return $stm->fetchAll(PDO::FETCH_ASSOC);
     }
+    // In src/Reservation.php
+
+/**
+ * Returns pending reservations with borrower details and available serialized units for immediate assignment.
+ */
+    public function listPendingDetailed(): array
+    {
+        $stm = $this->db->query(
+            "SELECT r.reservation_id, r.catalog_id, r.borrower_id, r.status, r.purpose,
+                    r.start_at, r.end_at, r.requested_at,
+                    ec.model_name, ec.max_loan_days,
+                    CONCAT(u.first_name, ' ', COALESCE(CONCAT(u.middle_name, ' '), ''), u.last_name) AS borrower_name,
+                    u.email AS borrower_email, u.phone AS borrower_phone, u.id_number AS borrower_id_number
+             FROM reservations r
+             JOIN equipment_catalog ec ON ec.catalog_id = r.catalog_id
+             JOIN users u ON u.user_id = r.borrower_id
+             WHERE r.status = 'pending'
+             ORDER BY r.requested_at ASC"
+        );
+        $requests = $stm->fetchAll(PDO::FETCH_ASSOC);
+    
+        // Attach available serialized units for each catalog model
+        $unitStmt = $this->db->prepare(
+            "SELECT item_id, serial_number, storage_location 
+             FROM serialized_items 
+             WHERE catalog_id = :catalog_id AND status = 'available'
+             ORDER BY serial_number ASC"
+        );
+    
+        foreach ($requests as &$req) {
+            $unitStmt->execute([':catalog_id' => $req['catalog_id']]);
+            $req['available_units'] = $unitStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+    
+        return $requests;
+    }
+    
+    /**
+     * Returns approved reservations awaiting staff handover.
+     */
+    public function listReadyForCheckout(): array
+    {
+        $stm = $this->db->query(
+            "SELECT r.reservation_id, r.item_id, r.start_at, r.end_at, r.reviewed_at,
+                    ec.model_name, si.serial_number, si.storage_location,
+                    CONCAT(u.first_name, ' ', u.last_name) AS borrower_name,
+                    u.id_number AS borrower_id_number,
+                    CONCAT(staff.first_name, ' ', staff.last_name) AS assigned_by_name
+             FROM reservations r
+             JOIN equipment_catalog ec ON ec.catalog_id = r.catalog_id
+             JOIN serialized_items si ON si.item_id = r.item_id
+             JOIN users u ON u.user_id = r.borrower_id
+             LEFT JOIN users staff ON staff.user_id = r.reviewed_by
+             WHERE r.status = 'approved'
+             ORDER BY r.start_at ASC"
+        );
+        return $stm->fetchAll(PDO::FETCH_ASSOC);
+    }
 
     public function countPending(): int
     {

@@ -102,10 +102,28 @@ class Checkout
         int $receivedBy,
         string $returnCondition,
         ?string $damageNotes = null,
-        ?string $inspectionRemarks = null
+        ?string $inspectionRemarks = null,
+        array $missingAccessoryIds = []
     ): array {
         if (!in_array($returnCondition, ['good', 'damaged', 'missing_accessories'], true)) {
             return ['success' => false, 'message' => 'Invalid return condition.'];
+        }
+
+        // Each condition has its own required detail.
+        $damageNotes = ($damageNotes !== null && trim($damageNotes) !== '') ? trim($damageNotes) : null;
+        if ($returnCondition === 'damaged' && $damageNotes === null) {
+            return ['success' => false, 'message' => 'Please describe what happened to the item.'];
+        }
+
+        $missingAccessoryIds = array_values(array_unique(array_filter(array_map('intval', $missingAccessoryIds), fn($id) => $id > 0)));
+        if ($returnCondition === 'missing_accessories' && empty($missingAccessoryIds)) {
+            return ['success' => false, 'message' => 'Select at least one missing accessory.'];
+        }
+        if ($returnCondition !== 'damaged') {
+            $damageNotes = null; // only meaningful for damaged items
+        }
+        if ($returnCondition !== 'missing_accessories') {
+            $missingAccessoryIds = [];
         }
 
         try {
@@ -129,6 +147,26 @@ class Checkout
                 return ['success' => false, 'message' => 'This equipment has already been returned.'];
             }
 
+            // Only accessories that belong to THIS unit's model may be reported missing.
+            $missingNames = [];
+            if (!empty($missingAccessoryIds)) {
+                $in = implode(',', array_fill(0, count($missingAccessoryIds), '?'));
+                $stm = $this->db->prepare(
+                    "SELECT a.accessory_id, a.accessory_name
+                     FROM accessories a
+                     JOIN serialized_items si ON si.catalog_id = a.catalog_id
+                     WHERE si.item_id = ? AND a.accessory_id IN ($in)"
+                );
+                $stm->execute(array_merge([(int) $checkout['item_id']], $missingAccessoryIds));
+                $valid = $stm->fetchAll(PDO::FETCH_ASSOC);
+
+                if (count($valid) !== count($missingAccessoryIds)) {
+                    $this->db->rollBack();
+                    return ['success' => false, 'message' => 'One or more selected accessories do not belong to this item.'];
+                }
+                $missingNames = array_column($valid, 'accessory_name');
+            }
+
             $stm = $this->db->prepare(
                 'UPDATE checkouts
                  SET returned_at = NOW(), received_by = :received_by, return_condition = :return_condition,
@@ -143,6 +181,15 @@ class Checkout
                 ':inspection_remarks' => $inspectionRemarks,
             ]);
 
+            if (!empty($missingAccessoryIds)) {
+                $stm = $this->db->prepare(
+                    'INSERT INTO checkout_missing_accessories (checkout_id, accessory_id) VALUES (:checkout_id, :accessory_id)'
+                );
+                foreach ($missingAccessoryIds as $accessoryId) {
+                    $stm->execute([':checkout_id' => $checkoutId, ':accessory_id' => $accessoryId]);
+                }
+            }
+
             $stm = $this->db->prepare("UPDATE reservations SET status = 'returned' WHERE reservation_id = :reservation_id");
             $stm->execute([':reservation_id' => $checkout['reservation_id']]);
 
@@ -152,13 +199,24 @@ class Checkout
             $stm->execute([':status' => $newUnitStatus, ':item_id' => $checkout['item_id']]);
 
             $isLate = ((int) $checkout['is_late'] === 1);
+
+            $remarkParts = [];
+            if ($returnCondition === 'damaged') {
+                $remarkParts[] = 'Damaged: ' . $damageNotes;
+            } elseif ($returnCondition === 'missing_accessories') {
+                $remarkParts[] = 'Missing accessories: ' . implode(', ', $missingNames);
+            }
+            if ($inspectionRemarks !== null && trim($inspectionRemarks) !== '') {
+                $remarkParts[] = trim($inspectionRemarks);
+            }
+
             $this->logger->record(
                 (int) $checkout['reservation_id'],
                 (int) $checkout['item_id'],
                 null,
                 $receivedBy,
                 $isLate ? 'returned_late' : 'returned',
-                $inspectionRemarks
+                $remarkParts ? implode(' | ', $remarkParts) : null
             );
 
             $this->db->commit();
@@ -189,6 +247,20 @@ class Checkout
         return $stm->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
+    /** Accessories reported missing when this checkout was returned. */
+    public function getMissingAccessories(int $checkoutId): array
+    {
+        $stm = $this->db->prepare(
+            'SELECT a.accessory_id, a.accessory_name
+             FROM checkout_missing_accessories cma
+             JOIN accessories a ON a.accessory_id = cma.accessory_id
+             WHERE cma.checkout_id = :checkout_id
+             ORDER BY a.accessory_name ASC'
+        );
+        $stm->execute([':checkout_id' => $checkoutId]);
+        return $stm->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function listActive(): array
     {
         $stm = $this->db->query(
@@ -211,6 +283,33 @@ class Checkout
              LEFT JOIN serialized_items si ON si.item_id = c.item_id
              WHERE c.returned_at IS NULL AND c.due_at < NOW()
              ORDER BY c.due_at ASC'
+        );
+        return $stm->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // In src/Checkout.php
+
+    /**
+     * Detailed active checkouts for return processing.
+     */
+    public function listActiveDetailed(): array
+    {
+        $stm = $this->db->query(
+            "SELECT c.checkout_id, c.reservation_id, c.item_id, si.catalog_id, c.checked_out_at, c.due_at,
+                    (NOW() > c.due_at) AS is_overdue,
+                    TIMESTAMPDIFF(DAY, c.due_at, NOW()) AS overdue_days,
+                    si.serial_number, ec.model_name, ec.late_fine_rate,
+                    CONCAT(u.first_name, ' ', u.last_name) AS borrower_name,
+                    u.id_number AS borrower_id_number,
+                    CONCAT(staff.first_name, ' ', staff.last_name) AS issued_by_name
+             FROM checkouts c
+             JOIN reservations r ON r.reservation_id = c.reservation_id
+             JOIN serialized_items si ON si.item_id = c.item_id
+             JOIN equipment_catalog ec ON ec.catalog_id = si.catalog_id
+             JOIN users u ON u.user_id = r.borrower_id
+             LEFT JOIN users staff ON staff.user_id = c.issued_by
+             WHERE c.returned_at IS NULL
+             ORDER BY c.due_at ASC"
         );
         return $stm->fetchAll(PDO::FETCH_ASSOC);
     }

@@ -163,4 +163,66 @@ class User{
             return ['success' => false, 'message' => 'Could not update the role. Please try again.'];
         }
     }
+    public function updateStaffPermissions(int $userId, array $permissions, ?int $grantedBy = null): array
+    {
+        try {
+            // Ensure the user is actually staff or admin first
+            $stm = $this->db->prepare('SELECT role FROM users WHERE user_id = :user_id');
+            $stm->execute([':user_id' => $userId]);
+            $role = $stm->fetchColumn();
+
+            if ($role === false) {
+                return ['success' => false, 'message' => 'User not found.'];
+            }
+
+            if ($role === 'borrower') {
+                return ['success' => false, 'message' => 'Cannot assign staff permissions to a regular borrower. Promote them to staff first.'];
+            }
+
+            // Who is *allowed* to call this is enforced by the endpoint
+            // (require_role(['admin'])); $role above is the TARGET user's role.
+
+            // UPSERT: Insert or update their granular permissions.
+            // Connection uses real prepared statements (EMULATE_PREPARES = false),
+            // which do not allow the same :name twice, so the UPDATE half gets
+            // its own placeholders.
+            $stm = $this->db->prepare(
+                'INSERT INTO staff_permissions
+                    (user_id, can_approve_requests, can_inspect_returns, can_confirm_pickup, can_manage_catalog, granted_by)
+                VALUES
+                    (:user_id, :approve, :inspect, :pickup, :catalog, :granted_by)
+                ON DUPLICATE KEY UPDATE
+                    can_approve_requests = :approve_u,
+                    can_inspect_returns  = :inspect_u,
+                    can_confirm_pickup   = :pickup_u,
+                    can_manage_catalog   = :catalog_u,
+                    granted_by           = :granted_by_u'
+            );
+
+            $approve = empty($permissions['can_approve_requests']) ? 0 : 1;
+            $inspect = empty($permissions['can_inspect_returns'])  ? 0 : 1;
+            $pickup  = empty($permissions['can_confirm_pickup'])   ? 0 : 1;
+            $catalog = empty($permissions['can_manage_catalog'])   ? 0 : 1;
+
+            $stm->execute([
+                ':user_id'      => $userId,
+                ':approve'      => $approve,
+                ':inspect'      => $inspect,
+                ':pickup'       => $pickup,
+                ':catalog'      => $catalog,
+                ':granted_by'   => $grantedBy,
+                ':approve_u'    => $approve,
+                ':inspect_u'    => $inspect,
+                ':pickup_u'     => $pickup,
+                ':catalog_u'    => $catalog,
+                ':granted_by_u' => $grantedBy,
+            ]);
+
+            return ['success' => true, 'message' => 'Staff permissions updated successfully.'];
+
+        } catch (Throwable $e) {
+            error_log('User::updateStaffPermissions failed: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Could not update staff permissions.'];
+        }
+    }   
 }
