@@ -204,6 +204,55 @@ class Notification
             }
         }
 
+        // The items above are things still WAITING for someone, so once everything is handled the
+        // feed would be empty. This adds what other people did in the last 7 days (shown only for
+        // the jobs this user has), so staff and admins also see activity, not just a to-do list.
+        $types = [];
+        if ($can('can_approve_requests')) { array_push($types, 'requested', 'cancelled'); }
+        if ($can('can_confirm_pickup'))   { array_push($types, 'handover', 'cancelled'); }
+        if ($can('can_inspect_returns'))  { array_push($types, 'returned', 'returned_late', 'fine_paid'); }
+        $types = array_values(array_unique($types));
+
+        if ($types) {
+            $in  = implode(',', array_fill(0, count($types), '?'));
+            $stm = $this->db->prepare(
+                "SELECT tl.log_id, tl.action_type, tl.remarks, UNIX_TIMESTAMP(tl.action_timestamp) AS ts,
+                        ec.model_name, CONCAT(b.first_name, ' ', b.last_name) AS borrower,
+                        CONCAT(a.first_name, ' ', a.last_name) AS actor, f.amount_due
+                 FROM transaction_logs tl
+                 JOIN reservations r ON r.reservation_id = tl.reservation_id
+                 JOIN equipment_catalog ec ON ec.catalog_id = r.catalog_id
+                 JOIN users b ON b.user_id = r.borrower_id
+                 LEFT JOIN users a ON a.user_id = tl.actor_id
+                 LEFT JOIN fines f ON f.fine_id = tl.fine_id
+                 WHERE tl.action_type IN ($in)
+                   AND tl.action_timestamp >= (NOW() - INTERVAL 7 DAY)
+                   AND (tl.actor_id IS NULL OR tl.actor_id <> ?)
+                   AND NOT (tl.action_type = 'requested' AND r.status = 'pending')   -- still pending: already listed above
+                 ORDER BY tl.action_timestamp DESC, tl.log_id DESC
+                 LIMIT 15"
+            );
+            $stm->execute(array_merge($types, [(int) $user['user_id']]));
+            $logsUrl = APP_URL . '/manage/logs.php';
+
+            foreach ($stm->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $model = $row['model_name'];
+                $who   = $row['borrower'];
+                $by    = $row['actor'] ? " by {$row['actor']}" : '';
+                $parts = match ($row['action_type']) {
+                    'requested'     => ['info', 'ph-hourglass', 'Request Received', "{$who} requested {$model}.", APP_URL . '/manage/requests.php'],
+                    'cancelled'     => str_starts_with((string) $row['remarks'], Reservation::EXPIRED_REASON)
+                        ? ['warning', 'ph-timer', 'Pick-Up Expired', "{$who} did not collect {$model} in time. The reservation was cancelled.", $logsUrl]
+                        : ['warning', 'ph-x-circle', 'Request Cancelled', "{$who} cancelled the request for {$model}.", $logsUrl],
+                    'handover'      => ['success', 'ph-check-circle', 'Item Handed Over', "{$model} was handed to {$who}{$by}.", $logsUrl],
+                    'returned'      => ['success', 'ph-arrow-u-down-left', 'Item Returned', "{$who} returned {$model}{$by}.", $logsUrl],
+                    'returned_late' => ['warning', 'ph-clock-countdown', 'Late Return', "{$who} returned {$model} late{$by}.", $logsUrl],
+                    'fine_paid'     => ['success', 'ph-coins', 'Fine Paid', "{$who} paid \u{20B1}" . number_format((float) $row['amount_due'], 2) . " for {$model}.", $logsUrl],
+                };
+                $items[] = $this->make('log-' . $row['log_id'], $parts, (int) $row['ts']);
+            }
+        }
+
         return $items;
     }
 

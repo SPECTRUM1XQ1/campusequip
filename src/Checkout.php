@@ -6,6 +6,7 @@ if (!defined('APP_INIT')) {
 
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/TransactionLog.php';
+require_once __DIR__ . '/Reservation.php';
 
 class Checkout
 {
@@ -24,6 +25,9 @@ class Checkout
             return ['success' => false, 'message' => 'Student ID verification is required before issuing the equipment.'];
         }
 
+        // If the pick-up window has just run out, cancel it first so it can't be handed over.
+        (new Reservation())->expireLapsedPickups();
+
         try {
             $this->db->beginTransaction();
 
@@ -37,6 +41,9 @@ class Checkout
             }
             if ($reservation['status'] !== 'approved') {
                 $this->db->rollBack();
+                if ($reservation['status'] === 'cancelled' && $reservation['decline_reason'] === Reservation::EXPIRED_REASON) {
+                    return ['success' => false, 'message' => 'The pick-up window for this reservation has ended, so it was cancelled.'];
+                }
                 return ['success' => false, 'message' => 'Reservation is not approved for checkout.'];
             }
             if (empty($reservation['item_id'])) {
@@ -75,7 +82,7 @@ class Checkout
             ]);
             $checkoutId = (int) $this->db->lastInsertId();
 
-            $stm = $this->db->prepare("UPDATE reservations SET status = 'checked_out', pickup_at = NOW() WHERE reservation_id = :id");
+            $stm = $this->db->prepare("UPDATE reservations SET status = 'checked_out' WHERE reservation_id = :id");
             $stm->execute([':id' => $reservationId]);
 
             $stm = $this->db->prepare("UPDATE serialized_items SET status = 'checked_out' WHERE item_id = :id");
@@ -219,12 +226,63 @@ class Checkout
                 $remarkParts ? implode(' | ', $remarkParts) : null
             );
 
+            // Late return -> charge the model's daily late fine automatically.
+            // Days late are rounded UP (a part of a day counts as a full day, minimum 1).
+            $lateFine = null;
+            $daysLate = 0;
+            if ($isLate) {
+                $stm = $this->db->prepare(
+                    'SELECT ec.late_fine_rate,
+                            GREATEST(1, CEIL(TIMESTAMPDIFF(SECOND, c.due_at, NOW()) / 86400)) AS days_late
+                     FROM checkouts c
+                     JOIN serialized_items si ON si.item_id = c.item_id
+                     JOIN equipment_catalog ec ON ec.catalog_id = si.catalog_id
+                     WHERE c.checkout_id = :checkout_id'
+                );
+                $stm->execute([':checkout_id' => $checkoutId]);
+                $late = $stm->fetch(PDO::FETCH_ASSOC);
+
+                $rate     = $late ? (float) $late['late_fine_rate'] : 0.0;
+                $daysLate = $late ? (int) $late['days_late'] : 0;
+
+                if ($rate > 0 && $daysLate > 0) {
+                    $lateFine = round($rate * $daysLate, 2);
+
+                    // Store HOW the amount was worked out (type, days, rate), not just the total.
+                    $stm = $this->db->prepare(
+                        "INSERT INTO fines (checkout_id, amount_due, fine_type, reason, days_late, rate_applied, payment_status, created_at)
+                         VALUES (:checkout_id, :amount_due, 'late', :reason, :days_late, :rate, 'unpaid', NOW())"
+                    );
+                    $stm->execute([
+                        ':checkout_id' => $checkoutId,
+                        ':amount_due'  => $lateFine,
+                        ':reason'      => 'Late return: ' . $daysLate . ' day(s) x ' . number_format($rate, 2) . '/day',
+                        ':days_late'   => $daysLate,
+                        ':rate'        => $rate,
+                    ]);
+                    $fineId = (int) $this->db->lastInsertId();
+
+                    $this->logger->record(
+                        (int) $checkout['reservation_id'],
+                        (int) $checkout['item_id'],
+                        $fineId,
+                        $receivedBy,
+                        'fine_charged',
+                        'Late return fine: ' . $daysLate . ' day(s) x ' . number_format($rate, 2) . '/day = ' . number_format($lateFine, 2)
+                    );
+                }
+            }
+
             $this->db->commit();
             return [
                 'success'     => true,
                 'checkout_id' => $checkoutId,
                 'is_late'     => $isLate,
-                'message'     => 'Equipment returned successfully.',
+                'days_late'   => $daysLate,
+                'late_fine'   => $lateFine,
+                'message'     => $lateFine !== null
+                    ? 'Equipment returned late. A late fine of ' . number_format($lateFine, 2) . ' was charged.'
+                    : 'Equipment returned successfully.',
             ];
         } catch (Throwable $e) {
             if ($this->db->inTransaction()) {
@@ -298,6 +356,7 @@ class Checkout
             "SELECT c.checkout_id, c.reservation_id, c.item_id, si.catalog_id, c.checked_out_at, c.due_at,
                     (NOW() > c.due_at) AS is_overdue,
                     TIMESTAMPDIFF(DAY, c.due_at, NOW()) AS overdue_days,
+                    CASE WHEN NOW() > c.due_at THEN GREATEST(1, CEIL(TIMESTAMPDIFF(SECOND, c.due_at, NOW()) / 86400)) ELSE 0 END AS days_late,
                     si.serial_number, ec.model_name, ec.late_fine_rate,
                     CONCAT(u.first_name, ' ', u.last_name) AS borrower_name,
                     u.id_number AS borrower_id_number,

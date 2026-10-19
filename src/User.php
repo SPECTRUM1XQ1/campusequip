@@ -76,16 +76,23 @@ class User{
         return ['success' => true, 'role' => $user['role']];
     }
     public function listAll(?string $roleFilter = null): array {
-        $sql = 'SELECT user_id, last_name, first_name, middle_name, email, role, id_number, phone, created_at FROM users';
-        $param =[];
+        // LEFT JOIN so borrowers/admins (who have no staff_permissions row) are still listed.
+        $sql = 'SELECT u.user_id, u.last_name, u.first_name, u.middle_name, u.email, u.role, u.id_number, u.phone, u.created_at,
+                       COALESCE(sp.can_approve_requests, 0) AS can_approve_requests,
+                       COALESCE(sp.can_inspect_returns, 0)  AS can_inspect_returns,
+                       COALESCE(sp.can_confirm_pickup, 0)   AS can_confirm_pickup,
+                       COALESCE(sp.can_manage_catalog, 0)   AS can_manage_catalog
+                FROM users u
+                LEFT JOIN staff_permissions sp ON sp.user_id = u.user_id';
+        $param = [];
         $allRoles = ['staff', 'admin', 'borrower'];
-        
+
         if ($roleFilter !== null && in_array($roleFilter, $allRoles, true)) {
-            $sql .= ' WHERE role = :role ';
+            $sql .= ' WHERE u.role = :role ';
             $param[':role'] = $roleFilter;
         }
 
-        $sql .= ' ORDER BY last_name ASC ';
+        $sql .= ' ORDER BY u.last_name ASC, u.first_name ASC ';
         $stm = $this->db->prepare($sql);
         $stm->execute($param);
 
@@ -177,6 +184,20 @@ class User{
 
             if ($role === 'borrower') {
                 return ['success' => false, 'message' => 'Cannot assign staff permissions to a regular borrower. Promote them to staff first.'];
+            }
+            if ($role === 'admin') {
+                return ['success' => false, 'message' => 'Admins can already do every job, so they have no single job to assign.'];
+            }
+
+            // Each staff member does exactly ONE job.
+            $jobCount = 0;
+            foreach (['can_approve_requests', 'can_inspect_returns', 'can_confirm_pickup', 'can_manage_catalog'] as $flag) {
+                if (!empty($permissions[$flag])) {
+                    $jobCount++;
+                }
+            }
+            if ($jobCount !== 1) {
+                return ['success' => false, 'message' => 'Choose exactly one job for each staff member.'];
             }
 
             // Who is *allowed* to call this is enforced by the endpoint

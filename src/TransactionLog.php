@@ -25,7 +25,7 @@ class TransactionLog
         ?int $reservationId,
         ?int $itemId,
         ?int $fineId,
-        int $actorId,
+        ?int $actorId, // null = the system itself (e.g. automatic pick-up expiry)
         string $actionType,
         ?string $remarks = null,
         ?string $serialSnapshot = null
@@ -61,10 +61,10 @@ class TransactionLog
     public function listRecent(int $limit = 5): array
     {
         $stm = $this->db->prepare(
-            "SELECT tl.*, CONCAT(u.first_name, ' ', u.last_name) AS actor_name,
+            "SELECT tl.*, COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'System') AS actor_name,
                     r.borrower_id, CONCAT(b.first_name, ' ', b.last_name) AS borrower_name
              FROM transaction_logs tl
-             JOIN users u ON u.user_id = tl.actor_id
+             LEFT JOIN users u ON u.user_id = tl.actor_id
              LEFT JOIN reservations r ON r.reservation_id = tl.reservation_id
              LEFT JOIN users b ON b.user_id = r.borrower_id
              ORDER BY tl.action_timestamp DESC LIMIT :limit"
@@ -74,17 +74,35 @@ class TransactionLog
         return $stm->fetchAll(PDO::FETCH_ASSOC);
     }
     
-    public function listAll(): array
+    // $from / $to are optional "YYYY-MM-DD" strings (inclusive).
+    public function listAll(?string $from = null, ?string $to = null): array
     {
-        $sql = "SELECT tl.*, CONCAT(u.first_name, ' ', u.last_name) AS actor_name,
+        $sql = "SELECT tl.*, COALESCE(CONCAT(u.first_name, ' ', u.last_name), 'System') AS actor_name,
                        r.borrower_id, CONCAT(b.first_name, ' ', b.last_name) AS borrower_name,
                        f.amount_due AS fine_amount
                 FROM transaction_logs tl
-                JOIN users u ON u.user_id = tl.actor_id
+                LEFT JOIN users u ON u.user_id = tl.actor_id
                 LEFT JOIN reservations r ON r.reservation_id = tl.reservation_id
                 LEFT JOIN users b ON b.user_id = r.borrower_id
-                LEFT JOIN fines f ON f.fine_id = tl.fine_id
-                ORDER BY tl.action_timestamp DESC";
-        return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
+                LEFT JOIN fines f ON f.fine_id = tl.fine_id";
+
+        $where  = [];
+        $params = [];
+        if ($from !== null) {
+            $where[] = 'DATE(tl.action_timestamp) >= :from_date';
+            $params[':from_date'] = $from;
+        }
+        if ($to !== null) {
+            $where[] = 'DATE(tl.action_timestamp) <= :to_date';
+            $params[':to_date'] = $to;
+        }
+        if ($where) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $sql .= ' ORDER BY tl.action_timestamp DESC';
+
+        $stm = $this->db->prepare($sql);
+        $stm->execute($params);
+        return $stm->fetchAll(PDO::FETCH_ASSOC);
     }
 }
