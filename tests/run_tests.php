@@ -156,6 +156,20 @@ $names = array_column((new TransactionLog())->listAll(), 'actor_name', 'log_id')
 check('the log page shows "System" for it', ($names[$logRow['log_id']] ?? null) === 'System');
 check('expiry run twice does nothing more', $res->expireLapsedPickups() === 0);
 
+// ---- staff / admin notifications show activity, not only a to-do list ---------------------
+section('Staff and admin notifications (fix: recent activity, not just things waiting)');
+$titles = fn(array $u) => array_column((new Notification())->forUser($u), 'title');
+$adminFeed = $titles((new User())->getById($admin));
+$staffFeed = $titles((new User())->getById($staff));
+check('admin sees a handover done by staff', in_array('Item Handed Over', $adminFeed, true), json_encode($adminFeed));
+check('admin sees the late return', in_array('Late Return', $adminFeed, true));
+check('admin sees the fine that was paid', in_array('Fine Paid', $adminFeed, true));
+check('admin sees a request that is no longer pending', in_array('Request Received', $adminFeed, true));
+check('admin sees the automatic pick-up expiry', in_array('Pick-Up Expired', $adminFeed, true));
+check('staff do not get notified about their OWN handover', !in_array('Item Handed Over', $staffFeed, true), json_encode($staffFeed));
+check('staff still see the automatic expiry (done by the system)', in_array('Pick-Up Expired', $staffFeed, true));
+check('feed is not empty after everything is handled', count($adminFeed) > 0);
+
 // ---- #6 one permission model -------------------------------------------------------------
 section('Permissions (fix: one shared definition)');
 check('admin has every flag', !in_array(false, Permissions::resolve('admin', null), true));
@@ -197,6 +211,27 @@ foreach ($it as $f) {
 }
 check('no hardcoded folder name outside config.php; no dead page links', empty($bad), implode('; ', $bad));
 check('old unreferenced pages are gone', !is_file(__DIR__ . '/../public/borrower/home.php') && !is_file(__DIR__ . '/../test.php'));
+
+// Icon-first buttons inside a table need a RESERVED Actions column, otherwise the whole table
+// shifts when a label slides out. A cell holding two buttons needs the wide variant.
+$tableProblems = [];
+foreach (glob(__DIR__ . '/../public/*/*.php') as $page) {
+    $src = file_get_contents($page);
+    if (!preg_match_all('#<table\b.*?</table>#s', $src, $tables)) continue;
+    foreach ($tables[0] as $table) {
+        if (!str_contains($table, 'btn-reveal')) continue;
+        $maxInCell = 0;
+        if (preg_match_all('#<td\b.*?</td>#s', $table, $cells)) {
+            foreach ($cells[0] as $cell) $maxInCell = max($maxInCell, substr_count($cell, 'btn-reveal'));
+        }
+        if (!preg_match('#<th[^>]*class="[^"]*\bcol-action\b#', $table)) {
+            $tableProblems[] = basename($page) . ': icon buttons in a table but the Actions <th> has no col-action class';
+        } elseif ($maxInCell >= 2 && !preg_match('#<th[^>]*col-action--wide#', $table)) {
+            $tableProblems[] = basename($page) . ": {$maxInCell} icon buttons in one cell need col-action--wide";
+        }
+    }
+}
+check('tables with icon-first buttons reserve their Actions width (no hover jump)', empty($tableProblems), implode('; ', $tableProblems));
 
 $root->exec("DROP DATABASE `{$dbName}`");
 ob_end_flush();
