@@ -1,0 +1,28 @@
+/* ---- Former inline style="" attributes, moved out of the PHP markup ---- */
+.e404-s1 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+    text-align: center;
+    padding: 2rem;
+}
+.e404-s2 {
+    font-size: 4rem;
+    font-weight: 800;
+    color: var(--primary-brand);
+    line-height: 1;
+}
+.e404-s3 {
+    margin: 0.75rem 0 0.5rem;
+}
+.e404-s4 {
+    margin-bottom: 1.75rem;
+}
+.e404-s5 {
+    text-decoration: none;
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+}

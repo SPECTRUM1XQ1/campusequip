@@ -10,6 +10,7 @@ require_once __DIR__ . '/../../src/Dashboard.php';
 requireRole(['admin', 'staff']);
 
 $pageTitle = 'Dashboard Overview';
+$pageStyles = ['shared/dashboard', 'pages/manage-dashboard'];
 
 // KPI real-time metrics. Unpaid fines are shown to admins and to staff whose job is processing returns.
 $showFines = hasPermission('can_inspect_returns');
@@ -36,10 +37,10 @@ $recentLogs       = $logModel->listRecent(5);
 <body>
     <div class="dashboard-layout">
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        <?php include __DIR__ . '/../../includes/sidebar-admin.php'; ?>
+        <?php include __DIR__ . '/../../includes/navigation/sidebar-admin.php'; ?>
 
         <main class="main-content">
-            <?php include __DIR__ . '/../../includes/topbar.php'; ?>
+            <?php include __DIR__ . '/../../includes/navigation/topbar.php'; ?>
 
             <!-- Real-time Stat Grid -->
             <div class="stats-grid">
@@ -49,7 +50,7 @@ $recentLogs       = $logModel->listRecent(5);
                         <h3 class="stat-value"><?= $availableEquipment ?></h3>
                     </div>
                     <div class="stat-icon primary">
-                        <i class="ph ph-cpu" style="font-size: 1.5rem;"></i>
+                        <i class="ph ph-cpu manage-dashboard-s1"></i>
                     </div>
                 </div>
 
@@ -59,7 +60,7 @@ $recentLogs       = $logModel->listRecent(5);
                         <h3 class="stat-value"><?= $activeLoans ?></h3>
                     </div>
                     <div class="stat-icon success">
-                        <i class="ph ph-arrows-left-right" style="font-size: 1.5rem;"></i>
+                        <i class="ph ph-arrows-left-right manage-dashboard-s1"></i>
                     </div>
                 </div>
 
@@ -69,19 +70,19 @@ $recentLogs       = $logModel->listRecent(5);
                         <h3 class="stat-value"><?= $overdueItems ?></h3>
                     </div>
                     <div class="stat-icon danger">
-                        <i class="ph ph-warning-circle" style="font-size: 1.5rem;"></i>
+                        <i class="ph ph-warning-circle manage-dashboard-s1"></i>
                     </div>
                 </div>
 
                 <?php if ($showFines): ?>
-                <a href="<?= APP_BASE ?>/public/manage/fines.php" class="stat-card" style="text-decoration: none; color: inherit;">
+                <a href="<?= APP_BASE ?>/public/manage/fines.php" class="stat-card manage-dashboard-s2">
                     <div class="stat-details">
                         <span class="stat-label">Unpaid Fines</span>
                         <h3 class="stat-value">&#8369;<?= number_format((float) $unpaidFines['total'], 2) ?></h3>
-                        <span class="text-muted" style="font-size: 0.75rem;"><?= (int) $unpaidFines['count'] ?> unpaid</span>
+                        <span class="text-muted manage-dashboard-s3"><?= (int) $unpaidFines['count'] ?> unpaid</span>
                     </div>
                     <div class="stat-icon danger">
-                        <i class="ph ph-receipt" style="font-size: 1.5rem;"></i>
+                        <i class="ph ph-receipt manage-dashboard-s1"></i>
                     </div>
                 </a>
                 <?php endif; ?>
@@ -92,7 +93,7 @@ $recentLogs       = $logModel->listRecent(5);
                         <h3 class="stat-value" id="dash-pending-count"><?= $pendingRequests ?></h3>
                     </div>
                     <div class="stat-icon warning">
-                        <i class="ph ph-hourglass-medium" style="font-size: 1.5rem;"></i>
+                        <i class="ph ph-hourglass-medium manage-dashboard-s1"></i>
                     </div>
                 </div>
             </div>
@@ -107,8 +108,8 @@ $recentLogs       = $logModel->listRecent(5);
 
                     <div id="dashboard-requests-container">
                         <?php if (empty($recentPending)): ?>
-                            <div class="card-container text-muted" style="text-align: center; padding: 2rem;">
-                                <i class="ph ph-check-circle" style="font-size: 2rem; color: var(--success-text); margin-bottom: 0.5rem; display: block;"></i>
+                            <div class="card-container text-muted manage-dashboard-s4">
+                                <i class="ph ph-check-circle manage-dashboard-s5"></i>
                                 No pending requests at this time.
                             </div>
                         <?php else: ?>
@@ -135,7 +136,7 @@ $recentLogs       = $logModel->listRecent(5);
                                     </div>
                                     <?php if (hasPermission('can_approve_requests')): ?>
                                     <div class="request-actions">
-                                        <a href="<?= APP_BASE ?>/public/manage/requests.php" class="btn btn-primary btn-sm btn-rect" style="text-decoration:none;"><i class="ph ph-list-checks" aria-hidden="true"></i><span class="btn-text">Review & Assign</span></a>
+                                        <a href="<?= APP_BASE ?>/public/manage/requests.php" class="btn btn-primary btn-sm btn-rect manage-dashboard-s6"><i class="ph ph-list-checks" aria-hidden="true"></i><span class="btn-text">Review & Assign</span></a>
                                     </div>
                                     <?php endif; ?>
                                 </div>
@@ -145,7 +146,7 @@ $recentLogs       = $logModel->listRecent(5);
 
                     <!-- Equipment Availability Breakdown -->
                     <div class="card-container">
-                        <h3 class="section-title" style="margin-bottom: 1.25rem;">Equipment Availability Breakdown</h3>
+                        <h3 class="section-title manage-dashboard-s7">Equipment Availability Breakdown</h3>
                         <?php if (empty($breakdown)): ?>
                             <p class="text-muted">No inventory tracked yet.</p>
                         <?php else: ?>
@@ -170,7 +171,7 @@ $recentLogs       = $logModel->listRecent(5);
                 <!-- RIGHT COLUMN -->
                 <div>
                     <div class="card-container">
-                        <h3 class="section-title" style="margin-bottom: 1rem;">Recent Logs</h3>
+                        <h3 class="section-title manage-dashboard-s8">Recent Logs</h3>
                         <?php if (empty($recentLogs)): ?>
                             <p class="text-muted">No system transactions logged yet.</p>
                         <?php else: ?>
@@ -191,6 +192,6 @@ $recentLogs       = $logModel->listRecent(5);
         </main>
     </div>
 
-    <?php include __DIR__ . '/../../includes/footer.php'; ?>
+    <?php include __DIR__ . '/../../includes/navigation/footer.php'; ?>
 </body>
 </html>

@@ -1,0 +1,68 @@
+/*
+ * pages/admin-export.css
+ * Styles for the admin export page only. Loaded after base.css (see $pageStyles in the page).
+ */
+
+/* ---- Export page + printing ---- */
+
+.print-only {
+    display: none;
+}
+
+.export-table .data-table {
+    min-width: 900px;
+}
+
+@media print {
+    .print-only {
+            display: block;
+            margin-bottom: 1rem;
+        }
+    .print-only h2 {
+            margin: 0 0 0.25rem 0;
+            font-size: 1.1rem;
+        }
+    .print-only p {
+            margin: 0;
+            font-size: 0.75rem;
+            color: #475569;
+        }
+    .export-table .data-table {
+            min-width: 0;
+            font-size: 0.75rem;
+        }
+}
+
+
+/* ---- Compact date fields (Export From / To) ---- */
+
+.export-range .btn {
+    height: 2rem;
+    display: inline-flex;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.export-range .modal-label {
+    margin-bottom: 0.25rem;
+}
+
+/* ---- Former inline style="" attributes, moved out of the PHP markup ---- */
+.admin-export-s1 {
+    text-decoration: none;
+}
+.admin-export-s2 {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+.admin-export-s3 {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.admin-export-s4 {
+    text-align: center;
+    padding: 2.5rem;
+}

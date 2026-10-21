@@ -1,0 +1,34 @@
+/*
+ * pages/manage-logs.css
+ * Styles for the manage logs page only. Loaded after base.css (see $pageStyles in the page).
+ */
+
+/* ---- TRANSACTION LOGS PAGE ---- */
+
+.logs-table {
+    min-width: 960px;
+}
+
+.logs-table th {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.cell-upper {
+    font-weight: 700;
+    color: var(--text-main);
+    text-transform: uppercase;
+}
+
+.status-badge.declined-solid {
+    background: #f87171;
+    color: #fff;
+}
+
+/* ---- Former inline style="" attributes, moved out of the PHP markup ---- */
+.manage-logs-s1 {
+    text-align: center;
+    padding: 2.5rem;
+}

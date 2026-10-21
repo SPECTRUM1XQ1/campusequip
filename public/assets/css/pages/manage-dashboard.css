@@ -1,0 +1,264 @@
+/*
+ * pages/manage-dashboard.css
+ * Styles for the manage dashboard page only. Loaded after base.css (see $pageStyles in the page).
+ */
+
+/* ---- ADMIN STAT CARDS (added — Admin Dashboard overview row) ---- */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.stat-icon.warning {
+    background: var(--warning-bg);
+}
+
+.stat-icon.primary {
+    background: rgba(32, 59, 140, 0.1);
+}
+
+.stat-icon.danger {
+    background: rgba(239, 68, 68, 0.12);
+}
+
+.stat-icon.success {
+    background: rgba(22, 163, 74, 0.12);
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+
+/* ---- FIGMA MATCH ---- */
+
+.stats-grid {
+    margin-top: 0;
+    padding: 0 2rem 1.5rem 2rem;
+    gap: 1rem;
+}
+
+.stat-card {
+    justify-content: space-between;
+    padding: 1.1rem 1.4rem;
+    border-radius: 0.75rem;
+    gap: 1rem;
+}
+
+.stat-details {
+    order: 1;
+}
+
+.stat-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #334155;
+    margin-bottom: 0.15rem;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.stat-icon {
+    order: 2;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    /* circle */
+    font-size: 0;
+    /* icons are inline SVG now */
+}
+
+.stat-icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.stat-icon.primary {
+    background: #e8edfb;
+    color: var(--primary-brand);
+}
+
+.stat-icon.success {
+    background: #e3f6ea;
+    color: #22a559;
+}
+
+.stat-icon.danger {
+    background: #fde8e8;
+    color: #ef4444;
+}
+
+.stat-icon.warning {
+    background: #fef0dc;
+    color: #f59e0b;
+}
+
+.request-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.request-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+}
+
+.availability-row {
+    margin-bottom: 1.1rem;
+}
+
+.availability-row:last-child {
+    margin-bottom: 0;
+}
+
+.availability-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.4rem;
+}
+
+.availability-name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.availability-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.progress-track {
+    width: 100%;
+    height: 10px;
+    background: #eef2f7;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--primary-brand);
+    border-radius: 9999px;
+}
+
+.log-item {
+    display: flex;
+    justify-content: space-between;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.log-item:last-child {
+    margin-bottom: 0;
+}
+
+.log-id {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--primary-brand);
+}
+
+.log-name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    margin: 0.15rem 0;
+}
+
+.log-note {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.log-date {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+            padding: 0 1rem 1rem 1rem;
+        }
+    .request-meta {
+            grid-template-columns: 1fr;
+        }
+}
+
+/* ---- Former inline style="" attributes, moved out of the PHP markup ---- */
+.manage-dashboard-s1 {
+    font-size: 1.5rem;
+}
+.manage-dashboard-s2 {
+    text-decoration: none;
+    color: inherit;
+}
+.manage-dashboard-s3 {
+    font-size: 0.75rem;
+}
+.manage-dashboard-s4 {
+    text-align: center;
+    padding: 2rem;
+}
+.manage-dashboard-s5 {
+    font-size: 2rem;
+    color: var(--success-text);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+.manage-dashboard-s6 {
+    text-decoration: none;
+}
+.manage-dashboard-s7 {
+    margin-bottom: 1.25rem;
+}
+.manage-dashboard-s8 {
+    margin-bottom: 1rem;
+}

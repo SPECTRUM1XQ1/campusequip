@@ -1,0 +1,13 @@
+/* ---- Former inline style="" attributes, moved out of the PHP markup ---- */
+.admin-users-s1 {
+    font-weight: 400;
+}
+.admin-users-s2 {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.admin-users-s3 {
+    text-align: center;
+    padding: 2.5rem;
+}

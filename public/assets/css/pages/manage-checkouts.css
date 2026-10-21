@@ -1,0 +1,20 @@
+/*
+ * pages/manage-checkouts.css
+ * Styles for the manage checkouts page only. Loaded after base.css (see $pageStyles in the page).
+ */
+
+/* ---- Checkout & Return: both columns share the same three rows (title / filter bar / list), ---- */
+
+.pending-grid.ops-aligned > .ops-column { display: grid; grid-template-rows: subgrid; grid-row: span 4; min-height: 0; }
+
+.pending-grid.ops-aligned .ops-scroll { min-height: 0; }
+
+/* ---- Former inline style="" attributes, moved out of the PHP markup ---- */
+/* only one column is shown (staff with a single permission) */
+.pending-grid.ops-single {
+    grid-template-columns: 1fr;
+}
+.manage-checkouts-s2 {
+    text-align: center;
+    padding: 2rem;
+}

@@ -1,0 +1,18 @@
+/*
+ * pages/manage-serialized.css
+ * Styles for the manage serialized page only. Loaded after base.css (see $pageStyles in the page).
+ */
+
+/* ---- Compact layout pass (Equipment Catalog, Serialize Item, System Settings) ---- */
+
+.table-card--compact .data-table th,
+.table-card--compact .data-table td { padding: 0.65rem 1rem; }
+
+/* ---- Former inline style="" attributes, moved out of the PHP markup ---- */
+.manage-serialized-s1 {
+    width: auto;
+}
+.manage-serialized-s2 {
+    text-align: center;
+    padding: 2rem;
+}

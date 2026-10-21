@@ -2,16 +2,14 @@
 define('APP_INIT', true);
 require_once __DIR__ . '/../config/config.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+app_session_start();
 
 if (isset($_SESSION['user_id'])) {
     $dest = in_array($_SESSION['role'], ['staff', 'admin'], true)
-        ? '/campusequip/public/admin/dashboard.php'
-        : '/campusequip/public/borrower/home.php';
+        ? APP_BASE . '/public/manage/dashboard.php'
+        : APP_BASE . '/public/borrower/dashboard.php';
     header('Location: ' . $dest);
 } else {
-    header('Location: ' . APP_URL . '/login.php');
+    header('Location: ' . APP_URL . '/login/login.php');
 }
 exit;

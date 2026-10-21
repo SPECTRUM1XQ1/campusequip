@@ -1,0 +1,25 @@
+/*
+ * pages/borrower-fines.css
+ * Styles for the borrower fines page only. Loaded after base.css (see $pageStyles in the page).
+ */
+
+/* ---- Borrower dashboard: Penalties & Fines panel ---- */
+
+.fine-summary--accent .fine-stat {
+    border-left: 4px solid var(--border-color);
+}
+
+.fine-summary--accent .fine-stat--danger {
+    border-left-color: #ef4444;
+    background: #fff;
+}
+
+.fine-summary--accent .fine-stat--success {
+    border-left-color: #22c55e;
+    background: #fff;
+}
+
+/* ---- Former inline style="" attributes, moved out of the PHP markup ---- */
+.borrower-fines-s1 {
+    margin-top: 1.5rem;
+}

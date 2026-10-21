@@ -1,1 +1,2 @@
+# NOTE: Apache cannot read PHP constants. If you rename the folder, change this path to match APP_BASE in config/config.php.
 ErrorDocument 404 /campusequip/public/404.php

@@ -2,9 +2,10 @@
 define('APP_INIT', true);
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../includes/auth_check.php';
-requireRole(['admin', 'staff']);
+requireRole('admin');
 
 $pageTitle = 'System Settings';
+$pageStyles = ['pages/admin-settings'];
 $comingSoonMessage = 'Fine rates and loan period settings are next on the build list.';
 
 // Temporary mock data for UI design — backend dev: load these from the DB.
@@ -30,10 +31,10 @@ $settings = [
 
     <div class="dashboard-layout">
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        <?php include __DIR__ . '/../../includes/sidebar-admin.php'; ?>
+        <?php include __DIR__ . '/../../includes/navigation/sidebar-admin.php'; ?>
 
         <main class="main-content">
-            <?php include __DIR__ . '/../../includes/topbar.php'; ?>
+            <?php include __DIR__ . '/../../includes/navigation/topbar.php'; ?>
 
             <section class="requests-page">
                 <p class="page-note">Configure loan rules, notifications and system behaviour</p>
@@ -144,23 +145,23 @@ $settings = [
                                     <h5>Backup database</h5>
                                     <p>Download a full copy of the current data.</p>
                                 </div>
-                                <button type="button" class="btn btn-outline btn-sm btn-rect" onclick="triggerBackup()">Backup Now</button>
+                                <button type="button" class="btn btn-outline btn-sm btn-rect" data-backup><i class="ph ph-database" aria-hidden="true"></i><span class="btn-text">Backup Now</span></button>
                             </div>
 
                             <div class="list-item">
                                 <div class="list-info">
-                                    <h5>Clear transaction logs</h5>
-                                    <p>Permanently delete all log entries. This cannot be undone.</p>
+                                    <h5>Export records</h5>
+                                    <p>View reservations, checkouts, fines or transaction logs, then print them or download a CSV for Excel / Google Sheets. Logs are permanent and cannot be deleted.</p>
                                 </div>
-                                <button type="button" class="btn btn-outline-danger btn-sm btn-rect" onclick="openModal('clearLogsModal')">Clear Logs</button>
+                                <a href="<?= APP_BASE ?>/public/admin/export.php" class="btn btn-outline btn-sm btn-rect admin-settings-s1"><i class="ph ph-export" aria-hidden="true"></i><span class="btn-text">Open Export</span></a>
                             </div>
                         </div>
                     </div>
 
                     <!-- Form actions -->
                     <div class="card-actions card-actions-right">
-                        <button type="reset" class="btn btn-outline">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="reset" class="btn btn-outline"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Cancel</span></button>
+                        <button type="submit" class="btn btn-primary"><i class="ph ph-floppy-disk" aria-hidden="true"></i><span class="btn-text">Save Changes</span></button>
                     </div>
 
                 </form>
@@ -168,72 +169,11 @@ $settings = [
             <!-- Snackbar Notification Container -->
 <div id="snackbar-container"></div>
 
-<!-- Clear Logs Warning Modal -->
-<div class="modal-overlay" id="clearLogsModal">
-    <div class="modal" style="max-width: 28rem;">
-        <div class="modal-header">
-            <div>
-                <h2 class="modal-title">Clear Transaction Logs</h2>
-                <p class="modal-subtitle">This action cannot be undone.</p>
-            </div>
-            <button class="modal-close" onclick="closeModal('clearLogsModal')">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="archive-warning-box">
-                <div class="alert-box">
-                    <div class="alert-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                    </div>
-                    <div class="alert-content">
-                        <h4>Permanent Deletion</h4>
-                        <p>You are about to permanently delete all equipment transaction logs from the database. Are you absolutely sure?</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-outline btn-rect" onclick="closeModal('clearLogsModal')">Cancel</button>
-            <button class="btn btn-danger btn-rect" onclick="closeModal('clearLogsModal')">Yes, Clear Logs</button>
-        </div>
-    </div>
-</div>
-
-<!-- Scripts for Modal & Snackbar -->
-<script>
-    function openModal(modalId) {
-        document.getElementById(modalId).classList.add('open');
-    }
-    
-    function closeModal(modalId) {
-        document.getElementById(modalId).classList.remove('open');
-    }
-
-    function triggerBackup() {
-        const container = document.getElementById('snackbar-container');
-        const snackbar = document.createElement('div');
-        snackbar.className = 'snackbar snackbar--success';
-        snackbar.textContent = 'Database backup package is downloading...';
-        
-        container.appendChild(snackbar);
-        
-        // Trigger reflow to ensure the CSS transition works
-        setTimeout(() => {
-            snackbar.classList.add('snackbar--visible');
-        }, 10);
-
-        // Remove the snackbar after 3 seconds
-        setTimeout(() => {
-            snackbar.classList.remove('snackbar--visible');
-            setTimeout(() => snackbar.remove(), 250);
-        }, 3000);
-    }
-</script>
+<script src="<?= APP_BASE ?>/public/assets/js/pages/admin-settings.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/pages/admin-settings.js') ?: 1 ?>"></script>
         </main>
     </div>
 
-    <?php include __DIR__ . '/../../includes/footer.php'; ?>
+    <?php include __DIR__ . '/../../includes/navigation/footer.php'; ?>
 </body>
 
 </html>

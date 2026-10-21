@@ -1,0 +1,33 @@
+/* ---- Former inline style="" attributes, moved out of the PHP markup ---- */
+.manage-fines-s1 {
+    margin-bottom: 2rem;
+}
+.manage-fines-s2 {
+    text-align: center;
+    padding: 2rem;
+}
+.manage-fines-s3 {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.manage-fines-s4 {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-muted);
+}
+.manage-fines-s5 {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.manage-fines-s6 {
+    text-align: center;
+    padding: 2.5rem;
+}
+.manage-fines-s7 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}

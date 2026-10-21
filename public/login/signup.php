@@ -2,14 +2,12 @@
 define('APP_INIT', true);
 require_once __DIR__ . '/../../config/config.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+app_session_start();
 
 if (isset($_SESSION['user_id'])) {
     $dest = in_array($_SESSION['role'], ['staff', 'admin'], true)
-        ? '/campusequip/public/admin/dashboard.php'
-        : '/campusequip/public/borrower/dashboard.php';
+        ? APP_BASE . '/public/manage/dashboard.php'
+        : APP_BASE . '/public/borrower/dashboard.php';
     header('Location: ' . $dest);
     exit;
 }
@@ -21,7 +19,11 @@ if (isset($_SESSION['user_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up — CampusEquip</title>
-    <link rel="stylesheet" href="/campusequip/public/assets/css/style.css">
+    <meta name="app-base" content="<?= htmlspecialchars(APP_BASE) ?>">
+    <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
+    <script src="<?= APP_BASE ?>/public/assets/js/app-core.js?v=<?= @filemtime(__DIR__ . '/../assets/js/app-core.js') ?: 1 ?>"></script>
+    <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/base.css?v=<?= @filemtime(__DIR__ . '/../assets/css/base.css') ?: 1 ?>">
+    <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/pages/auth.css?v=<?= @filemtime(__DIR__ . '/../assets/css/pages/auth.css') ?: 1 ?>">
 </head>
 
 <body>
@@ -30,17 +32,17 @@ if (isset($_SESSION['user_id'])) {
         <div class="login-left">
             <div class="login-overlay">
                 <div class="brand-showcase">
-                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
-                        <span class="campus-equip-logo" style="width: 56px; height: 56px; border-radius: 14px;">
-                            <span class="chip-icon" style="width: 32px; height: 32px;"></span>
+                    <div class="auth-signup-s1">
+                        <span class="campus-equip-logo auth-signup-s2">
+                            <span class="chip-icon auth-signup-s3"></span>
                         </span>
-                        <span style="font-size: 2.25rem; font-weight: 700; color: white;">CampusEquip</span>
+                        <span class="auth-signup-s4">CampusEquip</span>
                     </div>
                     <h1
-                        style="color: white; font-size: 3rem; margin-bottom: 1.5rem; line-height: 1.2; font-weight: 700;">
+                        class="auth-signup-s5">
                         Equipping your IT journey.
                     </h1>
-                    <p style="color: #cbd5e1; font-size: 1.125rem; line-height: 1.7; max-width: 400px;">
+                    <p class="auth-signup-s6">
                         The official hardware and equipment management portal for PHINMA UPang IT students. Reserve
                         laptops, cameras, and kits instantly.
                     </p>
@@ -65,31 +67,34 @@ if (isset($_SESSION['user_id'])) {
 
                     <form id="signup-form" novalidate>
                         <div class="grid-row grid-cols-3">
-                            <div class="form-group" style="margin-bottom: 0;">
+                            <div class="form-group auth-signup-s7">
                                 <label class="input-label">Last Name</label>
                                 <input type="text" name="last_name" class="input-field" placeholder="e.g. Dela Cruz"
                                     required>
                             </div>
-                            <div class="form-group" style="margin-bottom: 0;">
+                            <div class="form-group auth-signup-s7">
                                 <label class="input-label">First Name</label>
                                 <input type="text" name="first_name" class="input-field" placeholder="e.g. Juan"
                                     required>
                             </div>
-                            <div class="form-group" style="margin-bottom: 0;">
+                            <div class="form-group auth-signup-s7">
                                 <label class="input-label">Middle Name</label>
                                 <input type="text" name="middle_name" class="input-field" placeholder="e.g. C.">
                             </div>
                         </div>
 
                         <div class="grid-row grid-cols-2">
-                            <div class="form-group" style="margin-bottom: 0;">
+                            <div class="form-group auth-signup-s7">
                                 <label class="input-label">Student / Employee ID</label>
-                                <input type="text" name="id_number" class="input-field" placeholder="e.g. 2026-10201"
-                                    required>
+                                <input type="text" name="id_number" class="input-field" placeholder="e.g. 202610201"
+                                    inputmode="numeric" pattern="[0-9]*" maxlength="30" data-digits-only
+                                    title="Numbers only" autocomplete="off" required>
                             </div>
-                            <div class="form-group" style="margin-bottom: 0;">
+                            <div class="form-group auth-signup-s7">
                                 <label class="input-label">Phone Number</label>
-                                <input type="tel" name="phone" class="input-field" placeholder="0912 345 6789" required>
+                                <input type="tel" name="phone" class="input-field" placeholder="09123456789"
+                                    inputmode="numeric" pattern="[0-9]{7,15}" minlength="7" maxlength="11" data-digits-only
+                                    title="Numbers only (7 to 15 digits)" required>
                             </div>
                         </div>
 
@@ -100,14 +105,14 @@ if (isset($_SESSION['user_id'])) {
                         </div>
 
                         <div class="grid-row grid-cols-2">
-                            <div class="form-group" style="margin-bottom: 0;">
+                            <div class="form-group auth-signup-s7">
                                 <label class="input-label">Password</label>
                                 <div class="password-wrapper">
                                     <input type="password" name="password" class="input-field"
                                         placeholder="At least 8 characters" required>
                                 </div>
                             </div>
-                            <div class="form-group" style="margin-bottom: 0;">
+                            <div class="form-group auth-signup-s7">
                                 <label class="input-label">Confirm Password</label>
                                 <div class="password-wrapper">
                                     <input type="password" name="confirm_password" class="input-field"
@@ -116,11 +121,11 @@ if (isset($_SESSION['user_id'])) {
                             </div>
                         </div>
 
-                        <button type="submit" class="btn-primary" style="margin-top: 0.5rem;">Sign Up</button>
+                        <button type="submit" class="btn-primary auth-signup-s8">Sign Up</button>
                     </form>
                     <div class="toggle-view-text">
                         Already have an account?
-                        <a href="/campusequip/public/login/login.php" class="link-text" style="margin-left: 4px;">Sign In</a>
+                        <a href="<?= APP_BASE ?>/public/login/login.php" class="link-text auth-signup-s9">Sign In</a>
                     </div>
                 </div>
             </div>
@@ -129,8 +134,9 @@ if (isset($_SESSION['user_id'])) {
         </div>
     </div>
 
-    <script src="/campusequip/public/assets/js/snackbar.js"></script>
-    <script src="/campusequip/public/assets/js/auth.js"></script>
+    <script src="<?= APP_BASE ?>/public/assets/js/snackbar.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/snackbar.js') ?: 1 ?>"></script>
+    <script src="<?= APP_BASE ?>/public/assets/js/password-toggle.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/password-toggle.js') ?: 1 ?>"></script>
+    <script src="<?= APP_BASE ?>/public/assets/js/auth.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/auth.js') ?: 1 ?>"></script>
 </body>
 
 </html>

@@ -1,0 +1,72 @@
+/*
+ * pages/borrower-my-requests.css
+ * Styles for the borrower my requests page only. Loaded after base.css (see $pageStyles in the page).
+ */
+
+/* ---- Borrower pages: tabs, cards, pills, notices ---- */
+
+.tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 0.3rem;
+    border-radius: 9999px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.tab-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.tab-btn.active {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.tab-btn.active .tab-count {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.tab-btn.active .tab-label {
+    color: #1e3a8a;
+}
+
+.loan-card-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.loan-card-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}

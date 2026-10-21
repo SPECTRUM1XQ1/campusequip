@@ -2,9 +2,33 @@
 define('APP_INIT', true);
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../includes/auth_check.php';
+require_once __DIR__ . '/../../config/Database.php';
+require_once __DIR__ . '/../../src/Equipment.php';
+require_once __DIR__ . '/../../src/Reservation.php';
+require_once __DIR__ . '/../../src/Fine.php';
+require_once __DIR__ . '/../../src/Dashboard.php';
+require_once __DIR__ . '/../../includes/helpers/pickup-helpers.php';
 requireRole('borrower');
 
 $pageTitle = 'Home Overview';
+$pageStyles = ['shared/borrower', 'shared/dashboard', 'pages/borrower-dashboard'];
+$userId = (int) $_SESSION['user_id'];
+
+// Cancel approved reservations whose pick-up window has ended before we list anything.
+(new Reservation())->expireLapsedPickups();
+
+// Every list and number on this page comes from Dashboard (no SQL in the page).
+[
+    'myPending'     => $myPending,     'myApproved' => $myApproved,   'myCheckouts' => $myCheckouts,
+    'accruing'      => $accruing,      'accruingTotal' => $accruingTotal,
+    'unpaidTotal'   => $unpaidTotal,   'unpaidCount' => $unpaidCount,
+    'paidTotal'     => $paidTotal,     'paidCount' => $paidCount,     'owedTotal' => $owedTotal,
+] = (new Dashboard())->borrowerSummary($userId);
+$peso = fn(float $n) => '&#8369;' . number_format($n, 2);
+
+// 5. Quick Available catalog items
+$catalogList = (new Equipment())->listCatalog();
+$popularCatalog = array_slice($catalogList, 0, 5);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,165 +36,178 @@ $pageTitle = 'Home Overview';
     <?php include __DIR__ . '/../../includes/html-head.php'; ?>
 </head>
 <body>
-
     <div class="dashboard-layout">
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        <?php include __DIR__ . '/../../includes/sidebar.php'; ?>
+        <?php include __DIR__ . '/../../includes/navigation/sidebar-admin.php'; ?>
 
         <main class="main-content">
-            <?php include __DIR__ . '/../../includes/topbar.php'; ?>
+            <?php include __DIR__ . '/../../includes/navigation/topbar.php'; ?>
 
-            <!--
-                TEMPORARY DATA BELOW.
-                Everything in this dashboard-grid is placeholder markup until
-                Reservation.php / Equipment.php are built. Swap each block for
-                a real query against reservations / checkouts / wishlist_items
-                for $_SESSION['user_id'] when that's ready.
-            -->
             <div class="dashboard-grid">
-
                 <div class="left-column">
-
+                    <!-- Request Pending -->
                     <div class="section-header">
-                        <h3 class="section-title">Request Pending</h3>
-                        <span class="section-subtitle">Awaiting staff approval</span>
+                        <h3 class="section-title">Pending Requests</h3>
+                        <span class="section-subtitle">Awaiting staff sign-off</span>
                     </div>
 
-                    <div class="pending-grid mb-6" style="margin-bottom: 1.5rem;">
-                        <div class="item-card bg-white">
-                            <h5>Science Book (Biology)</h5>
-                            <p>Duration: Sept 12 - Sept 15, 2026</p>
-                            <div class="card-actions">
-                                <span class="badge-warning">Pending Request</span>
-                                <button class="btn btn-sm btn-outline-danger">Cancel</button>
+                    <div class="pending-grid borrower-dashboard-s1">
+                        <?php if (empty($myPending)): ?>
+                            <div class="item-card bg-white text-muted borrower-dashboard-s2">
+                                No pending equipment requests.
                             </div>
-                        </div>
-                        <div class="item-card bg-white">
-                            <h5>Science Book (Biology)</h5>
-                            <p>Duration: Sept 12 - Sept 15, 2026</p>
-                            <div class="card-actions">
-                                <span class="badge-warning">Pending Request</span>
-                                <button class="btn btn-sm btn-outline-danger">Cancel</button>
-                            </div>
-                        </div>
+                        <?php else: ?>
+                            <?php foreach ($myPending as $pend): ?>
+                                <div class="item-card bg-white" id="borrower-req-<?= (int)$pend['reservation_id'] ?>">
+                                    <h5><?= htmlspecialchars($pend['model_name']) ?></h5>
+                                    <p>Pick-up window (once approved):<br><?= pickupWindowFor($pend)['text'] ?></p>
+                                    <div class="card-actions">
+                                        <span class="badge-warning">Pending Review</span>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" data-cancel-reservation="<?= (int)$pend['reservation_id'] ?>"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Cancel</span></button>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
 
+                    <!-- Fines & penalties summary -->
                     <div class="section-header">
-                        <h3 class="section-title">Approved Requests (Ready to Pick Up)</h3>
+                        <h3 class="section-title">Penalties &amp; Fines</h3>
+                        <a href="<?= APP_BASE ?>/public/borrower/fines.php" class="section-link">View details</a>
                     </div>
-
-                    <div class="item-card bg-white"
-                        style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                        <div>
-                            <h5>DELL XPS 15 LAPTOP (SN-1002)</h5>
-                            <p style="margin-bottom: 0;">Approve Date: Sept 12, 2026 • Duration: 3 Days</p>
+                    <div class="fines-board <?= $owedTotal > 0 ? 'fines-board--owing' : 'fines-board--clear' ?>">
+                        <div class="fines-board-main">
+                            <span class="fines-board-icon"><i class="ph <?= $owedTotal > 0 ? 'ph-warning-circle' : 'ph-check-circle' ?>"></i></span>
+                            <div class="fines-board-owed">
+                                <span class="fines-board-label">You owe right now</span>
+                                <strong class="fines-board-amount"><?= $peso($owedTotal) ?></strong>
+                                <span class="fines-board-sub">Growing fines + charged &amp; unpaid</span>
+                            </div>
+                            <?php if ($accruingTotal > 0): ?>
+                                <span class="pill pill--danger">Overdue</span>
+                            <?php elseif ($unpaidTotal > 0): ?>
+                                <span class="pill pill--warning">Unpaid</span>
+                            <?php else: ?>
+                                <span class="pill pill--success">All clear</span>
+                            <?php endif; ?>
                         </div>
-                        <button class="btn btn-primary">Pick Up Item</button>
+
+                        <div class="fines-board-stats">
+                            <div class="fines-board-stat">
+                                <span class="fines-board-stat-label">Growing daily</span>
+                                <strong class="<?= $accruingTotal > 0 ? 'is-danger' : '' ?>"><?= $peso($accruingTotal) ?></strong>
+                                <span class="fines-board-stat-note">Running late fines</span>
+                            </div>
+                            <div class="fines-board-stat">
+                                <span class="fines-board-stat-label">Overdue items</span>
+                                <strong class="<?= count($accruing) > 0 ? 'is-danger' : '' ?>"><?= count($accruing) ?></strong>
+                                <span class="fines-board-stat-note">Not yet returned</span>
+                            </div>
+                            <div class="fines-board-stat">
+                                <span class="fines-board-stat-label">Charged &amp; unpaid</span>
+                                <strong class="<?= $unpaidTotal > 0 ? 'is-danger' : '' ?>"><?= $peso($unpaidTotal) ?></strong>
+                                <span class="fines-board-stat-note"><?= $unpaidCount ?> fine<?= $unpaidCount === 1 ? '' : 's' ?></span>
+                            </div>
+                            <div class="fines-board-stat">
+                                <span class="fines-board-stat-label">Paid so far</span>
+                                <strong class="is-success"><?= $peso($paidTotal) ?></strong>
+                                <span class="fines-board-stat-note"><?= $paidCount ?> fine<?= $paidCount === 1 ? '' : 's' ?></span>
+                            </div>
+                        </div>
+
+                        <?php if ($accruingTotal > 0): ?>
+                            <div class="notice notice--danger fines-board-notice">
+                                <i class="ph ph-info"></i>
+                                <span>Late fines grow every day until you return the item. The final amount is charged when you return it at the Lab Desk.</span>
+                            </div>
+                        <?php elseif ($unpaidTotal > 0): ?>
+                            <div class="notice notice--info fines-board-notice">
+                                <i class="ph ph-info"></i>
+                                <span>Please settle your unpaid fines at the Lab Desk.</span>
+                            </div>
+                        <?php else: ?>
+                            <p class="fines-board-notice fines-clear-note">No fines. Return items on time to keep it that way.</p>
+                        <?php endif; ?>
                     </div>
 
+                    <!-- Approved Pickups -->
                     <div class="section-header">
-                        <h3 class="section-title">My Wishlist</h3>
+                        <h3 class="section-title">Approved Requests (Ready at Lab Desk)</h3>
                     </div>
 
-                    <div style="display: flex; flex-direction: column; gap: 1rem;">
-                        <div class="item-card bg-white"
-                            style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                            <div>
-                                <h5>Advanced Research Chemistry Kit #1</h5>
-                                <p style="margin-bottom: 0;">Max Duration: 7 Days</p>
-                            </div>
-                            <div class="card-actions card-actions-right">
-                                <button class="btn btn-sm btn-outline">Remove</button>
-                                <button class="btn btn-sm btn-primary">Reserve</button>
-                            </div>
+                    <?php if (empty($myApproved)): ?>
+                        <div class="item-card bg-white text-muted borrower-dashboard-s3">
+                            No items ready for pickup.
                         </div>
-
-                        <div class="item-card bg-white"
-                            style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                            <div>
-                                <h5>Advanced Research Chemistry Kit #2</h5>
-                                <p style="margin-bottom: 0;">Max Duration: 7 Days</p>
+                    <?php else: ?>
+                        <div class="loan-grid">
+                        <?php foreach ($myApproved as $appr): ?>
+                            <div class="item-card bg-white borrower-dashboard-s4">
+                                <div>
+                                    <h5><?= htmlspecialchars($appr['model_name']) ?> (SN: <?= htmlspecialchars($appr['serial_number']) ?>)</h5>
+                                    <p class="borrower-dashboard-s5">Approved: <?= date('M d, Y', strtotime($appr['reviewed_at'])) ?> &bull; Present your Student ID at the desk</p>
+                                    <?php $apprWin = pickupWindowFor($appr); ?>
+                                    <p class="borrower-dashboard-s5">Pick-up window: <strong><?= $apprWin['text'] ?></strong></p>
+                                    <?= pickupCountdownTag($apprWin, '', 'Pick-up window ended — this reservation is cancelled') ?>
+                                </div>
+                                <span class="status-badge approved">Ready for Pickup</span>
                             </div>
-                            <div class="card-actions card-actions-right">
-                                <button class="btn btn-sm btn-outline">Remove</button>
-                                <button class="btn btn-sm btn-primary">Reserve</button>
-                            </div>
+                        <?php endforeach; ?>
                         </div>
-
-                        <div class="item-card bg-white"
-                            style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                            <div>
-                                <h5>Advanced Research Chemistry Kit #3</h5>
-                                <p style="margin-bottom: 0;">Max Duration: 7 Days</p>
-                            </div>
-                            <div class="card-actions card-actions-right">
-                                <button class="btn btn-sm btn-outline">Remove</button>
-                                <button class="btn btn-sm btn-primary">Reserve</button>
-                            </div>
-                        </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="right-column">
+                    <div class="section-header">
+                        <h3 class="section-title">Currently Possessed</h3>
+                    </div>
+
+                    <?php if (empty($myCheckouts)): ?>
+                        <div class="item-card bg-white text-muted borrower-dashboard-s3">
+                            You currently have no checked-out equipment.
+                        </div>
+                    <?php else: ?>
+                        <?php foreach ($myCheckouts as $loan): ?>
+                            <div class="item-card bg-white loan-mini">
+                                <h5><?= htmlspecialchars($loan['model_name']) ?> (SN: <?= htmlspecialchars($loan['serial_number']) ?>)</h5>
+                                <p class="borrower-dashboard-s5">Checked Out: <?= date('M d, Y', strtotime($loan['checked_out_at'])) ?></p>
+                                <p class="borrower-dashboard-s6">Due: <?= date('M d, Y h:i A', strtotime($loan['due_at'])) ?></p>
+                                <?php $rate = (float) $loan['late_fine_rate']; $late = (int) $loan['days_late']; ?>
+                                <?php if ((int) $loan['is_overdue'] === 1): ?>
+                                    <p class="loan-fine loan-fine--danger">
+                                        OVERDUE &mdash; <?= $late ?> day<?= $late === 1 ? '' : 's' ?> late<?= $rate > 0 ? ' &bull; Fine so far: ' . $peso($rate * $late) . ' (' . $late . ' &times; ' . $peso($rate) . '/day), still growing' : '' ?>
+                                    </p>
+                                <?php elseif ($rate > 0): ?>
+                                    <p class="loan-fine">Late fine if returned after the due date: <?= $peso($rate) ?>/day</p>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
 
                     <div class="section-header">
-                        <h3 class="section-title">Available Items</h3>
-                        <a href="/campusequip/public/borrower/catalog.php" class="section-link">View All</a>
+                        <h3 class="section-title">Available Equipment</h3>
+                        <a href="<?= APP_BASE ?>/public/borrower/catalog.php" class="section-link">Browse Catalog</a>
                     </div>
 
                     <div class="card-container">
-                        <div class="list-item">
-                            <div class="list-info">
-                                <h5>Sony Alpha Camera 4K</h5>
-                                <p class="text-success">16 Available</p>
+                        <?php foreach ($popularCatalog as $cat): ?>
+                            <div class="list-item">
+                                <div class="list-info">
+                                    <h5><?= htmlspecialchars($cat['model_name']) ?></h5>
+                                    <p class="text-success"><?= (int)($cat['available_units'] ?? 0) ?> Available</p>
+                                </div>
+                                <a href="<?= APP_BASE ?>/public/borrower/catalog.php" class="btn btn-sm btn-outline borrower-dashboard-s7"><i class="ph ph-eye" aria-hidden="true"></i><span class="btn-text">View</span></a>
                             </div>
-                            <button class="btn btn-sm btn-outline">View</button>
-                        </div>
-                        <div class="list-item">
-                            <div class="list-info">
-                                <h5>Dell XPS 15 Workstation</h5>
-                                <p class="text-success">4 Available</p>
-                            </div>
-                            <button class="btn btn-sm btn-outline">View</button>
-                        </div>
-                        <div class="list-item">
-                            <div class="list-info">
-                                <h5>Arduino Uno Basic Kit</h5>
-                                <p class="text-success">25 Available</p>
-                            </div>
-                            <button class="btn btn-sm btn-outline">View</button>
-                        </div>
-                        <div class="list-item">
-                            <div class="list-info">
-                                <h5>Asus Vivobook Laptop</h5>
-                                <p class="text-success">9 Available</p>
-                            </div>
-                            <button class="btn btn-sm btn-outline">View</button>
-                        </div>
-                        <div class="list-item">
-                            <div class="list-info">
-                                <h5>Biology Lab Pipette Set</h5>
-                                <p class="text-success">30 Available</p>
-                            </div>
-                            <button class="btn btn-sm btn-outline">View</button>
-                        </div>
+                        <?php endforeach; ?>
                     </div>
-
-                    <div class="section-header" style="margin-top: 2rem;">
-                        <h3 class="section-title">Picked Up Item</h3>
-                    </div>
-
-                    <div class="item-card bg-white">
-                        <h5>Science Book (Physics)</h5>
-                        <p style="margin-bottom: 0.25rem;">Checkout: Sept 14, 2026</p>
-                        <p style="margin-bottom: 0;">Return due: Sept 21, 2026</p>
-                    </div>
-
                 </div>
             </div>
         </main>
     </div>
 
-    <?php include __DIR__ . '/../../includes/footer.php'; ?>
+    <?php include __DIR__ . '/../../includes/navigation/footer.php'; ?>
+    <script src="<?= APP_BASE ?>/public/assets/js/countdown.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/countdown.js') ?: 1 ?>"></script>
+
+    <script src="<?= APP_BASE ?>/public/assets/js/pages/borrower-dashboard.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/pages/borrower-dashboard.js') ?: 1 ?>"></script>
 </body>
 </html>

@@ -1,0 +1,318 @@
+/* CampusEquip: modal / pop-up window styles (overlay, box, header, body, footer, form fields).
+   Loaded on every page by includes/html-head.php, after base.css.
+   Markup lives in includes/modal/, behaviour in assets/js/dashboard-actions.js (openModal / closeModal). */
+
+/* ---- MODALS (Approve / Decline) ---- */
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.55);
+}
+
+.modal-overlay.open {
+    display: flex;
+}
+
+.modal {
+    width: 100%;
+    max-width: 34rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    background: var(--card-bg);
+    border-radius: 1rem;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.25);
+    outline: none;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem 1.5rem 1.1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-title {
+    font-size: 1.375rem;
+    font-weight: 700;
+}
+
+.modal-subtitle {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    line-height: 0;
+    color: #475569;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
+.modal-close:hover {
+    color: var(--text-main);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-summary {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.7rem 2rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 1.1rem 1.25rem;
+    background: #f1f5f9;
+    border-radius: 0.75rem;
+}
+
+.modal-summary dt {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.modal-summary dd {
+    font-size: 0.875rem;
+    color: var(--text-main);
+}
+
+.modal-field {
+    margin-bottom: 1.25rem;
+}
+
+.modal-field:last-child {
+    margin-bottom: 0;
+}
+
+.modal-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #334155;
+}
+
+.modal textarea.input-field {
+    min-height: 6rem;
+    resize: vertical;
+}
+
+.option-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    font-size: 0.9375rem;
+    cursor: pointer;
+}
+
+.option-row input[type="radio"],
+.option-row input[type="checkbox"] {
+    accent-color: var(--primary-brand);
+}
+
+.option-row:has(input:disabled) {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.option-row:has(input:checked) {
+    border-color: var(--primary-brand);
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding: 1.1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+/* ---- CHECKOUT & RETURN MODAL EXTRAS ---- */
+
+.checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+    font-size: 0.875rem;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.checkbox-row input[type="checkbox"] {
+    accent-color: var(--primary-brand);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.modal-summary dd {
+    line-height: 1.4;
+    /* Improves readability for multi-line dates */
+}
+
+.modal--confirm {
+    max-width: 28rem;
+}
+
+/* ---- Former inline style="" attributes, moved out of the PHP markup ---- */
+.m-admin-users-edit-s1 {
+    max-width: 32rem;
+}
+.m-borrower-catalog-reserve-s1 {
+    max-width: 32rem;
+}
+.m-borrower-catalog-reserve-s2 {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+}
+.m-borrower-catalog-reserve-s3 {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+.m-borrower-catalog-reserve-s4 {
+    font-size: 0.85rem;
+    color: #64748b;
+}
+.m-borrower-catalog-reserve-s5 {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.m-borrower-catalog-reserve-s6 {
+    display: flex;
+    justify-content: space-between;
+}
+.m-borrower-catalog-reserve-s7 {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+}
+.m-borrower-catalog-reserve-s8 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+.m-borrower-catalog-reserve-s9 {
+    margin-bottom: 1.25rem;
+}
+.m-borrower-requests-cancel-s1 {
+    font-size: 1.25rem;
+}
+.m-borrower-wishlist-remove-s1 {
+    font-size: 1.25rem;
+}
+.m-borrower-wishlist-reserve-s1 {
+    max-width: 32rem;
+}
+.m-borrower-wishlist-reserve-s2 {
+    display: block;
+}
+.m-borrower-wishlist-reserve-s3 {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+.m-borrower-wishlist-reserve-s4 {
+    display: flex;
+    justify-content: space-between;
+}
+.m-borrower-wishlist-reserve-s5 {
+    margin-top: 1.25rem;
+}
+.m-manage-catalog-accessories-s1 {
+    margin-bottom: 0.75rem;
+}
+.m-manage-catalog-accessories-s2 {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+.m-manage-catalog-category-s1 {
+    max-width: 28rem;
+}
+.m-manage-catalog-category-s2 {
+    font-size: 1.25rem;
+}
+.m-manage-catalog-category-s3 {
+    margin-bottom: 0.5rem;
+}
+.m-manage-catalog-category-s4 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.m-manage-fines-charge-s1 {
+    max-width: 32rem;
+}
+.m-manage-fines-charge-s2 {
+    font-size: 1.25rem;
+}
+.m-manage-fines-pay-s1 {
+    font-size: 1.25rem;
+}
+.m-manage-fines-pay-s2 {
+    color: #16a34a;
+}
+.m-manage-fines-waive-s1 {
+    font-size: 1.25rem;
+}
+.m-manage-fines-waive-s2 {
+    margin-top: 1.25rem;
+}
+.m-manage-serialized-add-unit-s1 {
+    max-width: 28rem;
+}
+.m-manage-serialized-edit-unit-s1 {
+    max-width: 28rem;
+}
+.m-shared-handover-s1 {
+    font-weight: 700;
+    color: var(--primary-brand);
+}
+.m-shared-logout-s1 {
+    max-width: 28rem;
+}
+.m-shared-logout-s2 {
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+.m-shared-logout-s3 {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.m-shared-notification-s1 {
+    max-width: 26rem;
+}
+.m-shared-notification-s2 {
+    font-size: 1.1rem;
+}
+.m-shared-notification-s3 {
+    margin-top: 0.25rem;
+}
+.m-shared-notification-s4 {
+    font-size: 1.25rem;
+}

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../../src/TransactionLog.php';
 requireRole(['admin', 'staff']);
 
 $pageTitle = 'Transaction Log';
+$pageStyles = ['pages/manage-logs'];
 $logModel = new TransactionLog();
 $logs = $logModel->listAll();
 
@@ -25,7 +26,7 @@ $badgeStyles = [
 // Which filter pill each action belongs to.
 $logTags = [
     'requested'     => 'requests',
-    'cancelled'     => 'requests',
+    'cancelled'     => 'cancel',
     'approved'      => 'approved',
     'declined'      => 'declined',
     'handover'      => 'handover',
@@ -44,10 +45,10 @@ $logTags = [
 <body>
     <div class="dashboard-layout">
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        <?php include __DIR__ . '/../../includes/sidebar-admin.php'; ?>
+        <?php include __DIR__ . '/../../includes/navigation/sidebar-admin.php'; ?>
 
         <main class="main-content">
-            <?php include __DIR__ . '/../../includes/topbar.php'; ?>
+            <?php include __DIR__ . '/../../includes/navigation/topbar.php'; ?>
 
             <section class="requests-page">
                 <p class="page-note">Historical immutable audit trail of all transactions and equipment handovers</p>
@@ -64,6 +65,7 @@ $logTags = [
                         <button type="button" class="filter-pill" data-filter="requests">Requests</button>
                         <button type="button" class="filter-pill" data-filter="approved">Approved</button>
                         <button type="button" class="filter-pill" data-filter="declined">Declined</button>
+                        <button type="button" class="filter-pill" data-filter="cancel">Cancel</button>
                         <button type="button" class="filter-pill" data-filter="handover">Handovers</button>
                         <button type="button" class="filter-pill" data-filter="returns">Returns</button>
                         <button type="button" class="filter-pill" data-filter="fines">Fines</button>
@@ -88,16 +90,16 @@ $logTags = [
                         <tbody id="logs-tbody">
                             <?php if (empty($logs)): ?>
                                 <tr>
-                                    <td colspan="9" style="text-align:center; padding: 2.5rem;" class="text-muted">
+                                    <td colspan="9" class="text-muted manage-logs-s1">
                                         No transaction logs recorded.
                                     </td>
                                 </tr>
                             <?php else: ?>
                                 <?php foreach ($logs as $log): ?>
                                     <tr data-tags="<?= $logTags[$log['action_type']] ?? '' ?>">
-                                        <td class="cell-strong">LOG-<?= (int)$log['log_id'] ?></td>
+                                        <td class="cell-strong">LOG - <?= (int)$log['log_id'] ?></td>
                                         <td><?= date('Y-m-d H:i:s', strtotime($log['action_timestamp'])) ?></td>
-                                        <td class="cell-id"><?= $log['reservation_id'] ? 'REQ-' . (int)$log['reservation_id'] : '—' ?></td>
+                                        <td class="cell-id"><?= $log['reservation_id'] ? 'REQ - ' . (int)$log['reservation_id'] : '—' ?></td>
                                         <td><?= htmlspecialchars($log['serial_snapshot'] ?: '—') ?></td>
                                         <td>
                                             <span class="status-badge <?= $badgeStyles[$log['action_type']] ?? 'pending' ?>">
@@ -106,13 +108,13 @@ $logTags = [
                                         </td>
                                         <td class="cell-upper"><?= htmlspecialchars($log['borrower_name'] ?: '—') ?></td>
                                         <td><?= htmlspecialchars($log['actor_name']) ?></td>
-                                        <td class="cell-strong"><?= $log['fine_amount'] !== null ? '&#8369;' . number_format((float)$log['fine_amount'], 2) : '—' ?></td>
+                                          <td class="cell-strong"><?= $log['fine_amount'] !== null ? '&#8369;' . number_format((float)$log['fine_amount'], 2) : '—' ?></td>
                                         <td><?= htmlspecialchars($log['remarks'] ?: '—') ?></td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php endif; ?>
                             <tr id="filter-empty-row" style="display:none;">
-                                <td colspan="9" style="text-align:center; padding: 2.5rem;" class="text-muted">
+                                <td colspan="9" class="text-muted manage-logs-s1">
                                     No log entries match your search or filter.
                                 </td>
                             </tr>
@@ -124,7 +126,7 @@ $logTags = [
         </main>
     </div>
 
-    <?php include __DIR__ . '/../../includes/footer.php'; ?>
+    <?php include __DIR__ . '/../../includes/navigation/footer.php'; ?>
     <script src="<?= APP_BASE ?>/public/assets/js/filters.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/filters.js') ?: 1 ?>"></script>
 </body>
 </html>

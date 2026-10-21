@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../src/Export.php';
 requireRole('admin');
 
 $pageTitle = 'Export Records';
+$pageStyles = ['pages/admin-export'];
 
 $table = $_GET['table'] ?? 'reservations';
 if (!isset(Export::TABLES[$table])) {
@@ -66,10 +67,10 @@ $query = array_filter(['table' => $table, 'from' => $from, 'to' => $to]);
 
     <div class="dashboard-layout">
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        <?php include __DIR__ . '/../../includes/sidebar-admin.php'; ?>
+        <?php include __DIR__ . '/../../includes/navigation/sidebar-admin.php'; ?>
 
         <main class="main-content">
-            <?php include __DIR__ . '/../../includes/topbar.php'; ?>
+            <?php include __DIR__ . '/../../includes/navigation/topbar.php'; ?>
 
             <section class="requests-page">
                 <p class="page-note no-print">1. Choose a table &nbsp;&rarr;&nbsp; 2. Look it over &nbsp;&rarr;&nbsp; 3. Print it or download it as CSV (opens in Excel / Google Sheets).</p>
@@ -85,7 +86,7 @@ $query = array_filter(['table' => $table, 'from' => $from, 'to' => $to]);
                     <div class="filter-group" role="group" aria-label="Choose a table">
                         <span class="filter-label">Table:</span>
                         <?php foreach (Export::TABLES as $key => $label): ?>
-                            <a class="filter-pill<?= $key === $table ? ' active' : '' ?>" style="text-decoration: none;"
+                            <a class="filter-pill<?= $key === $table ? ' active' : '' ?> admin-export-s1"
                                href="?<?= $h(http_build_query(array_filter(['table' => $key, 'from' => $from, 'to' => $to]))) ?>"><?= $h($label) ?></a>
                         <?php endforeach; ?>
                     </div>
@@ -93,7 +94,7 @@ $query = array_filter(['table' => $table, 'from' => $from, 'to' => $to]);
 
                 <!-- Date range + actions -->
                 <div class="requests-toolbar no-print">
-                    <form method="get" class="export-range" style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
+                    <form method="get" class="export-range admin-export-s2">
                         <input type="hidden" name="table" value="<?= $h($table) ?>">
                         <div>
                             <label class="modal-label" for="from">From</label>
@@ -105,13 +106,13 @@ $query = array_filter(['table' => $table, 'from' => $from, 'to' => $to]);
                         </div>
                         <button type="submit" class="btn btn-outline btn-sm btn-rect"><i class="ph ph-funnel" aria-hidden="true"></i><span class="btn-text">Apply</span></button>
                         <?php if ($from || $to): ?>
-                            <a class="btn btn-outline btn-sm btn-rect" style="text-decoration: none;" href="?table=<?= $h($table) ?>"><i class="ph ph-eraser" aria-hidden="true"></i><span class="btn-text">Clear</span></a>
+                            <a class="btn btn-outline btn-sm btn-rect admin-export-s1" href="?table=<?= $h($table) ?>"><i class="ph ph-eraser" aria-hidden="true"></i><span class="btn-text">Clear</span></a>
                         <?php endif; ?>
                     </form>
 
-                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                        <button type="button" class="btn btn-outline btn-sm btn-rect" onclick="window.print()"><i class="ph ph-printer" aria-hidden="true"></i><span class="btn-text">Print</span></button>
-                        <a class="btn btn-primary btn-sm btn-rect" style="text-decoration: none;"
+                    <div class="admin-export-s3">
+                        <button type="button" class="btn btn-outline btn-sm btn-rect" data-print><i class="ph ph-printer" aria-hidden="true"></i><span class="btn-text">Print</span></button>
+                        <a class="btn btn-primary btn-sm btn-rect admin-export-s1"
                            href="?<?= $h(http_build_query($query + ['format' => 'csv'])) ?>"><i class="ph ph-download-simple" aria-hidden="true"></i><span class="btn-text">Download CSV</span></a>
                     </div>
                 </div>
@@ -131,7 +132,7 @@ $query = array_filter(['table' => $table, 'from' => $from, 'to' => $to]);
                         <tbody>
                             <?php if (empty($data['rows'])): ?>
                                 <tr>
-                                    <td colspan="<?= count($data['headers']) ?>" style="text-align:center; padding: 2.5rem;" class="text-muted">
+                                    <td colspan="<?= count($data['headers']) ?>" class="text-muted admin-export-s4">
                                         No records found<?= ($from || $to) ? ' for this date range' : '' ?>.
                                     </td>
                                 </tr>
@@ -149,7 +150,7 @@ $query = array_filter(['table' => $table, 'from' => $from, 'to' => $to]);
         </main>
     </div>
 
-    <?php include __DIR__ . '/../../includes/footer.php'; ?>
+    <?php include __DIR__ . '/../../includes/navigation/footer.php'; ?>
 </body>
 
 </html>

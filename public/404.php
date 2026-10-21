@@ -2,18 +2,16 @@
 define('APP_INIT', true);
 require_once __DIR__ . '/../config/config.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+app_session_start();
 
 http_response_code(404);
 
 $loggedIn = isset($_SESSION['user_id']);
 $homeLink = $loggedIn
     ? (in_array($_SESSION['role'] ?? '', ['staff', 'admin'], true)
-        ? APP_URL . '/staff/dashboard.php'
+        ? APP_URL . '/manage/dashboard.php'
         : APP_URL . '/borrower/dashboard.php')
-    : APP_URL . '/login.php';
+    : APP_URL . '/login/login.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -22,17 +20,21 @@ $homeLink = $loggedIn
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Page Not Found — CampusEquip</title>
-    <link rel="stylesheet" href="/campusequip/public/assets/css/style.css">
+    <meta name="app-base" content="<?= htmlspecialchars(APP_BASE) ?>">
+    <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
+    <script src="<?= APP_BASE ?>/public/assets/js/app-core.js?v=<?= @filemtime(__DIR__ . '/assets/js/app-core.js') ?: 1 ?>"></script>
+    <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/base.css?v=<?= @filemtime(__DIR__ . '/assets/css/base.css') ?: 1 ?>">
+    <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/pages/error-404.css?v=<?= @filemtime(__DIR__ . '/assets/css/pages/error-404.css') ?: 1 ?>">
 </head>
 
 <body>
     <div
-        style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; width:100%; text-align:center; padding:2rem;">
-        <div style="font-size:4rem; font-weight:800; color:var(--primary-brand); line-height:1;">404</div>
-        <h2 style="margin:0.75rem 0 0.5rem;">Page not found</h2>
-        <p class="text-muted" style="margin-bottom:1.75rem;">This page doesn't exist yet, or the link is incorrect.</p>
-        <a href="<?= htmlspecialchars($homeLink) ?>" class="btn btn-primary"
-            style="text-decoration:none; display:inline-block; padding:0.75rem 1.5rem;">
+        class="e404-s1">
+        <div class="e404-s2">404</div>
+        <h2 class="e404-s3">Page not found</h2>
+        <p class="text-muted e404-s4">This page doesn't exist yet, or the link is incorrect.</p>
+        <a href="<?= htmlspecialchars($homeLink) ?>" class="btn btn-primary e404-s5"
+           >
             <?= $loggedIn ? 'Back to Dashboard' : 'Back to Sign In' ?>
         </a>
     </div>

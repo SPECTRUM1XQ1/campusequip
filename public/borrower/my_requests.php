@@ -2,9 +2,56 @@
 define('APP_INIT', true);
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../includes/auth_check.php';
-requireRole(['admin', 'staff']);
+require_once __DIR__ . '/../../src/Reservation.php';
+require_once __DIR__ . '/../../includes/helpers/pickup-helpers.php';
+requireRole(['borrower']);
 
 $pageTitle = 'Borrowing & Requests';
+$pageStyles = ['shared/borrower', 'pages/borrower-my-requests'];
+
+$reservationModel = new Reservation();
+$reservationModel->expireLapsedPickups(); // cancel approved reservations whose pick-up window has ended
+$all = $reservationModel->listForBorrowerDetailed((int) $_SESSION['user_id']);
+
+// Split into the three tabs.
+$borrowed = [];
+$pending  = [];
+$history  = [];
+foreach ($all as $row) {
+    switch ($row['status']) {
+        case 'checked_out':
+            $borrowed[] = $row;
+            break;
+        case 'pending':
+        case 'approved':
+            $pending[] = $row;
+            break;
+        default: // declined, cancelled, returned
+            $history[] = $row;
+    }
+}
+
+function fmtDateTime(?string $value): string
+{
+    return $value ? date('M d, Y g:i A', strtotime($value)) : '—';
+}
+
+// $variant: success | danger | warning | amber | info | neutral (see .pill in assets/css/shared/borrower.css)
+function pill(string $text, string $variant): string
+{
+    return '<span class="pill pill--' . $variant . '">' . htmlspecialchars($text) . '</span>';
+}
+
+// One "Label: value" line inside a card.
+function detailLine(string $label, string $value): string
+{
+    return '<div><span class="label">' . htmlspecialchars($label) . ':</span> ' . htmlspecialchars($value) . '</div>';
+}
+
+function emptyState(string $icon, string $message): string
+{
+    return '<div class="empty-state"><i class="ph ' . $icon . '"></i><p>' . htmlspecialchars($message) . '</p></div>';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -17,360 +64,200 @@ $pageTitle = 'Borrowing & Requests';
 
     <div class="dashboard-layout">
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        <?php include __DIR__ . '/../../includes/sidebar.php'; ?>
+        <?php include __DIR__ . '/../../includes/navigation/sidebar-admin.php'; ?>
 
         <main class="main-content">
-            <?php include __DIR__ . '/../../includes/topbar.php'; ?>
+            <?php include __DIR__ . '/../../includes/navigation/topbar.php'; ?>
 
-            <div style="padding: 1.5rem 2rem;">
+            <div class="page-body">
 
-                <!-- Interactive Tabs -->
-                <div style="display: flex; gap: 1rem; margin-bottom: 2rem;">
-                    <button id="tab-borrowed" onclick="switchTab('borrowed')"
-                        style="display: flex; align-items: center; gap: 0.75rem; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 0.75rem 1.25rem; cursor: pointer; transition: 0.2s;">
-                        <span
-                            style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #2563eb; color: white; font-weight: 700; font-size: 0.85rem;">1</span>
-                        <span style="font-weight: 600; font-size: 0.9rem; color: #1e3a8a;">Currently Borrowed</span>
+                <!-- Tabs (counts come from the database) -->
+                <div class="tabs" role="tablist">
+                    <button type="button" class="tab-btn active" id="tab-borrowed" role="tab" data-tab="borrowed">
+                        <span class="tab-count"><?= count($borrowed) ?></span>
+                        <span class="tab-label">Currently Borrowed</span>
                     </button>
-
-                    <button id="tab-pending" onclick="switchTab('pending')"
-                        style="display: flex; align-items: center; gap: 0.75rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1.25rem; cursor: pointer; transition: 0.2s;">
-                        <span
-                            style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #eff6ff; color: #2563eb; font-weight: 700; font-size: 0.85rem;">2</span>
-                        <span style="font-weight: 600; font-size: 0.9rem; color: #334155;">Pending Request</span>
+                    <button type="button" class="tab-btn" id="tab-pending" role="tab" data-tab="pending">
+                        <span class="tab-count"><?= count($pending) ?></span>
+                        <span class="tab-label">Pending Request</span>
                     </button>
-
-                    <button id="tab-history" onclick="switchTab('history')"
-                        style="display: flex; align-items: center; gap: 0.75rem; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 0.75rem 1.25rem; cursor: pointer; transition: 0.2s;">
-                        <span
-                            style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #eff6ff; color: #2563eb; font-weight: 700; font-size: 0.85rem;">12</span>
-                        <span style="font-weight: 600; font-size: 0.9rem; color: #334155;">History</span>
+                    <button type="button" class="tab-btn" id="tab-history" role="tab" data-tab="history">
+                        <span class="tab-count"><?= count($history) ?></span>
+                        <span class="tab-label">History</span>
                     </button>
                 </div>
 
-                <!-- Two-Column Grid -->
-                <!-- Tab Content Sections -->
-                <div id="content-borrowed" style="display: block;">
-                    <h4
-                        style="font-size: 0.85rem; font-weight: 700; color: #334155; letter-spacing: 0.05em; margin-bottom: 1rem; text-transform: uppercase;">
-                        Currently in Your Possession</h4>
+                <!-- CURRENTLY BORROWED -->
+                <div id="content-borrowed" data-list data-items="#content-borrowed .item-card" data-page-size="6" data-pager="#borrowed-pager">
+                    <h4 class="section-eyebrow">Currently in Your Possession</h4>
 
-                    <!-- Card 1 -->
-                    <div class="item-card bg-white"
-                        style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: none;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: #0f172a;">Sony Alpha
-                                Camera 4K</h3>
-                            <span
-                                style="background: #dcfce7; color: #16a34a; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 9999px;">Currently
-                                Borrowed</span>
-                        </div>
-                        <div style="font-size: 0.85rem; color: #475569; line-height: 1.6; margin-bottom: 1rem;">
-                            <div><span style="color: #64748b;">Serial Number:</span> SN-CAM-002</div>
-                            <div><span style="color: #64748b;">Request Code:</span> #REQ-2026-002</div>
-                            <div><span style="color: #64748b;">Borrowed Date:</span> Sept 16, 2026 9:00 AM</div>
-                            <div><span style="color: #64748b;">Due Date:</span> Sept 19, 2026 9:00 AM</div>
-                        </div>
-                        <div
-                            style="display: flex; align-items: center; gap: 0.5rem; background: #eff6ff; border: 1px solid #dbeafe; color: #1e40af; padding: 0.6rem 0.85rem; border-radius: 6px; font-size: 0.8rem;">
-                            <i class="ph ph-info" style="font-size: 1rem;"></i>
-                            <span>Present your physical Student ID at the Lab Desk upon return.</span>
-                        </div>
-                    </div>
+                    <?php if (empty($borrowed)): ?>
+                        <?= emptyState('ph-package', 'You are not currently borrowing any equipment.') ?>
+                    <?php endif; ?>
 
-                    <!-- Card 2 -->
-                    <div class="item-card bg-white"
-                        style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: none;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: #0f172a;">Sony Alpha
-                                Camera 4K</h3>
-                            <span
-                                style="background: #dcfce7; color: #16a34a; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 9999px;">Currently
-                                Borrowed</span>
+                    <div class="loan-grid">
+                    <?php foreach ($borrowed as $r):
+                        $overdue = ((int) $r['is_overdue'] === 1);
+                    ?>
+                        <div class="item-card loan-card">
+                            <div class="loan-card-head">
+                                <h3 class="loan-card-title"><?= htmlspecialchars($r['model_name']) ?></h3>
+                                <?= $overdue ? pill('Overdue', 'danger') : pill('Currently Borrowed', 'success') ?>
+                            </div>
+                            <div class="loan-card-body">
+                                <?= detailLine('Serial Number', $r['serial_number'] ?: '—') ?>
+                                <?= detailLine('Request Code', 'REQ-' . (int) $r['reservation_id']) ?>
+                                <?= detailLine('Borrowed Date', fmtDateTime($r['checked_out_at'])) ?>
+                                <?= detailLine('Due Date', fmtDateTime($r['due_at'])) ?>
+                            </div>
+                            <div class="notice <?= $overdue ? 'notice--danger' : 'notice--info' ?>">
+                                <i class="ph ph-info"></i>
+                                <span>
+                                    <?= $overdue
+                                        ? 'This item is past its due date. Please return it to the Lab Desk as soon as possible.'
+                                            . ((float) $r['late_fine_rate'] > 0
+                                                ? ' Late fine so far: ₱' . number_format((float) $r['late_fine_rate'] * (int) $r['days_late'], 2)
+                                                    . ' (' . (int) $r['days_late'] . ' day' . ((int) $r['days_late'] === 1 ? '' : 's') . ' × ₱' . number_format((float) $r['late_fine_rate'], 2) . '/day).'
+                                                : ' Late fines may apply.')
+                                        : 'Present your physical Student ID at the Lab Desk upon return.'
+                                            . ((float) $r['late_fine_rate'] > 0 ? ' Returning after the due date costs ₱' . number_format((float) $r['late_fine_rate'], 2) . ' per day.' : '') ?>
+                                </span>
+                            </div>
                         </div>
-                        <div style="font-size: 0.85rem; color: #475569; line-height: 1.6; margin-bottom: 1rem;">
-                            <div><span style="color: #64748b;">Serial Number:</span> SN-CAM-002</div>
-                            <div><span style="color: #64748b;">Request Code:</span> #REQ-2026-002</div>
-                            <div><span style="color: #64748b;">Borrowed Date:</span> Sept 16, 2026 9:00 AM</div>
-                            <div><span style="color: #64748b;">Due Date:</span> Sept 19, 2026 9:00 AM</div>
-                        </div>
-                        <div
-                            style="display: flex; align-items: center; gap: 0.5rem; background: #eff6ff; border: 1px solid #dbeafe; color: #1e40af; padding: 0.6rem 0.85rem; border-radius: 6px; font-size: 0.8rem;">
-                            <i class="ph ph-info" style="font-size: 1rem;"></i>
-                            <span>Present your physical Student ID at the Lab Desk upon return.</span>
-                        </div>
+                    <?php endforeach; ?>
                     </div>
-
-                    <!-- Card 3 -->
-                    <div class="item-card bg-white"
-                        style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: none;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: #0f172a;">Sony Alpha
-                                Camera 4K</h3>
-                            <span
-                                style="background: #dcfce7; color: #16a34a; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 9999px;">Currently
-                                Borrowed</span>
-                        </div>
-                        <div style="font-size: 0.85rem; color: #475569; line-height: 1.6; margin-bottom: 1rem;">
-                            <div><span style="color: #64748b;">Serial Number:</span> SN-CAM-002</div>
-                            <div><span style="color: #64748b;">Request Code:</span> #REQ-2026-002</div>
-                            <div><span style="color: #64748b;">Borrowed Date:</span> Sept 16, 2026 9:00 AM</div>
-                            <div><span style="color: #64748b;">Due Date:</span> Sept 19, 2026 9:00 AM</div>
-                        </div>
-                        <div
-                            style="display: flex; align-items: center; gap: 0.5rem; background: #eff6ff; border: 1px solid #dbeafe; color: #1e40af; padding: 0.6rem 0.85rem; border-radius: 6px; font-size: 0.8rem;">
-                            <i class="ph ph-info" style="font-size: 1rem;"></i>
-                            <span>Present your physical Student ID at the Lab Desk upon return.</span>
-                        </div>
-                    </div>
+                    <div class="pager" id="borrowed-pager"></div>
                 </div>
 
-                <div id="content-pending" style="display: none;">
-                    <h4
-                        style="font-size: 0.85rem; font-weight: 700; color: #334155; letter-spacing: 0.05em; margin-bottom: 1rem; text-transform: uppercase;">
-                        Awaiting Staff Sign-Off</h4>
+                <!-- PENDING REQUESTS (pending + approved-awaiting-pickup) -->
+                <div id="content-pending" hidden data-list data-items="#content-pending .item-card" data-page-size="6" data-pager="#pending-pager">
+                    <h4 class="section-eyebrow">Awaiting Staff Sign-Off &amp; Pickup</h4>
 
-                    <!-- Card 1 -->
-                    <div class="item-card bg-white"
-                        style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: none;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: #0f172a;">Dell XPS 15
-                                Laptop</h3>
-                            <span
-                                style="background: #fef08a; color: #854d0e; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 9999px;">Pending
-                                Request</span>
-                        </div>
-                        <div style="font-size: 0.85rem; color: #475569; line-height: 1.6; margin-bottom: 1.25rem;">
-                            <div><span style="color: #64748b;">Serial Number:</span> SN-CAM-002</div>
-                            <div><span style="color: #64748b;">Request Code:</span> #REQ-2026-003</div>
-                            <div><span style="color: #64748b;">Request Window:</span> Sept 16, 2026 9:00 AM</div>
-                            <div><span style="color: #64748b;">Purpose:</span> Capstone Presentation</div>
-                            <div><span style="color: #64748b;">Status:</span> Awaiting Staff Approval</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.75rem; color: #94a3b8;">ID validation required at pickup.</span>
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-rect"
-                                onclick="openModal('cancelModal')">Cancel Request</button>
-                        </div>
-                    </div>
+                    <?php if (empty($pending)): ?>
+                        <?= emptyState('ph-hourglass', 'You have no pending requests.') ?>
+                    <?php endif; ?>
 
-                    <!-- Card 2 -->
-                    <div class="item-card bg-white"
-                        style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: none;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: #0f172a;">Dell XPS 15
-                                Laptop</h3>
-                            <span
-                                style="background: #fef08a; color: #854d0e; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 9999px;">Pending
-                                Request</span>
+                    <div class="loan-grid">
+                    <?php foreach ($pending as $r):
+                        $isApproved = ($r['status'] === 'approved');
+                        $win = pickupWindowFor($r);
+                    ?>
+                        <div class="item-card loan-card">
+                            <div class="loan-card-head">
+                                <h3 class="loan-card-title"><?= htmlspecialchars($r['model_name']) ?></h3>
+                                <?= $isApproved ? pill('Approved — Ready for Pickup', 'info') : pill('Pending Request', 'warning') ?>
+                            </div>
+                            <div class="loan-card-body">
+                                <?php if ($isApproved): ?>
+                                    <?= detailLine('Serial Number', $r['serial_number'] ?: '—') ?>
+                                <?php endif; ?>
+                                <?= detailLine('Request Code', 'REQ-' . (int) $r['reservation_id']) ?>
+                                <div>
+                                    <span class="label"><?= $isApproved ? 'Pick-Up Window' : 'Pick-Up Window (once approved)' ?>:</span>
+                                    <?= $win['text'] ?>
+                                    <?php if ($isApproved): ?>
+                                        <br><?= pickupCountdownTag($win, '', 'Pick-up window ended — this reservation is cancelled') ?>
+                                    <?php endif; ?>
+                                </div>
+                                <?= detailLine('Purpose', $r['purpose'] ?: '—') ?>
+                                <?= detailLine('Status', $isApproved ? 'Approved — bring your ID to the Lab Desk to pick it up' : 'Awaiting Staff Approval') ?>
+                            </div>
+                            <div class="loan-card-foot">
+                                <span class="loan-card-hint">ID validation required at pickup. Not collected in time = reservation cancelled.</span>
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-rect cancel-btn"
+                                    data-id="<?= (int) $r['reservation_id'] ?>"
+                                    data-model="<?= htmlspecialchars($r['model_name'], ENT_QUOTES) ?>"><i class="ph ph-x-circle" aria-hidden="true"></i><span class="btn-text">Cancel Request</span></button>
+                            </div>
                         </div>
-                        <div style="font-size: 0.85rem; color: #475569; line-height: 1.6; margin-bottom: 1.25rem;">
-                            <div><span style="color: #64748b;">Serial Number:</span> SN-CAM-002</div>
-                            <div><span style="color: #64748b;">Request Code:</span> #REQ-2026-003</div>
-                            <div><span style="color: #64748b;">Request Window:</span> Sept 16, 2026 9:00 AM</div>
-                            <div><span style="color: #64748b;">Purpose:</span> Capstone Presentation</div>
-                            <div><span style="color: #64748b;">Status:</span> Awaiting Staff Approval</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.75rem; color: #94a3b8;">ID validation required at pickup.</span>
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-rect"
-                                onclick="openModal('cancelModal')">Cancel Request</button>
-                        </div>
+                    <?php endforeach; ?>
                     </div>
-
-                    <!-- Card 3 -->
-                    <div class="item-card bg-white"
-                        style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 1.25rem; margin-bottom: 1.25rem; box-shadow: none;">
-                        <div
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
-                            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: #0f172a;">Dell XPS 15
-                                Laptop</h3>
-                            <span
-                                style="background: #fef08a; color: #854d0e; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.75rem; border-radius: 9999px;">Pending
-                                Request</span>
-                        </div>
-                        <div style="font-size: 0.85rem; color: #475569; line-height: 1.6; margin-bottom: 1.25rem;">
-                            <div><span style="color: #64748b;">Serial Number:</span> SN-CAM-002</div>
-                            <div><span style="color: #64748b;">Request Code:</span> #REQ-2026-003</div>
-                            <div><span style="color: #64748b;">Request Window:</span> Sept 16, 2026 9:00 AM</div>
-                            <div><span style="color: #64748b;">Purpose:</span> Capstone Presentation</div>
-                            <div><span style="color: #64748b;">Status:</span> Awaiting Staff Approval</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.75rem; color: #94a3b8;">ID validation required at pickup.</span>
-                            <button type="button" class="btn btn-sm btn-outline-danger btn-rect"
-                                onclick="openModal('cancelModal')">Cancel Request</button>
-                        </div>
-                    </div>
+                    <div class="pager" id="pending-pager"></div>
                 </div>
 
-                <div id="content-history" style="display: none;">
-                    <h4
-                        style="font-size: 0.85rem; font-weight: 700; color: #334155; letter-spacing: 0.05em; margin-bottom: 1rem; text-transform: uppercase;">
-                        Past Borrowing History</h4>
-                    <div
-                        style="padding: 3rem; text-align: center; background: white; border: 1px dashed #cbd5e1; border-radius: 8px; color: #64748b;">
-                        <i class="ph ph-clock-counter-clockwise"
-                            style="font-size: 2.5rem; margin-bottom: 0.5rem; color: #94a3b8;"></i>
-                        <p style="margin: 0;">Your past reservations will appear here.</p>
+                <!-- HISTORY -->
+                <div id="content-history" hidden data-list data-items="#content-history .item-card" data-page-size="6" data-pager="#history-pager">
+                    <h4 class="section-eyebrow">Past Borrowing History</h4>
+
+                    <?php if (empty($history)): ?>
+                        <?= emptyState('ph-clock-counter-clockwise', 'Your past reservations will appear here.') ?>
+                    <?php endif; ?>
+
+                    <div class="loan-grid">
+                    <?php foreach ($history as $r):
+                        $status = $r['status'];
+                        $pickupExpired = ($status === 'cancelled' && $r['decline_reason'] === Reservation::EXPIRED_REASON);
+                        $lateReturn = ($status === 'returned' && $r['returned_at'] && $r['due_at'] && strtotime($r['returned_at']) > strtotime($r['due_at']));
+
+                        if ($status === 'returned') {
+                            $statusPill = $lateReturn ? pill('Returned Late', 'amber') : pill('Returned', 'success');
+                        } elseif ($status === 'declined') {
+                            $statusPill = pill('Declined', 'danger');
+                        } elseif ($pickupExpired) {
+                            $statusPill = pill('Pick-Up Expired', 'danger');
+                        } else {
+                            $statusPill = pill('Cancelled', 'neutral');
+                        }
+
+                        $conditionText = '';
+                        if ($status === 'returned') {
+                            if ($r['return_condition'] === 'damaged') {
+                                $conditionText = 'Damaged' . ($r['damage_notes'] ? ' — ' . $r['damage_notes'] : '');
+                            } elseif ($r['return_condition'] === 'missing_accessories') {
+                                $conditionText = 'Missing accessories' . (!empty($r['missing_accessories']) ? ': ' . implode(', ', $r['missing_accessories']) : '');
+                            } elseif ($r['return_condition'] === 'good') {
+                                $conditionText = 'Good condition';
+                            }
+                        }
+                    ?>
+                        <div class="item-card loan-card">
+                            <div class="loan-card-head">
+                                <h3 class="loan-card-title"><?= htmlspecialchars($r['model_name']) ?></h3>
+                                <?= $statusPill ?>
+                            </div>
+                            <div class="loan-card-body">
+                                <?php if ($r['serial_number']): ?>
+                                    <?= detailLine('Serial Number', $r['serial_number']) ?>
+                                <?php endif; ?>
+                                <?= detailLine('Request Code', 'REQ-' . (int) $r['reservation_id']) ?>
+                                <?php if ($status === 'returned'): ?>
+                                    <?= detailLine('Borrowed Date', fmtDateTime($r['checked_out_at'])) ?>
+                                    <?= detailLine('Returned Date', fmtDateTime($r['returned_at'])) ?>
+                                    <?php if ($conditionText !== ''): ?>
+                                        <?= detailLine('Condition on Return', $conditionText) ?>
+                                    <?php endif; ?>
+                                    <?php if ((float) $r['fine_total'] > 0): ?>
+                                        <?= detailLine('Fine', '₱' . number_format((float) $r['fine_total'], 2) . ((float) $r['fine_unpaid'] > 0 ? ' (unpaid: ₱' . number_format((float) $r['fine_unpaid'], 2) . ')' : ' (paid)')) ?>
+                                    <?php endif; ?>
+                                <?php elseif ($pickupExpired): ?>
+                                    <?= detailLine('Pick-Up Window', strip_tags(html_entity_decode(pickupWindowFor($r)['text']))) ?>
+                                    <?= detailLine('Reason', 'Not picked up before the window ended') ?>
+                                    <?= detailLine('Requested On', fmtDateTime($r['requested_at'])) ?>
+                                <?php else: ?>
+                                    <?= detailLine('Request Window', fmtDateTime($r['start_at']) . ' → ' . fmtDateTime($r['end_at'])) ?>
+                                    <?= detailLine('Requested On', fmtDateTime($r['requested_at'])) ?>
+                                <?php endif; ?>
+                                <?php if ($status === 'declined'): ?>
+                                    <?= detailLine('Reason', $r['decline_reason'] ?: 'No reason given') ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                     </div>
+                    <div class="pager" id="history-pager"></div>
                 </div>
 
             </div>
 
             <!-- Cancel Request Modal -->
-            <div class="modal-overlay" id="cancelModal">
-                <div class="modal" style="max-width: 28rem;">
-                    <div class="modal-header">
-                        <div>
-                            <h2 class="modal-title">Cancel Request</h2>
-                        </div>
-                        <button type="button" class="modal-close" onclick="closeModal('cancelModal')">
-                            <i class="ph ph-x" style="font-size: 1.25rem;"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <p>Are you sure you want to cancel this pending request? You will lose your place in the queue.
-                        </p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-outline btn-rect" onclick="closeModal('cancelModal')">Keep
-                            Request</button>
-                        <button type="button" class="btn btn-danger btn-rect" onclick="closeModal('cancelModal')">Yes,
-                            Cancel</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Notification Modal (Bell) -->
-            <div class="modal-overlay" id="notificationModal">
-                <div class="modal" style="max-width: 28rem; position: absolute; top: 4rem; right: 2rem; margin: 0;">
-                    <div class="modal-header">
-                        <div>
-                            <h2 class="modal-title">Notifications</h2>
-                        </div>
-                        <button type="button" class="modal-close" onclick="closeModal('notificationModal')">
-                            <i class="ph ph-x" style="font-size: 1.25rem;"></i>
-                        </button>
-                    </div>
-                    <div class="modal-body" style="padding: 0;">
-                        <div style="padding: 1rem; border-bottom: 1px solid #e2e8f0; display: flex; gap: 1rem;">
-                            <div
-                                style="width: 8px; height: 8px; background-color: #2563eb; border-radius: 50%; margin-top: 0.4rem;">
-                            </div>
-                            <div>
-                                <p style="margin: 0; font-size: 0.9rem; font-weight: 500;">Request Approved</p>
-                                <p style="margin: 0.25rem 0 0 0; font-size: 0.8rem; color: #64748b;">Your request for
-                                    DELL XPS 15 LAPTOP has been approved.</p>
-                                <span style="font-size: 0.7rem; color: #94a3b8; display: block; margin-top: 0.5rem;">2
-                                    hours ago</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal Logic Script -->
-            <script>
-                function openModal(id) {
-                    var modal = document.getElementById(id);
-                    if (modal) {
-                        modal.classList.add('open');
-                    }
-                }
-
-                function closeModal(id) {
-                    var modal = document.getElementById(id);
-                    if (modal) {
-                        modal.classList.remove('open');
-                    }
-                }
-
-                document.addEventListener('DOMContentLoaded', function () {
-                    var overlays = document.querySelectorAll('.modal-overlay');
-                    overlays.forEach(function (overlay) {
-                        overlay.addEventListener('click', function (e) {
-                            if (e.target === overlay) {
-                                closeModal(overlay.id);
-                            }
-                        });
-                    });
-                });
-
-                function switchTab(tabId) {
-                    // 1. Hide all content sections
-                    document.getElementById('content-borrowed').style.display = 'none';
-                    document.getElementById('content-pending').style.display = 'none';
-                    document.getElementById('content-history').style.display = 'none';
-
-                    // 2. Reset all buttons to default styling
-                    const tabs = ['tab-borrowed', 'tab-pending', 'tab-history'];
-                    tabs.forEach(id => {
-                        const btn = document.getElementById(id);
-                        btn.style.background = '#ffffff';
-                        btn.style.borderColor = '#e2e8f0';
-                        btn.children[0].style.background = '#eff6ff';
-                        btn.children[0].style.color = '#2563eb';
-                        btn.children[1].style.color = '#334155';
-                    });
-
-                    // 3. Show selected content
-                    document.getElementById('content-' + tabId).style.display = 'block';
-
-                    // 4. Apply "Active" styling to the clicked button
-                    const activeBtn = document.getElementById('tab-' + tabId);
-                    activeBtn.style.background = '#eff6ff';
-                    activeBtn.style.borderColor = '#bfdbfe';
-                    activeBtn.children[0].style.background = '#2563eb';
-                    activeBtn.children[0].style.color = 'white';
-                    activeBtn.children[1].style.color = '#1e3a8a';
-                }
-            </script>
-            <!-- Confirm Cancel Modal -->
-            <div class="modal-overlay" id="cancelModal">
-                <div class="modal" style="max-width: 28rem; border-radius: 12px; overflow: hidden; background: white;">
-
-                    <!-- Header -->
-                    <div class="modal-header"
-                        style="border-bottom: 1px solid #e2e8f0; padding: 1.25rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
-                        <h2 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: #0f172a;">Confirm Action</h2>
-                        <button class="modal-close" onclick="closeModal('cancelModal')"
-                            style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b; transition: 0.2s;">
-                            <i class="ph ph-x" style="font-size: 1.1rem;"></i>
-                        </button>
-                    </div>
-
-                    <!-- Body -->
-                    <div class="modal-body" style="padding: 1.5rem;">
-                        <div
-                            style="background: #f8fafc; border-radius: 8px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.75rem;">
-                            <i class="ph ph-warning" style="color: #ef4444; font-size: 1.25rem;"></i>
-                            <span style="font-size: 0.9rem; color: #334155;">Are you sure you want to cancel your
-                                pending request?</span>
-                        </div>
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="modal-footer"
-                        style="border-top: 1px solid #e2e8f0; padding: 1rem 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem; background: #ffffff;">
-                        <button type="button" onclick="closeModal('cancelModal')"
-                            style="padding: 0.6rem 1.25rem; border: 1px solid #cbd5e1; background: white; color: #334155; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s;">Back</button>
-                        <button type="button" onclick="closeModal('cancelModal')"
-                            style="padding: 0.6rem 1.25rem; background: #dc2626; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s;">Confirm
-                            Cancel</button>
-                    </div>
-                </div>
-            </div>
-
+<?php include __DIR__ . '/../../includes/modal/borrower/requests-cancel.php'; ?>
         </main>
     </div>
 
-    <?php include __DIR__ . '/../../includes/footer.php'; ?>
+    <?php include __DIR__ . '/../../includes/navigation/footer.php'; ?>
+    <script src="<?= APP_BASE ?>/public/assets/js/filters.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/filters.js') ?: 1 ?>"></script>
+    <script src="<?= APP_BASE ?>/public/assets/js/countdown.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/countdown.js') ?: 1 ?>"></script>
+
+    <script src="<?= APP_BASE ?>/public/assets/js/pages/borrower-my-requests.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/pages/borrower-my-requests.js') ?: 1 ?>"></script>
 </body>
 
 </html>

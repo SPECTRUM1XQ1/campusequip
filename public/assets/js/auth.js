@@ -4,6 +4,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (loginForm)  loginForm.addEventListener('submit', handleLogin);
   if (signupForm) signupForm.addEventListener('submit', handleSignup);
+
+  // Fields marked data-digits-only (ID number, phone) accept numbers only:
+  // anything else typed or pasted is removed straight away.
+  document.querySelectorAll('input[data-digits-only]').forEach(input => {
+    input.addEventListener('input', () => {
+      const cleaned = input.value.replace(/\D/g, '');
+      if (cleaned !== input.value) input.value = cleaned;
+    });
+  });
 });
 
 async function handleLogin(e) {
@@ -16,18 +25,18 @@ async function handleLogin(e) {
   formData.append('action', 'login');
 
   try {
-    const res = await fetch('/campusequip/api/auth/auth_handler.php', { method: 'POST', body: formData });
+    const res = await fetch(APP_BASE + '/api/auth/auth_handler.php', { method: 'POST', body: formData });
     const data = await res.json();
 
     if (data.success) {
       showToast('Signed in successfully', 'success');
       // Route by role — matches the folders in the project structure.
       const destinations = {
-        borrower: '/campusequip/public/borrower/dashboard.php',
-        staff:    '/campusequip/public/staff/dashboard.php',
-        admin:    '/campusequip/public/staff/dashboard.php',
+        borrower: APP_BASE + '/public/borrower/dashboard.php',
+        staff:    APP_BASE + '/public/manage/dashboard.php',
+        admin:    APP_BASE + '/public/manage/dashboard.php',
       };
-      setTimeout(() => { window.location.href = destinations[data.role] || '/campusequip/public/index.php'; }, 600);
+      setTimeout(() => { window.location.href = destinations[data.role] || APP_BASE + '/public/index.php'; }, 600);
     } else {
       showToast(data.message, 'error');
       submitBtn.disabled = false;
@@ -48,12 +57,12 @@ async function handleSignup(e) {
   formData.append('action', 'signup');
 
   try {
-    const res = await fetch('/campusequip/api/auth/auth_handler.php', { method: 'POST', body: formData });
+    const res = await fetch(APP_BASE + '/api/auth/auth_handler.php', { method: 'POST', body: formData });
     const data = await res.json();
 
     if (data.success) {
       showToast(data.message, 'success');
-      setTimeout(() => { window.location.href = '/campusequip/public/login.php'; }, 1000);
+      setTimeout(() => { window.location.href = APP_BASE + '/public/login/login.php'; }, 1000);
     } else {
       showToast(data.message, 'error');
       submitBtn.disabled = false;
