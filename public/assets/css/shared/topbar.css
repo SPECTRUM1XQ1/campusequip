@@ -1,0 +1,228 @@
+/*
+ * shared/topbar.css
+ * Top header bar: page title, search, notification bell and list, mobile menu button.
+ * Loaded right after base.css (see includes/html-head.php).
+ */
+
+.top-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    padding: 1.25rem 2rem;
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.header-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-main);
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-controls select {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 2rem;
+    background-color: white;
+    outline: none;
+}
+
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-bar i {
+    position: absolute;
+    left: 1rem;
+    color: var(--text-muted);
+}
+
+.search-bar input {
+    padding: 0.5rem 1rem 0.5rem 2.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 2rem;
+    background-color: white;
+    width: 250px;
+    outline: none;
+}
+
+.search-bar input:focus {
+    border-color: var(--primary-brand);
+}
+
+@media (max-width: 768px) {
+    .mobile-menu-btn {
+                display: block;
+            }
+    .header-title span {
+                display: none;
+            }
+    .header-controls select {
+                display: none;
+            }
+    .header-controls {
+                flex: 1;
+                min-width: 0;
+                justify-content: flex-end;
+            }
+    .search-bar {
+                flex: 1;
+                min-width: 0;
+            }
+    .search-bar input {
+                width: 100%;
+                min-width: 0;
+            }
+    .top-header {
+                padding: 1rem;
+            }
+}
+
+/* ---- FIGMA MATCH ---- */
+
+.header-title {
+    font-size: 1.5rem;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+}
+
+.header-title strong {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+/* ---- Notifications (bell, badge, list) ---- */
+
+.bell-btn {
+    position: relative;
+    background-color: #f8fafc;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #475569;
+    transition: background-color 0.2s;
+}
+
+.bell-btn:hover {
+    background-color: #e2e8f0;
+}
+
+.bell-btn i {
+    font-size: 1.25rem;
+}
+
+.notif-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}
+
+.notif-badge[hidden] {
+    display: none;
+}
+
+.notif-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.notif-item {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 1rem;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.notif-item.notif-unread {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.notif-item h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 0.9rem;
+    color: #1e293b;
+}
+
+.notif-item p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #475569;
+    line-height: 1.4;
+}
+
+.notif-icon {
+    font-size: 1.5rem;
+    margin-top: 0.1rem;
+    color: #64748b;
+}
+
+.notif-success .notif-icon { color: #16a34a; }
+
+.notif-info .notif-icon { color: #2563eb; }
+
+.notif-warning .notif-icon { color: #d97706; }
+
+.notif-danger .notif-icon { color: #dc2626; }
+
+.notif-time {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.notif-empty {
+    text-align: center;
+    color: #64748b;
+    font-size: 0.85rem;
+    padding: 1.5rem 0;
+    margin: 0;
+}
