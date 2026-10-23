@@ -20,7 +20,10 @@ USE campusequipdb;
 
 SET FOREIGN_KEY_CHECKS = 0;
 DROP TABLE IF EXISTS
+  checkout_missing_accessories,
+  accessories,
   wishlist_items,
+  staff_permissions,
   fines,
   transaction_logs,
   checkouts,
@@ -53,8 +56,8 @@ INSERT INTO categories (category_name) VALUES
 CREATE TABLE users (
   user_id       INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   last_name VARCHAR(30) NOT NULL,
-  fist_name VARCHAR(20) NOT NULL,
-  middle_name VARCHAR(20) NOT NULL,
+  first_name    VARCHAR(20) NOT NULL,
+  middle_name   VARCHAR(20) NULL,
   email         VARCHAR(100) NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   role          ENUM('borrower','staff','admin') NOT NULL DEFAULT 'borrower',
@@ -107,7 +110,7 @@ CREATE TABLE serialized_items (
   item_id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   catalog_id       INT UNSIGNED NOT NULL,
   serial_number    VARCHAR(100) NOT NULL,
-  status           ENUM('available','reserved','checked_out','maintenance','retired')
+  status           ENUM('available','checked_out','maintenance','retired')
                     NOT NULL DEFAULT 'available',
   storage_location VARCHAR(100) NULL,
   condition_notes  TEXT NULL,
@@ -135,7 +138,6 @@ CREATE TABLE reservations (
   purpose         TEXT NULL,
   start_at        DATETIME NOT NULL,
   end_at          DATETIME NOT NULL,
-  pickup_at       DATETIME NULL,
   decline_reason  VARCHAR(255) NULL,
   terms_accepted  TINYINT(1) NOT NULL DEFAULT 0,
   requested_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -195,19 +197,52 @@ CREATE TABLE checkouts (
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------
+-- accessories: items that ship with a MODEL (charger, mouse, bag...).
+-- checkout_missing_accessories: which of them were NOT returned on
+-- a given checkout. Many-to-many, so it needs its own table.
+-- ---------------------------------------------------------
+CREATE TABLE accessories (
+  accessory_id   INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  catalog_id     INT UNSIGNED NOT NULL COMMENT 'model this accessory ships with',
+  accessory_name VARCHAR(100) NOT NULL,
+  created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uq_accessory_per_model (catalog_id, accessory_name),
+  CONSTRAINT fk_acc_catalog
+    FOREIGN KEY (catalog_id) REFERENCES equipment_catalog (catalog_id)
+    ON UPDATE RESTRICT ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+CREATE TABLE checkout_missing_accessories (
+  checkout_id  INT UNSIGNED NOT NULL,
+  accessory_id INT UNSIGNED NOT NULL,
+  PRIMARY KEY (checkout_id, accessory_id),
+  CONSTRAINT fk_cma_checkout
+    FOREIGN KEY (checkout_id) REFERENCES checkouts (checkout_id)
+    ON UPDATE RESTRICT ON DELETE RESTRICT,
+  CONSTRAINT fk_cma_accessory
+    FOREIGN KEY (accessory_id) REFERENCES accessories (accessory_id)
+    ON UPDATE RESTRICT ON DELETE RESTRICT
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------
 -- fines: the current state of a penalty (source of truth for
 -- amount / payment status). transaction_logs will POINT to a
 -- fine row rather than repeating its amount/paid status.
 -- ---------------------------------------------------------
 CREATE TABLE fines (
   fine_id        INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  reservation_id INT UNSIGNED NOT NULL,
+  checkout_id    INT UNSIGNED NOT NULL,
   amount_due     DECIMAL(10,2) NOT NULL,
+  fine_type      ENUM('late','damage','missing_accessories','other') NOT NULL DEFAULT 'other',
+  reason         VARCHAR(255) NULL,
+  days_late      SMALLINT UNSIGNED NULL COMMENT 'late fines only',
+  rate_applied   DECIMAL(10,2) NULL COMMENT 'late fines only: per-day rate at the time',
   payment_status ENUM('unpaid','paid','waived') NOT NULL DEFAULT 'unpaid',
   paid_at        TIMESTAMP NULL DEFAULT NULL,
-  KEY idx_fine_res (reservation_id),
-  CONSTRAINT fk_fine_res
-    FOREIGN KEY (reservation_id) REFERENCES reservations (reservation_id)
+  created_at     TIMESTAMP NULL DEFAULT NULL,
+  KEY idx_fine_checkout (checkout_id),
+  CONSTRAINT fk_fine_checkout
+    FOREIGN KEY (checkout_id) REFERENCES checkouts (checkout_id)
     ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
@@ -222,7 +257,7 @@ CREATE TABLE transaction_logs (
   reservation_id   INT UNSIGNED NULL,
   item_id          INT UNSIGNED NULL,
   fine_id          INT UNSIGNED NULL,
-  actor_id         INT UNSIGNED NOT NULL COMMENT 'who performed the action (borrower or staff)',
+  actor_id         INT UNSIGNED NULL COMMENT 'who performed the action; NULL = the system (automatic)',
   action_type      ENUM(
                      'requested','approved','declined','cancelled',
                      'handover','returned','returned_late',
