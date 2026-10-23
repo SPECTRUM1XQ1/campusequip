@@ -21,5 +21,7 @@
     </div>
 </header>
 
+<?php include __DIR__ . '/../announcement-banner.php'; ?>
+
 <!-- Notification Modal (filled from api/notifications/list.php) -->
 <?php include __DIR__ . '/../modal/shared/notification.php'; ?>

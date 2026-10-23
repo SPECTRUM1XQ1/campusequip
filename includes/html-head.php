@@ -3,8 +3,9 @@
 <meta name="app-base" content="<?= htmlspecialchars(APP_BASE) ?>">
 <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
 <script src="<?= APP_BASE ?>/public/assets/js/app-core.js?v=<?= @filemtime(__DIR__ . '/../public/assets/js/app-core.js') ?: 1 ?>"></script>
-<title><?= htmlspecialchars($pageTitle ?? 'CampusEquip') ?> — CampusEquip</title>
-<link rel="shortcut icon" href="<?= APP_BASE ?>/public/assets/images/favicon-32x32.png" type="image/x-icon">
+<title><?= htmlspecialchars($pageTitle ?? APP_NAME) ?> — <?= APP_NAME ?></title>
+<link rel="icon" type="image/svg+xml" href="<?= APP_BASE ?>/public/assets/images/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="<?= APP_BASE ?>/public/assets/images/favicon-32x32.png">
 <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/vendor/phosphor/style.css?v=2.1.2">
 <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/base.css?v=<?= @filemtime(__DIR__ . '/../public/assets/css/base.css') ?: 1 ?>">
 <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/shared/sidebar.css?v=<?= @filemtime(__DIR__ . '/../public/assets/css/shared/sidebar.css') ?: 1 ?>">

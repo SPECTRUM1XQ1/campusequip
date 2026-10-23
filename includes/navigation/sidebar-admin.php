@@ -83,10 +83,10 @@ $navGroups = array_values(array_filter($navGroups, fn($g) => !empty($g['items'])
 <aside class="sidebar" id="sidebar">
     <div
         class="ui-sidebar-admin-s1">
-        <span class="campus-equip-logo">
-            <span class="chip-icon">`</span>
+        <span class="app-logo">
+            <span class="app-logo-mark"></span>
         </span>
-        Campus Equip
+        LendLab
     </div>
 
     <div class="user-profile-card">
