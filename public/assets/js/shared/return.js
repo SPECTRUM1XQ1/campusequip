@@ -102,7 +102,7 @@ document.getElementById('return-form').addEventListener('submit', async function
         showToast('Server error during return', 'error');
     } finally {
         btn.disabled = false;
-        setBtnText(btn, 'Complete Return');
+        setBtnText(btn, 'Return');
     }
 });
 

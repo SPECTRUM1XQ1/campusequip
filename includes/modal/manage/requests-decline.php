@@ -48,7 +48,7 @@
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline btn-rect" data-close-modal="declineModal"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Cancel</span></button>
-                <button type="submit" class="btn btn-danger btn-rect" id="decline-submit-btn"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Confirm Decline</span></button>
+                <button type="submit" class="btn btn-danger btn-rect" id="decline-submit-btn"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Decline</span></button>
             </div>
         </form>
     </div>

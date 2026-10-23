@@ -18,9 +18,12 @@
 }
 
 .snackbar {
+    box-sizing: border-box;
     min-width: 240px;
     max-width: 90vw;
     padding: 12px 18px;
+    text-align: center;
+    line-height: 1.4;
     border-radius: 0.5rem;
     color: #fff;
     font-size: 0.875rem;

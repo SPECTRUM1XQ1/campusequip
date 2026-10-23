@@ -54,7 +54,7 @@
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline btn-rect" data-close-modal="returnModal"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Cancel</span></button>
-                <button type="submit" class="btn btn-approve btn-rect" id="ret-submit-btn"><i class="ph ph-check-circle" aria-hidden="true"></i><span class="btn-text">Complete Return</span></button>
+                <button type="submit" class="btn btn-approve btn-rect" id="ret-submit-btn"><i class="ph ph-check-circle" aria-hidden="true"></i><span class="btn-text">Return</span></button>
             </div>
         </form>
     </div>

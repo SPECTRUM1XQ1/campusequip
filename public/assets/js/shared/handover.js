@@ -37,7 +37,7 @@ document.getElementById('handover-form').addEventListener('submit', async functi
         showToast('Server error during handover', 'error');
     } finally {
         btn.disabled = false;
-        setBtnText(btn, 'Confirm Handover');
+        setBtnText(btn, 'Handover');
     }
 });
 

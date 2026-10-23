@@ -40,7 +40,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline btn-rect" data-close-modal="editModal"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Cancel</span></button>
-                <button type="submit" class="btn btn-primary btn-rect" id="edit-model-submit-btn"><i class="ph ph-floppy-disk" aria-hidden="true"></i><span class="btn-text">Save Changes</span></button>
+                <button type="submit" class="btn btn-primary btn-rect" id="edit-model-submit-btn"><i class="ph ph-floppy-disk" aria-hidden="true"></i><span class="btn-text">Save</span></button>
             </div>
         </form>
     </div>

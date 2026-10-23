@@ -78,7 +78,7 @@ document.getElementById('approve-form').addEventListener('submit', async functio
         showToast('Server communication error', 'error');
     } finally {
         btn.disabled = false;
-        setBtnText(btn, 'Confirm Approval');
+        setBtnText(btn, 'Approve');
     }
 });
 
@@ -126,7 +126,7 @@ document.getElementById('decline-form').addEventListener('submit', async functio
         showToast('Server communication error', 'error');
     } finally {
         btn.disabled = false;
-        setBtnText(btn, 'Confirm Decline');
+        setBtnText(btn, 'Decline');
     }
 });
 

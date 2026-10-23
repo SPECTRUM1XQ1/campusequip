@@ -15,7 +15,7 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-outline btn-rect" data-close-modal="removeWishlistModal"><i class="ph ph-arrow-u-up-left" aria-hidden="true"></i><span class="btn-text">Keep</span></button>
-            <button type="button" class="btn btn-danger btn-rect" id="remove-confirm-btn"><i class="ph ph-trash" aria-hidden="true"></i><span class="btn-text">Confirm Remove</span></button>
+            <button type="button" class="btn btn-danger btn-rect" id="remove-confirm-btn"><i class="ph ph-trash" aria-hidden="true"></i><span class="btn-text">Remove</span></button>
         </div>
     </div>
 </div>

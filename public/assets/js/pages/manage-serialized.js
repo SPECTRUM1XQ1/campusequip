@@ -57,7 +57,7 @@ document.getElementById('edit-unit-form').addEventListener('submit', async funct
         showToast('Server communication error', 'error');
     } finally {
         btn.disabled = false;
-        setBtnText(btn, 'Save Changes');
+        setBtnText(btn, 'Save');
     }
 });
 
@@ -84,7 +84,7 @@ document.getElementById('add-unit-form').addEventListener('submit', async functi
         showToast('Server communication error', 'error');
     } finally {
         btn.disabled = false;
-        setBtnText(btn, 'Register Unit');
+        setBtnText(btn, 'Register');
     }
 });
 

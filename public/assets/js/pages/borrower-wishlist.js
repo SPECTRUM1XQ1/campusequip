@@ -137,6 +137,6 @@ document.getElementById('reserve-form').addEventListener('submit', async functio
         showToast('Server communication error', 'error');
     } finally {
         btn.disabled = false;
-        setBtnText(btn, 'Submit Request');
+        setBtnText(btn, 'Submit');
     }
 });

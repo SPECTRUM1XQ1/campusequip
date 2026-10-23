@@ -34,7 +34,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline btn-rect" data-close-modal="addUnitModal"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Cancel</span></button>
-                <button type="submit" class="btn btn-primary btn-rect" id="add-unit-submit-btn"><i class="ph ph-barcode" aria-hidden="true"></i><span class="btn-text">Register Unit</span></button>
+                <button type="submit" class="btn btn-primary btn-rect" id="add-unit-submit-btn"><i class="ph ph-barcode" aria-hidden="true"></i><span class="btn-text">Register</span></button>
             </div>
         </form>
     </div>

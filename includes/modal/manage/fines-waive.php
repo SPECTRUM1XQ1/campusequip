@@ -17,7 +17,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline btn-rect" data-close-modal="waiveModal"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Cancel</span></button>
-                <button type="submit" class="btn btn-danger btn-rect" id="waive-submit-btn"><i class="ph ph-minus-circle" aria-hidden="true"></i><span class="btn-text">Waive Fine</span></button>
+                <button type="submit" class="btn btn-danger btn-rect" id="waive-submit-btn"><i class="ph ph-minus-circle" aria-hidden="true"></i><span class="btn-text">Waive</span></button>
             </div>
         </form>
     </div>

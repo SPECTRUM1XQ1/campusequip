@@ -25,7 +25,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline btn-rect" data-close-modal="categoryModal"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Cancel</span></button>
-                <button type="submit" class="btn btn-primary btn-rect" id="category-submit-btn"><i class="ph ph-plus" aria-hidden="true"></i><span class="btn-text">Add Category</span></button>
+                <button type="submit" class="btn btn-primary btn-rect" id="category-submit-btn"><i class="ph ph-plus" aria-hidden="true"></i><span class="btn-text">Add</span></button>
             </div>
         </form>
     </div>

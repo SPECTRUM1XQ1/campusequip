@@ -47,7 +47,7 @@
 
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline btn-rect" data-close-modal="reserveModal"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Cancel</span></button>
-                <button type="submit" class="btn btn-primary btn-rect" id="reserve-submit-btn"><i class="ph ph-paper-plane-tilt" aria-hidden="true"></i><span class="btn-text">Submit Request</span></button>
+                <button type="submit" class="btn btn-primary btn-rect" id="reserve-submit-btn"><i class="ph ph-paper-plane-tilt" aria-hidden="true"></i><span class="btn-text">Submit</span></button>
             </div>
         </form>
     </div>

@@ -15,7 +15,7 @@
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-outline btn-rect" data-close-modal="payModal"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Cancel</span></button>
-            <button type="button" class="btn btn-primary btn-rect" id="pay-confirm-btn"><i class="ph ph-coins" aria-hidden="true"></i><span class="btn-text">Confirm Payment</span></button>
+            <button type="button" class="btn btn-primary btn-rect" id="pay-confirm-btn"><i class="ph ph-coins" aria-hidden="true"></i><span class="btn-text">Pay</span></button>
         </div>
     </div>
 </div>

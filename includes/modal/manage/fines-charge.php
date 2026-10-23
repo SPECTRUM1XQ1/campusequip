@@ -43,7 +43,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline btn-rect" data-close-modal="chargeModal"><i class="ph ph-x" aria-hidden="true"></i><span class="btn-text">Cancel</span></button>
-                <button type="submit" class="btn btn-primary btn-rect" id="charge-submit-btn"><i class="ph ph-receipt" aria-hidden="true"></i><span class="btn-text">Charge Fine</span></button>
+                <button type="submit" class="btn btn-primary btn-rect" id="charge-submit-btn"><i class="ph ph-receipt" aria-hidden="true"></i><span class="btn-text">Charge</span></button>
             </div>
         </form>
     </div>

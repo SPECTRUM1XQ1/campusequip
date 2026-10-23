@@ -130,7 +130,7 @@ document.getElementById('edit-model-form').addEventListener('submit', async func
         showToast('Server communication error', 'error');
     } finally {
         btn.disabled = false;
-        setBtnText(btn, 'Save Changes');
+        setBtnText(btn, 'Save');
     }
 });
 
@@ -186,7 +186,7 @@ document.getElementById('add-model-form').addEventListener('submit', async funct
         showToast('Server communication error', 'error');
     } finally {
         btn.disabled = false;
-        setBtnText(btn, 'Save Model');
+        setBtnText(btn, 'Save');
     }
 });
 

@@ -78,6 +78,6 @@ document.getElementById('editUserForm').addEventListener('submit', async functio
         showToast('Server communication error', 'error');
     } finally {
         btn.disabled = false;
-        setBtnText(btn, 'Save Changes');
+        setBtnText(btn, 'Save');
     }
 });
