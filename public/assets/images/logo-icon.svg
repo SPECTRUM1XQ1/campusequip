@@ -1,16 +1,7 @@
-<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="32" height="32" rx="8" fill="#1E40AF"/>
-<g clip-path="url(#clip0_71_1537)">
-<g clip-path="url(#clip1_71_1537)">
-<path d="M16.0002 21.3337V22.6672M16.0002 9.33276V10.6662M19.3338 21.3337V22.6672M19.3338 9.33276V10.6662M9.33301 16H10.6664M9.33301 19.3336H10.6664M9.33301 12.6664H10.6664M21.334 16H22.6674M21.334 19.3336H22.6674M21.334 12.6664H22.6674M12.6666 21.3337V22.6672M12.6666 9.33276V10.6662M11.9999 10.6662H20.0005C20.737 10.6662 21.334 11.2632 21.334 11.9996V20.0003C21.334 20.7367 20.737 21.3337 20.0005 21.3337H11.9999C11.2634 21.3337 10.6664 20.7367 10.6664 20.0003V11.9996C10.6664 11.2632 11.2634 10.6662 11.9999 10.6662ZM14 13.3331H18.0004C18.3686 13.3331 18.6671 13.6316 18.6671 13.9998V18.0001C18.6671 18.3683 18.3686 18.6668 18.0004 18.6668H14C13.6318 18.6668 13.3333 18.3683 13.3333 18.0001V13.9998C13.3333 13.6316 13.6318 13.3331 14 13.3331Z" stroke="white" stroke-width="2" stroke-linecap="round"/>
-</g>
-</g>
-<defs>
-<clipPath id="clip0_71_1537">
-<rect width="16" height="16" fill="white" transform="translate(8 8)"/>
-</clipPath>
-<clipPath id="clip1_71_1537">
-<rect width="16" height="16" fill="white" transform="translate(8 8)"/>
-</clipPath>
-</defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="LendLab">
+  <rect width="48" height="48" rx="11" fill="#203b8c"/>
+  <g transform="translate(24 24) scale(.86) translate(-24 -24.75)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.6">
+    <path d="M20 8V19L9.5 37Q7.5 41.5 12.5 41.5H35.5Q40.5 41.5 38.5 37L28 19V8M17 8H31" stroke="#ffffff"/>
+    <path d="M18.5 31L23 35.5L30.5 27" stroke="#f59e0b"/>
+  </g>
 </svg>

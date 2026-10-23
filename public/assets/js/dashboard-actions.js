@@ -1,5 +1,5 @@
 /**
- * CampusEquip Global Dashboard Utilities
+ * LendLab Global Dashboard Utilities
  * Modals: open/close, Escape + backdrop close, and keyboard accessibility
  * (dialog roles, focus moves into the dialog, Tab stays inside, focus returns on close).
  */

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="LendLab">
+  <rect width="48" height="48" rx="11" fill="#203b8c"/>
+  <g transform="translate(24 24) scale(.86) translate(-24 -24.75)" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.6">
+    <path d="M20 8V19L9.5 37Q7.5 41.5 12.5 41.5H35.5Q40.5 41.5 38.5 37L28 19V8M17 8H31" stroke="#ffffff"/>
+    <path d="M18.5 31L23 35.5L30.5 27" stroke="#f59e0b"/>
+  </g>
+</svg>

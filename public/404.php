@@ -19,7 +19,9 @@ $homeLink = $loggedIn
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Not Found — CampusEquip</title>
+    <title>Page Not Found — LendLab</title>
+    <link rel="icon" type="image/svg+xml" href="<?= APP_BASE ?>/public/assets/images/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= APP_BASE ?>/public/assets/images/favicon-32x32.png">
     <meta name="app-base" content="<?= htmlspecialchars(APP_BASE) ?>">
     <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
     <script src="<?= APP_BASE ?>/public/assets/js/app-core.js?v=<?= @filemtime(__DIR__ . '/assets/js/app-core.js') ?: 1 ?>"></script>

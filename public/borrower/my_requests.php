@@ -68,6 +68,7 @@ function emptyState(string $icon, string $message): string
 
         <main class="main-content">
             <?php include __DIR__ . '/../../includes/navigation/topbar.php'; ?>
+            <?php include __DIR__ . '/../../includes/announcement-banner.php'; ?>
 
             <div class="page-body">
 

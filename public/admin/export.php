@@ -32,7 +32,7 @@ $data = (new Export())->get($table, $from, $to);
 
 // ---- CSV download ----
 if (($_GET['format'] ?? '') === 'csv') {
-    $filename = 'campusequip-' . $table . '-' . date('Ymd-His') . '.csv';
+    $filename = 'lendlab-' . $table . '-' . date('Ymd-His') . '.csv';
     header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment; filename="' . $filename . '"');
 

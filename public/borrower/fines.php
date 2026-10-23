@@ -72,6 +72,7 @@ function emptyState(string $icon, string $message): string
 
         <main class="main-content">
             <?php include __DIR__ . '/../../includes/navigation/topbar.php'; ?>
+            <?php include __DIR__ . '/../../includes/announcement-banner.php'; ?>
 
             <section class="requests-page">
                 <p class="page-note">A late fine is the item's daily rate for every day (or part of a day) it is past its due date. It keeps growing until you return the item, and the final amount is charged when you return it at the Lab Desk. Staff may also charge a fine for damage or missing accessories.</p>

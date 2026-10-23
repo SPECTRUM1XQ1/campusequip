@@ -24,6 +24,7 @@ $savedIds = (new Wishlist())->savedCatalogIds((int) $_SESSION['user_id']);
 
         <main class="main-content">
             <?php include __DIR__ . '/../../includes/navigation/topbar.php'; ?>
+            <?php include __DIR__ . '/../../includes/announcement-banner.php'; ?>
 
             <div class="borrower-catalog-s1">
                 <h3 class="borrower-catalog-s2">

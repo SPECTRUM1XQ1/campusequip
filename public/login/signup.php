@@ -18,11 +18,14 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up — CampusEquip</title>
+    <title>Sign Up — LendLab</title>
+    <link rel="icon" type="image/svg+xml" href="<?= APP_BASE ?>/public/assets/images/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?= APP_BASE ?>/public/assets/images/favicon-32x32.png">
     <meta name="app-base" content="<?= htmlspecialchars(APP_BASE) ?>">
     <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
     <script src="<?= APP_BASE ?>/public/assets/js/app-core.js?v=<?= @filemtime(__DIR__ . '/../assets/js/app-core.js') ?: 1 ?>"></script>
     <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/base.css?v=<?= @filemtime(__DIR__ . '/../assets/css/base.css') ?: 1 ?>">
+    <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/shared/snackbar.css?v=<?= @filemtime(__DIR__ . '/../assets/css/shared/snackbar.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/pages/auth.css?v=<?= @filemtime(__DIR__ . '/../assets/css/pages/auth.css') ?: 1 ?>">
 </head>
 
@@ -33,10 +36,10 @@ if (isset($_SESSION['user_id'])) {
             <div class="login-overlay">
                 <div class="brand-showcase">
                     <div class="auth-signup-s1">
-                        <span class="campus-equip-logo auth-signup-s2">
-                            <span class="chip-icon auth-signup-s3"></span>
+                        <span class="app-logo auth-signup-s2">
+                            <span class="app-logo-mark auth-signup-s3"></span>
                         </span>
-                        <span class="auth-signup-s4">CampusEquip</span>
+                        <span class="auth-signup-s4">LendLab</span>
                     </div>
                     <h1
                         class="auth-signup-s5">
@@ -57,10 +60,10 @@ if (isset($_SESSION['user_id'])) {
             <div id="auth-container" class="auth-container max-w-signup">
                 <div id="signup-view" class="view-section active-view">
                     <div class="brand-header">
-                        <span class="campus-equip-logo">
-                            <span class="chip-icon"></span>
+                        <span class="app-logo">
+                            <span class="app-logo-mark"></span>
                         </span>
-                        <span class="brand-name">CampusEquip</span>
+                        <span class="brand-name">LendLab</span>
                     </div>
                     <h2 class="view-title">Create Account</h2>
                     <p class="view-subtitle">Register below to reserve and borrow campus devices</p>

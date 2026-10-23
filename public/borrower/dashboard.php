@@ -144,13 +144,15 @@ $popularCatalog = array_slice($catalogList, 0, 5);
                         <?php foreach ($myApproved as $appr): ?>
                             <div class="item-card bg-white borrower-dashboard-s4">
                                 <div>
-                                    <h5><?= htmlspecialchars($appr['model_name']) ?> (SN: <?= htmlspecialchars($appr['serial_number']) ?>)</h5>
+                                    <div class="request-sn-status">
+                                        <h5><?= htmlspecialchars($appr['model_name']) ?> <span class="sn">(SN: <?= htmlspecialchars($appr['serial_number']) ?>)</span></h5>
+                                        <span class="status-badge approved">Ready for Pickup</span>
+                                    </div>
                                     <p class="borrower-dashboard-s5">Approved: <?= date('M d, Y', strtotime($appr['reviewed_at'])) ?> &bull; Present your Student ID at the desk</p>
                                     <?php $apprWin = pickupWindowFor($appr); ?>
                                     <p class="borrower-dashboard-s5">Pick-up window: <strong><?= $apprWin['text'] ?></strong></p>
                                     <?= pickupCountdownTag($apprWin, '', 'Pick-up window ended — this reservation is cancelled') ?>
                                 </div>
-                                <span class="status-badge approved">Ready for Pickup</span>
                             </div>
                         <?php endforeach; ?>
                         </div>

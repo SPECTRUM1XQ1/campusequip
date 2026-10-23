@@ -30,7 +30,6 @@
     font-weight: 600;
 }
 
-
 /* ---- Borrower: fines card, loan fine lines, pick-up note ---- */
 
 .loan-fine {
@@ -215,6 +214,28 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 1rem;
+}
+/* Ready-for-pickup card: the info block takes the full card width, the badge sits top-right beside the title */
+.borrower-dashboard-s4 > div {
+    flex: 1 1 16rem;
+    min-width: 0;
+}
+.request-sn-status {
+    display: flex;
+    align-items: flex-start;          /* badge keeps its own height instead of stretching to the title */
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+.item-card .request-sn-status h5 {
+    margin: 0;
+    min-width: 0;
+}
+.request-sn-status .sn {
+    white-space: nowrap;              /* "(SN: ...)" moves to the next line as one piece, never splits */
+}
+.request-sn-status .status-badge {
+    flex: none;
 }
 .borrower-dashboard-s5 {
     margin-bottom: 0.25rem;

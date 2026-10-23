@@ -86,6 +86,7 @@ function savedCard(array $item, bool $isAvailable): void
 
         <main class="main-content">
             <?php include __DIR__ . '/../../includes/navigation/topbar.php'; ?>
+            <?php include __DIR__ . '/../../includes/announcement-banner.php'; ?>
 
             <div class="page-body">
 

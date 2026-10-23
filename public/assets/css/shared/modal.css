@@ -1,4 +1,4 @@
-/* CampusEquip: modal / pop-up window styles (overlay, box, header, body, footer, form fields).
+/* LendLab: modal / pop-up window styles (overlay, box, header, body, footer, form fields).
    Loaded on every page by includes/html-head.php, after base.css.
    Markup lives in includes/modal/, behaviour in assets/js/dashboard-actions.js (openModal / closeModal). */
 
