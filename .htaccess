@@ -1,0 +1,2 @@
+# Never list folder contents; developer-only folders carry their own deny rule.
+Options -Indexes

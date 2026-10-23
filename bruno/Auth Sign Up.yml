@@ -1,0 +1,36 @@
+info:
+  name: Auth Sign Up
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost/campusequip/api/auth/auth_handler.php
+  body:
+    type: form-urlencoded
+    data:
+      - name: first_name
+        value: markus
+      - name: last_name
+        value: balgua
+      - name: email
+        value: markus@gmail.com
+      - name: password
+        value: "12345678"
+      - name: role
+        value: borrower
+      - name: middle_name
+        value: cacho
+      - name: confirm_password
+        value: "12345678"
+      - name: action
+        value: signup
+      - name: id_number
+        value: 2026-00001
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

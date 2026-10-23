@@ -1,0 +1,30 @@
+info:
+  name: Charge Fine
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost/campusequip/api/fine/charge.php
+  headers:
+    - name: Cookie
+      value: PHPSESSID=949okj45io9vfo6podtpp6hc4i
+  body:
+    type: multipart-form
+    data:
+      - name: checkout_id
+        type: text
+        value: "1"
+      - name: amount
+        type: text
+        value: "150.00"
+      - name: ""
+        type: text
+        value: ""
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

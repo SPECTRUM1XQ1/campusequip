@@ -212,6 +212,20 @@ foreach ($it as $f) {
 check('no hardcoded folder name outside config.php; no dead page links', empty($bad), implode('; ', $bad));
 check('old unreferenced pages are gone', !is_file(__DIR__ . '/../public/borrower/home.php') && !is_file(__DIR__ . '/../test.php'));
 
+// Active Returns: one shared card with a due countdown, and no late-fine row (the fine is charged at return).
+require_once __DIR__ . '/../includes/helpers/pickup-helpers.php';
+$pill = dueCountdownTag('2026-10-17 16:19:00');
+check('due countdown pill carries an ISO local due date', str_contains($pill, 'class="due-countdown"') && str_contains($pill, 'data-due="2026-10-17T16:19:00"'), $pill);
+$retCard = file_get_contents(__DIR__ . '/../includes/return-card.php');
+check('return card shows the countdown and no late-fine row', str_contains($retCard, 'dueCountdownTag(') && !str_contains($retCard, 'Late Fine So Far'));
+check('both pages use the shared return card (no copy-pasted markup)',
+    str_contains(file_get_contents(__DIR__ . '/../public/staff/return.php'), 'includes/return-card.php')
+    && str_contains(file_get_contents(__DIR__ . '/../public/manage/checkouts.php'), 'includes/return-card.php')
+    && !str_contains(file_get_contents(__DIR__ . '/../public/staff/return.php'), 'class="request-card"'));
+// Handover and Return cards must stay field-for-field the same so they are the same size.
+$fieldCount = fn(string $s) => substr_count($s, 'class="ops-field"');
+check('handover and return cards have the same number of fields', $fieldCount(file_get_contents(__DIR__ . '/../includes/handover-card.php')) === $fieldCount($retCard));
+
 // Icon-first buttons inside a table need a RESERVED Actions column, otherwise the whole table
 // shifts when a label slides out. A cell holding two buttons needs the wide variant.
 $tableProblems = [];

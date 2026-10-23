@@ -1,0 +1,22 @@
+info:
+  name: Catalogb list
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://localhost/campusequip/api/catalog/list.php
+  body:
+    type: form-urlencoded
+    data:
+      - name: category_id
+        value: "1"
+      - name: search
+        value: Computer
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

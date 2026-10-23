@@ -1,0 +1,33 @@
+info:
+  name: Catalog Add Equipment Model
+  type: http
+  seq: 6
+
+http:
+  method: POST
+  url: http://localhost/campusequip/api/catalog/add_model.php?model_name=Asus ExpertBook 16S&category_id=2&total_stock=1&description
+  params:
+    - name: model_name
+      value: Asus ExpertBook 16S
+      type: query
+    - name: category_id
+      value: "2"
+      type: query
+    - name: total_stock
+      value: "1"
+      type: query
+    - name: description
+      value: ""
+      type: query
+  body:
+    type: form-urlencoded
+    data:
+      - name: catalog_id
+        value: "1"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

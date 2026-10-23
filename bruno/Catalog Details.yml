@@ -1,0 +1,24 @@
+info:
+  name: Catalog Details
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://localhost/campusequip/api/catalog/details.php?item_id=1
+  params:
+    - name: item_id
+      value: "1"
+      type: query
+  body:
+    type: form-urlencoded
+    data:
+      - name: catalog_id
+        value: "1"
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
