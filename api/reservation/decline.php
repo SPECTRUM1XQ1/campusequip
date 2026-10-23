@@ -6,18 +6,15 @@ require_post();
 $user = require_permission('can_approve_requests');
 
 $reservationId = post_int('reservation_id');
-$reason = post_string('decline_reason');
+$reason        = post_string('decline_reason');
 
 if ($reservationId <= 0) {
-    json_response(['success' => false, 'message'=> 'Reservation Id Not Found']);
+    json_response(['success' => false, 'message' => 'Reservation ID not found.']);
 }
 
-if ($user <= 0) {
-    json_response(['success' => false, 'message'=> 'Staff ID not Found']);
-}
 if (empty($reason)) {
-    json_response(['success'=> false, 'message'=> 'Reason Must Have State']);
+    json_response(['success' => false, 'message' => 'Please provide a decline reason.']);
 }
-$result = (new Reservation())->decline($reservationId, (int) $user['user_id'], $reason);
 
+$result = (new Reservation())->decline($reservationId, (int) $user['user_id'], $reason);
 json_response($result);

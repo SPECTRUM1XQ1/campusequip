@@ -14,8 +14,8 @@ if ($itemId <= 0) {
     json_response(['success' => false, 'message' => 'Item ID not found.']);
 }
 
-// 'reserved' and 'checked_out' are managed by the system (approve / handover),
-// so only these three can be set by hand. Matches Equipment::updateUnitStatus().
+// 'checked_out' is managed by the system (handover / return), so only these three can be
+// set by hand. (Booking is decided by date ranges, not by a unit status.) Matches Equipment::updateUnitStatus().
 if (!in_array($status, ['available', 'maintenance', 'retired'], true)) {
     json_response(['success' => false, 'message' => 'Invalid status.']);
 }

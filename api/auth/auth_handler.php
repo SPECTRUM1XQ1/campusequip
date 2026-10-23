@@ -3,9 +3,7 @@ define('APP_INIT', true);
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../src/User.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+app_session_start();
 
 header('Content-Type: application/json');
 
@@ -14,9 +12,20 @@ header('Content-Type: application/json');
 // clean JSON — never a raw PHP error page that breaks res.json() on the
 // frontend and shows as "Could not reach the server."
 try {
+    // Login/signup/logout are POSTs too, so they need the CSRF token like every other endpoint.
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['success' => false, 'message' => 'Method not allowed.']);
+        exit;
+    }
+    if (!csrf_verify()) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => 'Your session has expired. Please refresh the page and try again.']);
+        exit;
+    }
+
     $action = $_POST['action'] ?? '';
     $user   = new User();
-
     switch ($action) {
 
         case 'signup':
@@ -35,6 +44,14 @@ try {
 
             if ($firstName === '' || $lastName === '' || $email === '' || $idNumber === '' || $password === '') {
                 echo json_encode(['success' => false, 'message' => 'Please fill in all required fields.']);
+                exit;
+            }
+            if (!ctype_digit($idNumber) || strlen($idNumber) > 30) {
+                echo json_encode(['success' => false, 'message' => 'Student / Employee ID must contain numbers only.']);
+                exit;
+            }
+            if ($phone !== '' && (!ctype_digit($phone) || strlen($phone) < 7 || strlen($phone) > 15)) {
+                echo json_encode(['success' => false, 'message' => 'Phone number must contain numbers only (7 to 15 digits).']);
                 exit;
             }
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
