@@ -25,6 +25,7 @@ if (isset($_SESSION['user_id'])) {
     <meta name="app-base" content="<?= htmlspecialchars(APP_BASE) ?>">
     <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
     <script src="<?= APP_BASE ?>/public/assets/js/app-core.js?v=<?= @filemtime(__DIR__ . '/../assets/js/app-core.js') ?: 1 ?>"></script>
+    <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/vendor/phosphor/style.css?v=2.1.2">
     <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/base.css?v=<?= @filemtime(__DIR__ . '/../assets/css/base.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/shared/snackbar.css?v=<?= @filemtime(__DIR__ . '/../assets/css/shared/snackbar.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/pages/auth.css?v=<?= @filemtime(__DIR__ . '/../assets/css/pages/auth.css') ?: 1 ?>">
@@ -73,6 +74,7 @@ if (isset($_SESSION['user_id'])) {
 
         <!-- Right Side: The Form -->
         <div class="login-right">
+            <a class="auth-back-home" href="<?= APP_URL ?>/landing.php"><i class="ph ph-arrow-left" aria-hidden="true"></i>Back to home</a>
             <div id="auth-container" class="auth-container max-w-signin">
                 <div id="signin-view" class="view-section active-view">
                     <div class="brand-header">
@@ -90,14 +92,15 @@ if (isset($_SESSION['user_id'])) {
                                >Email
                                 / ID Number</label>
                             <input type="text" name="identifier" class="input-field"
-                                placeholder="e.g. 202610201 or student@univ.edu" required>
+                                placeholder="PHINMA email or ID number"
+                                maxlength="50" data-no-space autocapitalize="none" spellcheck="false" autocomplete="username" required>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label auth-login-s7"
                                >Password</label>
                             <input type="password" name="password" class="input-field" placeholder="Enter password"
-                                required>
+                                maxlength="64" data-no-space autocomplete="current-password" required>
                         </div>
 
                         <button type="submit" class="btn-primary auth-login-s8">LOGIN</button>

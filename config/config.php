@@ -8,6 +8,10 @@ if (!defined('APP_INIT')) {
  */
 
 define('APP_NAME', 'LendLab');
+// Every date and time in the app (PHP and MySQL) uses Philippine time. Without this line PHP falls back to
+// whatever date.timezone is in php.ini (XAMPP ships with Europe/Berlin), so times showed 7 hours behind.
+define('APP_TIMEZONE', 'Asia/Manila');
+date_default_timezone_set(APP_TIMEZONE);
 // The ONLY place the folder name appears. If your htdocs folder is not called
 // "campusequip", change this one line (every link, redirect and fetch() reads it).
 // Pages use APP_BASE; JavaScript reads it from window.APP_BASE (see app-core.js).

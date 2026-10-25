@@ -43,12 +43,12 @@
                 <!-- Shown only when "Damaged" is selected -->
                 <div class="modal-field" id="damage-notes-field" style="display: none;">
                     <label class="modal-label">What happened? * (describe the damage)</label>
-                    <textarea class="input-field" name="damage_notes" id="damage_notes" rows="3" placeholder="e.g. Screen cracked after being dropped, water damage on the case..."></textarea>
+                    <textarea class="input-field" name="damage_notes" maxlength="500" id="damage_notes" rows="3" placeholder="e.g. Screen cracked after being dropped, water damage on the case..."></textarea>
                 </div>
 
                 <div class="modal-field">
                     <label class="modal-label">Inspection Remarks (optional)</label>
-                    <textarea class="input-field" name="inspection_remarks" rows="2" placeholder="Any other notes about the item's condition..."></textarea>
+                    <textarea class="input-field" name="inspection_remarks" maxlength="500" rows="2" placeholder="Any other notes about the item's condition..."></textarea>
                 </div>
             </div>
 

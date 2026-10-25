@@ -107,12 +107,30 @@ function liveSearch() {
 
     document.addEventListener('DOMContentLoaded', () => {
         const originalClose = window.closeModal;
-        window.closeModal = function (id) {
-            originalClose(id);
-            if (id === 'notificationModal' && items.length) {
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function markSeen() {
+            if (items.length) {
                 localStorage.setItem(SEEN_KEY, String(Math.max(...items.map(i => i.ts))));
                 paintBadge();
             }
+        }
+
+        // The notification panel slides out to the right before it really closes
+        // (Escape, the X button and a click on the dark backdrop all come through here).
+        window.closeModal = function (id) {
+            if (id !== 'notificationModal') return originalClose(id);
+
+            const overlay = document.getElementById(id);
+            if (!overlay || overlay.classList.contains('closing')) return;
+            if (reduceMotion) { originalClose(id); markSeen(); return; }
+
+            overlay.classList.add('closing');
+            setTimeout(() => {
+                overlay.classList.remove('closing');
+                originalClose(id);
+                markSeen();
+            }, 220);
         };
     });
 

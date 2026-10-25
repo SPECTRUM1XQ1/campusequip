@@ -36,7 +36,7 @@
 
                 <div class="modal-field">
                     <label class="modal-label" for="res_purpose">Purpose of Use *</label>
-                    <textarea class="input-field" id="res_purpose" name="purpose" placeholder="e.g. Capstone project documentation, laboratory experiment..." required></textarea>
+                    <textarea class="input-field" id="res_purpose" maxlength="500" name="purpose" placeholder="e.g. Capstone project documentation, laboratory experiment..." required></textarea>
                 </div>
 
                 <label class="checkbox-row">

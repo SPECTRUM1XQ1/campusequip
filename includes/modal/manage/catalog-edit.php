@@ -35,7 +35,7 @@
                 </div>
                 <div class="modal-field">
                     <label class="modal-label" for="edit_description">Description</label>
-                    <textarea class="input-field" name="description" id="edit_description"></textarea>
+                    <textarea class="input-field" name="description" maxlength="500" id="edit_description"></textarea>
                 </div>
             </div>
             <div class="modal-footer">

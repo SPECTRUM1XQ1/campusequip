@@ -93,26 +93,26 @@ $popularCatalog = array_slice($catalogList, 0, 5);
                         </div>
 
                         <div class="fines-board-stats">
-                            <div class="fines-board-stat">
+                            <a class="fines-board-stat fines-board-stat-link" href="<?= APP_BASE ?>/public/borrower/fines.php#accruing-list">
                                 <span class="fines-board-stat-label">Growing daily</span>
                                 <strong class="<?= $accruingTotal > 0 ? 'is-danger' : '' ?>"><?= $peso($accruingTotal) ?></strong>
                                 <span class="fines-board-stat-note">Running late fines</span>
-                            </div>
-                            <div class="fines-board-stat">
+                            </a>
+                            <a class="fines-board-stat fines-board-stat-link" href="<?= APP_BASE ?>/public/borrower/fines.php#accruing-list">
                                 <span class="fines-board-stat-label">Overdue items</span>
                                 <strong class="<?= count($accruing) > 0 ? 'is-danger' : '' ?>"><?= count($accruing) ?></strong>
                                 <span class="fines-board-stat-note">Not yet returned</span>
-                            </div>
-                            <div class="fines-board-stat">
+                            </a>
+                            <a class="fines-board-stat fines-board-stat-link" href="<?= APP_BASE ?>/public/borrower/fines.php#charged-list">
                                 <span class="fines-board-stat-label">Charged &amp; unpaid</span>
                                 <strong class="<?= $unpaidTotal > 0 ? 'is-danger' : '' ?>"><?= $peso($unpaidTotal) ?></strong>
                                 <span class="fines-board-stat-note"><?= $unpaidCount ?> fine<?= $unpaidCount === 1 ? '' : 's' ?></span>
-                            </div>
-                            <div class="fines-board-stat">
+                            </a>
+                            <a class="fines-board-stat fines-board-stat-link" href="<?= APP_BASE ?>/public/borrower/fines.php#charged-list">
                                 <span class="fines-board-stat-label">Paid so far</span>
                                 <strong class="is-success"><?= $peso($paidTotal) ?></strong>
                                 <span class="fines-board-stat-note"><?= $paidCount ?> fine<?= $paidCount === 1 ? '' : 's' ?></span>
-                            </div>
+                            </a>
                         </div>
 
                         <?php if ($accruingTotal > 0): ?>

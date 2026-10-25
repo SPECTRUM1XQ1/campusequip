@@ -21,15 +21,15 @@
                 </div>
                 <div class="modal-field">
                     <label class="modal-label">Serial Number (Unique Barcode) *</label>
-                    <input type="text" class="input-field" name="serial_number" placeholder="e.g. SN-CAM-10204" required>
+                    <input type="text" class="input-field" name="serial_number" maxlength="100" placeholder="e.g. SN-CAM-10204" required>
                 </div>
                 <div class="modal-field">
                     <label class="modal-label">Storage Location</label>
-                    <input type="text" class="input-field" name="storage_location" placeholder="e.g. Lab Cabinet 3, Shelf B">
+                    <input type="text" class="input-field" name="storage_location" maxlength="100" placeholder="e.g. Lab Cabinet 3, Shelf B">
                 </div>
                 <div class="modal-field">
                     <label class="modal-label">Initial Condition Notes</label>
-                    <textarea class="input-field" name="condition_notes" placeholder="Brand new, includes lens cap & battery..."></textarea>
+                    <textarea class="input-field" name="condition_notes" maxlength="500" placeholder="Brand new, includes lens cap & battery..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">

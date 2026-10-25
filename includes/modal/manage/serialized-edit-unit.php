@@ -26,7 +26,7 @@
                 </div>
                 <div class="modal-field">
                     <label class="modal-label" for="eu_notes">Condition Notes</label>
-                    <textarea class="input-field" name="condition_notes" id="eu_notes"></textarea>
+                    <textarea class="input-field" name="condition_notes" maxlength="500" id="eu_notes"></textarea>
                 </div>
             </div>
             <div class="modal-footer">

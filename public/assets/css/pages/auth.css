@@ -341,3 +341,31 @@
     line-height: 1.5;
 }
 .auth-help i { flex: none; margin-top: 0.2rem; color: #fff; }
+
+/* ---- Small helper line under a field ---- */
+.field-hint {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.input-field.is-invalid {
+    border-color: #dc2626;
+}
+
+/* ---- Back to the landing page ---- */
+.login-right { position: relative; }
+.auth-back-home {
+    position: absolute;
+    top: 1.25rem;
+    left: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-decoration: none;
+}
+.auth-back-home:hover { color: var(--primary-brand); }

@@ -46,7 +46,7 @@
 
                 <div class="m-borrower-catalog-reserve-s9">
                     <label class="modal-label">Purpose of Use *</label>
-                    <textarea class="input-field" name="purpose" placeholder="e.g. Capstone project documentation, laboratory experiment..." required></textarea>
+                    <textarea class="input-field" name="purpose" maxlength="500" placeholder="e.g. Capstone project documentation, laboratory experiment..." required></textarea>
                 </div>
 
                 <label class="checkbox-row">

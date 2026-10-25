@@ -226,3 +226,66 @@
     padding: 1.5rem 0;
     margin: 0;
 }
+
+/* ---- Notifications: slide-in panel on the right side (admin, staff and borrower) ---- */
+
+#notificationModal.modal-overlay {
+    align-items: stretch;
+    justify-content: flex-end;
+    padding: 0;
+}
+
+#notificationModal.open {
+    animation: notif-backdrop-in 0.25s ease both;
+}
+
+#notificationModal .modal {
+    width: min(24rem, 100vw);
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 1rem 0 0 1rem;
+    animation: notif-panel-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+#notificationModal .notif-list {
+    flex: 1 1 auto;
+    max-height: none;
+    overflow-y: auto;
+}
+
+#notificationModal.closing {
+    animation: notif-backdrop-out 0.22s ease both;
+}
+
+#notificationModal.closing .modal {
+    animation: notif-panel-out 0.22s ease-in both;
+}
+
+#notificationModal .notif-item {
+    animation: notif-item-in 0.3s ease both;
+}
+
+#notificationModal .notif-item:nth-child(2) { animation-delay: 0.04s; }
+#notificationModal .notif-item:nth-child(3) { animation-delay: 0.08s; }
+#notificationModal .notif-item:nth-child(4) { animation-delay: 0.12s; }
+#notificationModal .notif-item:nth-child(n+5) { animation-delay: 0.16s; }
+
+@keyframes notif-backdrop-in  { from { background: rgba(15, 23, 42, 0); }    to { background: rgba(15, 23, 42, 0.55); } }
+@keyframes notif-backdrop-out { from { background: rgba(15, 23, 42, 0.55); } to { background: rgba(15, 23, 42, 0); } }
+@keyframes notif-panel-in     { from { transform: translateX(100%); }        to { transform: translateX(0); } }
+@keyframes notif-panel-out    { from { transform: translateX(0); }           to { transform: translateX(100%); } }
+@keyframes notif-item-in      { from { opacity: 0; transform: translateX(1rem); } to { opacity: 1; transform: translateX(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+    #notificationModal.open,
+    #notificationModal .modal,
+    #notificationModal .notif-item,
+    #notificationModal.closing,
+    #notificationModal.closing .modal {
+        animation: none;
+    }
+}

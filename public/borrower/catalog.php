@@ -47,7 +47,7 @@ $savedIds = (new Wishlist())->savedCatalogIds((int) $_SESSION['user_id']);
                                         <h3 class="borrower-catalog-s7">
                                             <?= htmlspecialchars($item['model_name']) ?>
                                         </h3>
-                                        <span style="background: <?= $avail > 0 ? '#dcfce7' : '#fee2e2' ?>; color: <?= $avail > 0 ? '#16a34a' : '#ef4444' ?>; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 9999px;">
+                                        <span class="catalog-stock-badge" style="background: <?= $avail > 0 ? '#dcfce7' : '#fee2e2' ?>; color: <?= $avail > 0 ? '#16a34a' : '#ef4444' ?>; font-size: 0.75rem; font-weight: 600; padding: 0.25rem 0.6rem; border-radius: 9999px;">
                                             <?= $avail > 0 ? "$avail Available" : 'Out of Stock' ?>
                                         </span>
                                     </div>

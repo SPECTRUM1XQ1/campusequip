@@ -38,7 +38,7 @@
                 </div>
                 <div class="modal-field">
                     <label class="modal-label" for="charge_reason">Reason *</label>
-                    <textarea class="input-field" id="charge_reason" name="reason" rows="3" placeholder="e.g. Cracked screen on return" required></textarea>
+                    <textarea class="input-field" id="charge_reason" maxlength="200" name="reason" rows="3" placeholder="e.g. Cracked screen on return" required></textarea>
                 </div>
             </div>
             <div class="modal-footer">

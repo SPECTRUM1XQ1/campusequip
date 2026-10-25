@@ -1,5 +1,5 @@
 <?php if (!defined('APP_INIT')) { http_response_code(403); exit; } ?>
-<div class="modal-overlay" id="notificationModal">
+<div class="modal-overlay notif-drawer-overlay" id="notificationModal">
     <div class="modal m-shared-notification-s1">
         <div class="modal-header">
             <div>

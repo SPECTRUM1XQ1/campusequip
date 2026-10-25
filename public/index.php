@@ -10,6 +10,6 @@ if (isset($_SESSION['user_id'])) {
         : APP_BASE . '/public/borrower/dashboard.php';
     header('Location: ' . $dest);
 } else {
-    header('Location: ' . APP_URL . '/login/login.php');
+    header('Location: ' . APP_URL . '/landing.php');
 }
 exit;

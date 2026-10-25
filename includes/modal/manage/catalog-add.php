@@ -12,7 +12,7 @@
             <div class="modal-body">
                 <div class="modal-field">
                     <label class="modal-label">Model Name *</label>
-                    <input type="text" class="input-field" name="model_name" placeholder="e.g. Sony Alpha A7 IV" required>
+                    <input type="text" class="input-field" name="model_name" maxlength="150" placeholder="e.g. Sony Alpha A7 IV" required>
                 </div>
                 <div class="grid-row grid-cols-2">
                     <div class="modal-field">
@@ -35,7 +35,7 @@
                 </div>
                 <div class="modal-field">
                     <label class="modal-label">Description</label>
-                    <textarea class="input-field" name="description" placeholder="Technical specifications, included accessories..."></textarea>
+                    <textarea class="input-field" name="description" maxlength="500" placeholder="Technical specifications, included accessories..."></textarea>
                 </div>
             </div>
             <div class="modal-footer">

@@ -12,7 +12,7 @@
                 <div class="confirm-note"><i class="ph ph-warning"></i><span id="waive-message"></span></div>
                 <div class="modal-field m-manage-fines-waive-s2">
                     <label class="modal-label" for="waive_reason">Reason for waiving *</label>
-                    <textarea class="input-field" id="waive_reason" name="reason" rows="3" placeholder="e.g. Item was held by the lab for inspection" required></textarea>
+                    <textarea class="input-field" id="waive_reason" maxlength="200" name="reason" rows="3" placeholder="e.g. Item was held by the lab for inspection" required></textarea>
                 </div>
             </div>
             <div class="modal-footer">

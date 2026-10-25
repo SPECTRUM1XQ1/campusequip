@@ -24,6 +24,7 @@ if (isset($_SESSION['user_id'])) {
     <meta name="app-base" content="<?= htmlspecialchars(APP_BASE) ?>">
     <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
     <script src="<?= APP_BASE ?>/public/assets/js/app-core.js?v=<?= @filemtime(__DIR__ . '/../assets/js/app-core.js') ?: 1 ?>"></script>
+    <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/vendor/phosphor/style.css?v=2.1.2">
     <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/base.css?v=<?= @filemtime(__DIR__ . '/../assets/css/base.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/shared/snackbar.css?v=<?= @filemtime(__DIR__ . '/../assets/css/shared/snackbar.css') ?: 1 ?>">
     <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/pages/auth.css?v=<?= @filemtime(__DIR__ . '/../assets/css/pages/auth.css') ?: 1 ?>">
@@ -55,6 +56,7 @@ if (isset($_SESSION['user_id'])) {
 
         <!-- Right Side: The Signup Form -->
         <div class="login-right">
+            <a class="auth-back-home" href="<?= APP_URL ?>/landing.php"><i class="ph ph-arrow-left" aria-hidden="true"></i>Back to home</a>
 
             <!-- THIS IS YOUR EXISTING SIGNUP CARD -->
             <div id="auth-container" class="auth-container max-w-signup">
@@ -72,39 +74,43 @@ if (isset($_SESSION['user_id'])) {
                         <div class="grid-row grid-cols-3">
                             <div class="form-group auth-signup-s7">
                                 <label class="input-label">Last Name</label>
-                                <input type="text" name="last_name" class="input-field" placeholder="e.g. Dela Cruz"
-                                    required>
+                                <input type="text" name="last_name" class="input-field" placeholder="e.g. Peralta"
+                                    maxlength="30" minlength="2" data-letters-only autocomplete="family-name" required>
                             </div>
                             <div class="form-group auth-signup-s7">
                                 <label class="input-label">First Name</label>
-                                <input type="text" name="first_name" class="input-field" placeholder="e.g. Juan"
-                                    required>
+                                <input type="text" name="first_name" class="input-field" placeholder="e.g. Justin"
+                                    maxlength="20" minlength="2" data-letters-only autocomplete="given-name" required>
                             </div>
                             <div class="form-group auth-signup-s7">
                                 <label class="input-label">Middle Name</label>
-                                <input type="text" name="middle_name" class="input-field" placeholder="e.g. C.">
+                                <input type="text" name="middle_name" class="input-field" placeholder="e.g. Candelario"
+                                    maxlength="20" data-letters-only autocomplete="additional-name">
                             </div>
                         </div>
 
                         <div class="grid-row grid-cols-2">
                             <div class="form-group auth-signup-s7">
                                 <label class="input-label">Student / Employee ID</label>
-                                <input type="text" name="id_number" class="input-field" placeholder="e.g. 202610201"
-                                    inputmode="numeric" pattern="[0-9]*" maxlength="30" data-digits-only
-                                    title="Numbers only" autocomplete="off" required>
+                                <input type="text" name="id_number" class="input-field" placeholder="03-01-2526-049080"
+                                    inputmode="numeric" pattern="[0-9]{2}-[0-9]{2}-[0-9]{4}-[0-9]{6}" maxlength="17"
+                                    data-id-format title="Format: 03-01-2526-049080" autocomplete="off" required>
+                                <small class="field-hint">Numbers only, the dashes are added for you.</small>
                             </div>
                             <div class="form-group auth-signup-s7">
                                 <label class="input-label">Phone Number</label>
-                                <input type="tel" name="phone" class="input-field" placeholder="09123456789"
-                                    inputmode="numeric" pattern="[0-9]{7,15}" minlength="7" maxlength="11" data-digits-only
-                                    title="Numbers only (7 to 15 digits)" required>
+                                <input type="tel" name="phone" class="input-field" placeholder="09171234567"
+                                    inputmode="numeric" pattern="09[0-9]{9}" minlength="11" maxlength="11" data-ph-phone
+                                    title="Philippine mobile number, 11 digits starting with 09" autocomplete="tel-national" required>
+                                <small class="field-hint">Philippine mobile number (09XXXXXXXXX).</small>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label class="input-label">Email</label>
-                            <input type="email" name="email" class="input-field" placeholder="student@univ.edu"
-                                required>
+                            <input type="email" name="email" class="input-field" placeholder="juca.peralta.up@phinmaed.com"
+                                maxlength="50" data-phinma-email autocapitalize="none" spellcheck="false" autocomplete="email" required>
+                            <small class="field-hint" id="email-hint">Your PHINMA email, like juca.peralta.up@phinmaed.com.</small>
                         </div>
 
                         <div class="grid-row grid-cols-2">
@@ -112,14 +118,17 @@ if (isset($_SESSION['user_id'])) {
                                 <label class="input-label">Password</label>
                                 <div class="password-wrapper">
                                     <input type="password" name="password" class="input-field"
-                                        placeholder="At least 8 characters" required>
+                                        placeholder="At least 8 characters" minlength="8" maxlength="64"
+                                        data-no-space autocomplete="new-password" required>
                                 </div>
+                                <small class="field-hint">8 to 64 characters, no spaces.</small>
                             </div>
                             <div class="form-group auth-signup-s7">
                                 <label class="input-label">Confirm Password</label>
                                 <div class="password-wrapper">
                                     <input type="password" name="confirm_password" class="input-field"
-                                        placeholder="Re-enter password" required>
+                                        placeholder="Re-enter password" maxlength="64"
+                                        data-no-space autocomplete="new-password" required>
                                 </div>
                             </div>
                         </div>

@@ -181,7 +181,7 @@ $attention = [
                             <div><dt>Application</dt><dd><?= htmlspecialchars(APP_NAME) ?></dd></div>
                             <div><dt>PHP version</dt><dd><?= htmlspecialchars(PHP_VERSION) ?></dd></div>
                             <div><dt>Database</dt><dd><?= $snap ? 'Connected' : 'Check the error log' ?></dd></div>
-                            <div><dt>Server time</dt><dd><?= htmlspecialchars(date('M j, g:i A')) ?></dd></div>
+                            <div><dt>Server time (Philippine time)</dt><dd><?= htmlspecialchars(date('M j, g:i A')) ?></dd></div>
                             <div><dt>Users</dt><dd><?= $n('users') ?></dd></div>
                             <div><dt>Equipment models</dt><dd><?= $n('models') ?></dd></div>
                             <div><dt>Serialized units</dt><dd><?= $n('units') ?></dd></div>
@@ -198,7 +198,7 @@ $attention = [
                         <div class="list-item">
                             <div class="list-info">
                                 <h5>Export records</h5>
-                                <p>View reservations, checkouts, fines or transaction logs, then print them or download a CSV for Excel / Google Sheets.</p>
+                                <p>Filter the borrowing records by borrower, equipment, status or date, then print them or export them straight to Excel.</p>
                             </div>
                             <a href="<?= APP_BASE ?>/public/admin/export.php" class="btn btn-outline btn-sm btn-rect"><i class="ph ph-export" aria-hidden="true"></i><span class="btn-text">Open Export</span></a>
                         </div>

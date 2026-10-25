@@ -19,6 +19,24 @@ $showFines = hasPermission('can_inspect_returns');
     'availableEquipment' => $availableEquipment, 'unpaidFines' => $unpaidFines,
 ] = (new Dashboard())->adminStats($showFines);
 
+// Each stat card links to the page where that number can be acted on, but only if this person may open it
+// (staff only get the pages their one job needs; see includes/navigation/sidebar-admin.php).
+$returnsPage = (($_SESSION['role'] ?? '') === 'admin')
+    ? APP_BASE . '/public/manage/checkouts.php'
+    : (hasPermission('can_inspect_returns') ? APP_BASE . '/public/staff/return.php' : null);
+$statLinks = [
+    'available' => hasPermission('can_manage_catalog') ? APP_BASE . '/public/manage/serialized.php' : null,
+    'active'    => $returnsPage,
+    'overdue'   => $returnsPage ? $returnsPage . '?filter=overdue' : null,
+    'pending'   => hasPermission('can_approve_requests') ? APP_BASE . '/public/manage/requests.php' : null,
+];
+$statOpen = function (string $key) use ($statLinks): string {
+    return !empty($statLinks[$key])
+        ? '<a href="' . htmlspecialchars($statLinks[$key]) . '" class="stat-card stat-card-link">'
+        : '<div class="stat-card">';
+};
+$statClose = fn(string $key): string => !empty($statLinks[$key]) ? '</a>' : '</div>';
+
 // Fetch lists for widgets
 $reservationModel = new Reservation();
 $equipmentModel   = new Equipment();
@@ -44,7 +62,7 @@ $recentLogs       = $logModel->listRecent(5);
 
             <!-- Real-time Stat Grid -->
             <div class="stats-grid">
-                <div class="stat-card">
+                <?= $statOpen('available') ?>
                     <div class="stat-details">
                         <span class="stat-label">Total Available</span>
                         <h3 class="stat-value"><?= $availableEquipment ?></h3>
@@ -52,9 +70,9 @@ $recentLogs       = $logModel->listRecent(5);
                     <div class="stat-icon primary">
                         <i class="ph ph-cpu manage-dashboard-s1"></i>
                     </div>
-                </div>
+                <?= $statClose('available') ?>
 
-                <div class="stat-card">
+                <?= $statOpen('active') ?>
                     <div class="stat-details">
                         <span class="stat-label">Active Checkouts</span>
                         <h3 class="stat-value"><?= $activeLoans ?></h3>
@@ -62,9 +80,9 @@ $recentLogs       = $logModel->listRecent(5);
                     <div class="stat-icon success">
                         <i class="ph ph-arrows-left-right manage-dashboard-s1"></i>
                     </div>
-                </div>
+                <?= $statClose('active') ?>
 
-                <div class="stat-card">
+                <?= $statOpen('overdue') ?>
                     <div class="stat-details">
                         <span class="stat-label">Overdue Items</span>
                         <h3 class="stat-value"><?= $overdueItems ?></h3>
@@ -72,10 +90,10 @@ $recentLogs       = $logModel->listRecent(5);
                     <div class="stat-icon danger">
                         <i class="ph ph-warning-circle manage-dashboard-s1"></i>
                     </div>
-                </div>
+                <?= $statClose('overdue') ?>
 
                 <?php if ($showFines): ?>
-                <a href="<?= APP_BASE ?>/public/manage/fines.php" class="stat-card manage-dashboard-s2">
+                <a href="<?= APP_BASE ?>/public/manage/fines.php?filter=unpaid" class="stat-card stat-card-link manage-dashboard-s2">
                     <div class="stat-details">
                         <span class="stat-label">Unpaid Fines</span>
                         <h3 class="stat-value">&#8369;<?= number_format((float) $unpaidFines['total'], 2) ?></h3>
@@ -87,7 +105,7 @@ $recentLogs       = $logModel->listRecent(5);
                 </a>
                 <?php endif; ?>
 
-                <div class="stat-card">
+                <?= $statOpen('pending') ?>
                     <div class="stat-details">
                         <span class="stat-label">Pending Requests</span>
                         <h3 class="stat-value" id="dash-pending-count"><?= $pendingRequests ?></h3>
@@ -95,7 +113,7 @@ $recentLogs       = $logModel->listRecent(5);
                     <div class="stat-icon warning">
                         <i class="ph ph-hourglass-medium manage-dashboard-s1"></i>
                     </div>
-                </div>
+                <?= $statClose('pending') ?>
             </div>
 
             <div class="dashboard-grid">

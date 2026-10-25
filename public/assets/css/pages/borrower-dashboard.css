@@ -248,3 +248,20 @@
 .borrower-dashboard-s7 {
     text-decoration: none;
 }
+
+/* ---- The four numbers are links to the Penalties & Fines page ---- */
+a.fines-board-stat {
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+a.fines-board-stat:hover {
+    border-color: var(--primary-brand);
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+a.fines-board-stat:focus-visible {
+    outline: 2px solid var(--primary-brand);
+    outline-offset: 2px;
+}

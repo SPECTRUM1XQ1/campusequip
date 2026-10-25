@@ -99,9 +99,22 @@
     }
 
     function init() {
+        // A link like fines.php?filter=unpaid opens the list with that pill already selected.
+        const wanted = new URLSearchParams(window.location.search).get('filter');
+        let preselected = false;
+
         document.querySelectorAll('[data-filter-group], [data-list]').forEach(function (el) {
             const list = { el: el, page: 1 };
             lists.push(list);
+
+            if (wanted && !preselected) {
+                const pill = Array.from(el.querySelectorAll('.filter-pill')).find(function (p) { return p.dataset.filter === wanted; });
+                if (pill) {
+                    el.querySelectorAll('.filter-pill').forEach(function (p) { p.classList.remove('active'); });
+                    pill.classList.add('active');
+                    preselected = true;
+                }
+            }
 
             el.addEventListener('click', function (e) {
                 const pill = e.target.closest('.filter-pill');

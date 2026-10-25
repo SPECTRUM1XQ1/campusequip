@@ -39,7 +39,7 @@
                 </div>
 
                 <div class="modal-field" id="decline-other-field" style="display: none;">
-                    <textarea class="input-field" id="decline_other" rows="3" placeholder="Enter reason details..."></textarea>
+                    <textarea class="input-field" id="decline_other" maxlength="200" rows="3" placeholder="Enter reason details..."></textarea>
                 </div>
 
                 <!-- The value actually sent to api/reservation/decline.php -->

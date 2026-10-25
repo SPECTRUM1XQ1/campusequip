@@ -305,7 +305,7 @@
     justify-content: center;
 }
 .m-shared-notification-s1 {
-    max-width: 26rem;
+    /* width is set by the drawer rules in shared/topbar.css */
 }
 .m-shared-notification-s2 {
     font-size: 1.1rem;

@@ -2,6 +2,7 @@
 define('APP_INIT', true);
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../src/User.php';
+require_once __DIR__ . '/../../src/Validation.php';
 
 app_session_start();
 
@@ -33,37 +34,33 @@ try {
             // last_name / first_name / middle_name, matching the users table's
             // real columns. Do not combine these into full_name here; that
             // was the bug that just broke this.
-            $lastName   = trim($_POST['last_name'] ?? '');
-            $firstName  = trim($_POST['first_name'] ?? '');
-            $middleName = trim($_POST['middle_name'] ?? '');
-            $email      = trim($_POST['email'] ?? '');
-            $idNumber   = trim($_POST['id_number'] ?? '');
-            $phone      = trim($_POST['phone'] ?? '');
-            $password   = $_POST['password'] ?? '';
-            $confirm    = $_POST['confirm_password'] ?? '';
+            $lastName   = Validation::cleanName((string) ($_POST['last_name'] ?? ''));
+            $firstName  = Validation::cleanName((string) ($_POST['first_name'] ?? ''));
+            $middleName = Validation::cleanName((string) ($_POST['middle_name'] ?? ''));
+            $email      = strtolower(trim((string) ($_POST['email'] ?? '')));
+            $idNumber   = Validation::normalizeId(trim((string) ($_POST['id_number'] ?? '')));
+            $phone      = Validation::normalizePhone(trim((string) ($_POST['phone'] ?? '')));
+            $password   = (string) ($_POST['password'] ?? '');
+            $confirm    = (string) ($_POST['confirm_password'] ?? '');
 
             if ($firstName === '' || $lastName === '' || $email === '' || $idNumber === '' || $password === '') {
                 echo json_encode(['success' => false, 'message' => 'Please fill in all required fields.']);
                 exit;
             }
-            if (!ctype_digit($idNumber) || strlen($idNumber) > 30) {
-                echo json_encode(['success' => false, 'message' => 'Student / Employee ID must contain numbers only.']);
-                exit;
+
+            // Same rules the sign-up form applies while typing (see src/Validation.php).
+            $error = Validation::name($lastName, 'Last name', Validation::LAST_NAME_MAX)
+                ?? Validation::name($firstName, 'First name', Validation::FIRST_NAME_MAX)
+                ?? Validation::name($middleName, 'Middle name', Validation::MIDDLE_NAME_MAX, false)
+                ?? Validation::idNumber($idNumber)
+                ?? ($phone !== '' ? Validation::phone($phone) : null)
+                ?? Validation::email($email)
+                ?? Validation::password($password);
+            if ($error === null && $password !== $confirm) {
+                $error = 'Passwords do not match.';
             }
-            if ($phone !== '' && (!ctype_digit($phone) || strlen($phone) < 7 || strlen($phone) > 15)) {
-                echo json_encode(['success' => false, 'message' => 'Phone number must contain numbers only (7 to 15 digits).']);
-                exit;
-            }
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
-                exit;
-            }
-            if (strlen($password) < 8) {
-                echo json_encode(['success' => false, 'message' => 'Password must be at least 8 characters.']);
-                exit;
-            }
-            if ($password !== $confirm) {
-                echo json_encode(['success' => false, 'message' => 'Passwords do not match.']);
+            if ($error !== null) {
+                echo json_encode(['success' => false, 'message' => $error]);
                 exit;
             }
 
@@ -81,12 +78,25 @@ try {
         case 'login':
             // "identifier" is whatever was typed into the single sign-in field —
             // could be an email or a Student/Employee ID, User::login() checks both.
-            $identifier = trim($_POST['identifier'] ?? '');
-            $password   = $_POST['password'] ?? '';
+            $identifier = trim((string) ($_POST['identifier'] ?? ''));
+            $password   = (string) ($_POST['password'] ?? '');
 
             if ($identifier === '' || $password === '') {
                 echo json_encode(['success' => false, 'message' => 'Please enter your email/ID and password.']);
                 exit;
+            }
+            if (strlen($identifier) > Validation::IDENTIFIER_MAX || preg_match('/\s/', $identifier)) {
+                echo json_encode(['success' => false, 'message' => 'Invalid email/ID or password.']);
+                exit;
+            }
+            if (preg_match('/\s/', $password) || strlen($password) > Validation::PASSWORD_MAX) {
+                echo json_encode(['success' => false, 'message' => 'Passwords cannot contain spaces.']);
+                exit;
+            }
+            // 14 digits typed without dashes are looked up as 03-01-2526-049080; emails are not case sensitive.
+            $identifier = Validation::normalizeId($identifier);
+            if (strpos($identifier, '@') !== false) {
+                $identifier = strtolower($identifier);
             }
 
             echo json_encode($user->login($identifier, $password));
