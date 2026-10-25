@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../includes/helpers/pickup-helpers.php';
 requireRole(['borrower']);
 
 $pageTitle = 'Borrowing & Requests';
-$pageStyles = ['shared/borrower', 'pages/borrower-my-requests'];
+$pageStyles = ['shared/borrower', 'shared/collapse', 'pages/borrower-my-requests'];
 
 $reservationModel = new Reservation();
 $reservationModel->expireLapsedPickups(); // cancel approved reservations whose pick-up window has ended
@@ -47,6 +47,50 @@ function detailLine(string $label, string $value): string
 {
     return '<div class="loan-row"><span class="label">' . htmlspecialchars($label) . '</span><span class="value">' . htmlspecialchars($value) . '</span></div>';
 }
+
+// One card in the "Pending Request" tab (a request waiting for staff, or approved and waiting for pick-up).
+function renderPendingCard(array $r): string
+{
+    $isApproved = ($r['status'] === 'approved');
+    $win = pickupWindowFor($r);
+    ob_start();
+?>
+<div class="item-card loan-card">
+                            <div class="loan-card-head">
+                                <h3 class="loan-card-title"><?= htmlspecialchars($r['model_name']) ?></h3>
+                                <?= $isApproved ? pill('Approved — Ready for Pickup', 'info') : pill('Pending Request', 'warning') ?>
+                            </div>
+                            <div class="loan-card-body">
+                                <?php if ($isApproved): ?>
+                                    <?= detailLine('Serial Number', $r['serial_number'] ?: '—') ?>
+                                <?php endif; ?>
+                                <?= detailLine('Request Code', 'REQ-' . (int) $r['reservation_id']) ?>
+                                <div class="loan-row">
+                                    <span class="label">Pick-Up Window<?php if (!$isApproved): ?><small>once approved</small><?php endif; ?></span>
+                                    <span class="value">
+                                        <?= $win['text'] ?>
+                                        <?php if ($isApproved): ?>
+                                            <span class="loan-row-extra"><?= pickupCountdownTag($win, '', 'Pick-up window ended — this reservation is cancelled') ?></span>
+                                        <?php endif; ?>
+                                    </span>
+                                </div>
+                                <?= detailLine('Purpose', $r['purpose'] ?: '—') ?>
+                                <?= detailLine('Status', $isApproved ? 'Approved — bring your ID to the Lab Desk to pick it up' : 'Awaiting Staff Approval') ?>
+                            </div>
+                            <div class="loan-card-foot">
+                                <span class="loan-card-hint">ID validation required at pickup. Not collected in time = reservation cancelled.</span>
+                                <button type="button" class="btn btn-sm btn-outline-danger btn-rect cancel-btn"
+                                    data-id="<?= (int) $r['reservation_id'] ?>"
+                                    data-model="<?= htmlspecialchars($r['model_name'], ENT_QUOTES) ?>"><i class="ph ph-x-circle" aria-hidden="true"></i><span class="btn-text">Cancel Request</span></button>
+                            </div>
+                        </div>
+<?php
+    return (string) ob_get_clean();
+}
+
+// The Pending tab shows two separate rows: approved (top) and still waiting for staff (bottom).
+$approvedRows = array_values(array_filter($pending, fn($r) => $r['status'] === 'approved'));
+$waitingRows  = array_values(array_filter($pending, fn($r) => $r['status'] === 'pending'));
 
 function emptyState(string $icon, string $message): string
 {
@@ -130,51 +174,40 @@ function emptyState(string $icon, string $message): string
                     <div class="pager" id="borrowed-pager"></div>
                 </div>
 
-                <!-- PENDING REQUESTS (pending + approved-awaiting-pickup) -->
-                <div id="content-pending" hidden data-list data-items="#content-pending .item-card" data-page-size="6" data-pager="#pending-pager">
-                    <h4 class="section-eyebrow">Awaiting Staff Sign-Off &amp; Pickup</h4>
-
+                <!-- PENDING REQUESTS: two collapsible groups (approved, then waiting). Each is a 3-column grid, 2 rows (6 cards) per page. -->
+                <div id="content-pending" hidden>
                     <?php if (empty($pending)): ?>
+                        <h4 class="section-eyebrow">Awaiting Staff Sign-Off &amp; Pickup</h4>
                         <?= emptyState('ph-hourglass', 'You have no pending requests.') ?>
                     <?php endif; ?>
 
-                    <div class="loan-grid">
-                    <?php foreach ($pending as $r):
-                        $isApproved = ($r['status'] === 'approved');
-                        $win = pickupWindowFor($r);
-                    ?>
-                        <div class="item-card loan-card">
-                            <div class="loan-card-head">
-                                <h3 class="loan-card-title"><?= htmlspecialchars($r['model_name']) ?></h3>
-                                <?= $isApproved ? pill('Approved — Ready for Pickup', 'info') : pill('Pending Request', 'warning') ?>
+                    <?php foreach ([
+                        ['approved', 'Approved &mdash; ready for pick-up', 'ph-check-circle', 'collapse-count--info',    $approvedRows],
+                        ['waiting',  'Waiting for staff approval',         'ph-hourglass',     'collapse-count--warning', $waitingRows],
+                    ] as [$key, $title, $icon, $countClass, $rows]):
+                        if (!$rows) continue; ?>
+                        <section class="collapse-section req-group req-group--<?= $key ?>" data-collapse="requests-<?= $key ?>">
+                            <h4 class="section-eyebrow collapse-heading">
+                                <button type="button" class="collapse-toggle" aria-expanded="true" aria-controls="collapse-requests-<?= $key ?>" data-collapse-toggle>
+                                    <i class="ph <?= $icon ?> collapse-icon" aria-hidden="true"></i>
+                                    <span class="collapse-title"><?= $title ?></span>
+                                    <span class="collapse-count <?= $countClass ?>"><?= count($rows) ?></span>
+                                    <i class="ph ph-caret-down collapse-chevron" aria-hidden="true"></i>
+                                </button>
+                            </h4>
+
+                            <div class="collapse-body" id="collapse-requests-<?= $key ?>">
+                                <div class="collapse-inner"><div class="collapse-content">
+                                    <div class="req-grid" id="req-<?= $key ?>-grid" data-list data-items="#req-<?= $key ?>-grid > .req-cell" data-page-size="6" data-pager="#req-<?= $key ?>-pager">
+                                        <?php foreach ($rows as $r): ?>
+                                            <div class="req-cell"><?= renderPendingCard($r) ?></div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <div class="pager" id="req-<?= $key ?>-pager"></div>
+                                </div></div>
                             </div>
-                            <div class="loan-card-body">
-                                <?php if ($isApproved): ?>
-                                    <?= detailLine('Serial Number', $r['serial_number'] ?: '—') ?>
-                                <?php endif; ?>
-                                <?= detailLine('Request Code', 'REQ-' . (int) $r['reservation_id']) ?>
-                                <div class="loan-row">
-                                    <span class="label">Pick-Up Window<?php if (!$isApproved): ?><small>once approved</small><?php endif; ?></span>
-                                    <span class="value">
-                                        <?= $win['text'] ?>
-                                        <?php if ($isApproved): ?>
-                                            <span class="loan-row-extra"><?= pickupCountdownTag($win, '', 'Pick-up window ended — this reservation is cancelled') ?></span>
-                                        <?php endif; ?>
-                                    </span>
-                                </div>
-                                <?= detailLine('Purpose', $r['purpose'] ?: '—') ?>
-                                <?= detailLine('Status', $isApproved ? 'Approved — bring your ID to the Lab Desk to pick it up' : 'Awaiting Staff Approval') ?>
-                            </div>
-                            <div class="loan-card-foot">
-                                <span class="loan-card-hint">ID validation required at pickup. Not collected in time = reservation cancelled.</span>
-                                <button type="button" class="btn btn-sm btn-outline-danger btn-rect cancel-btn"
-                                    data-id="<?= (int) $r['reservation_id'] ?>"
-                                    data-model="<?= htmlspecialchars($r['model_name'], ENT_QUOTES) ?>"><i class="ph ph-x-circle" aria-hidden="true"></i><span class="btn-text">Cancel Request</span></button>
-                            </div>
-                        </div>
+                        </section>
                     <?php endforeach; ?>
-                    </div>
-                    <div class="pager" id="pending-pager"></div>
                 </div>
 
                 <!-- HISTORY -->
@@ -258,6 +291,7 @@ function emptyState(string $icon, string $message): string
 
     <?php include __DIR__ . '/../../includes/navigation/footer.php'; ?>
     <script src="<?= APP_BASE ?>/public/assets/js/filters.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/filters.js') ?: 1 ?>"></script>
+    <script src="<?= APP_BASE ?>/public/assets/js/collapse.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/collapse.js') ?: 1 ?>"></script>
     <script src="<?= APP_BASE ?>/public/assets/js/countdown.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/countdown.js') ?: 1 ?>"></script>
 
     <script src="<?= APP_BASE ?>/public/assets/js/pages/borrower-my-requests.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/pages/borrower-my-requests.js') ?: 1 ?>"></script>

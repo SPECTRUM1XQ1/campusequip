@@ -67,6 +67,14 @@ Never hand-write an Edit button; call `<?= edit_button(['id' => $id], 'optional-
 Long lists use `data-page-size` + `data-pager` (see `filters.js`): tables 10 rows, card grids 6 (catalog 9, wishlist columns 4).
 Paged lists: all admin/manage tables, Catalog, Borrowing & Requests (all three tabs), Fines, Wishlist (both columns).
 
+## Collapsible sections
+
+A section that can fold away uses `shared/collapse.css` + `assets/js/collapse.js` (markup is documented at the top of the CSS file).
+The height-and-fade animation is pure CSS (a grid row going from `1fr` to `0fr`); the script only flips `.is-collapsed` and
+`aria-expanded`, and remembers the choice for the browser tab so a page that reloads after an action keeps its sections as they were.
+Used on Fines & Penalties (Overdue, Charged Fines) and Borrowing & Requests > Pending Request (Approved, Waiting).
+Pending Request cards sit in a 3-column grid (2 rows = 6 per page), dropping to 2 and 1 columns when the group is narrow.
+
 ## Contrast
 
 Status text uses `--success-text` (#15803d) and `--danger-text` (#b91c1c), both at least 4.5:1 on white and on their tinted badge

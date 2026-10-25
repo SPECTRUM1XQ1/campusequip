@@ -86,3 +86,40 @@
     gap: 0.4rem;
     white-space: nowrap;
 }
+
+
+/* ---- Pending tab: two collapsible groups (approved on top, waiting below), each a 3-column grid ----
+   The header bar, count badge and fold animation come from shared/collapse.css. Six cards (2 rows x 3 columns)
+   show per page; the pager under the grid (filters.js) takes care of the rest. */
+
+.req-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+/* every card in a row is as tall as the tallest one, with its footer pinned to the bottom */
+.req-cell { display: flex; min-width: 0; }
+
+.req-cell .loan-card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin: 0;
+}
+
+/* the label column is a little narrower here so three cards fit side by side */
+.req-grid .loan-row { grid-template-columns: 6.5rem minmax(0, 1fr); }
+
+/* Fewer columns when the group itself is narrow. This looks at the width the group really has (it already
+   accounts for the sidebar), not at the screen width, so 3 columns stay as long as three cards fit. */
+.req-group { container-type: inline-size; }
+
+@container (max-width: 60rem) {
+    .req-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container (max-width: 38rem) {
+    .req-grid { grid-template-columns: minmax(0, 1fr); }
+}

@@ -1,0 +1,125 @@
+/*
+ * shared/collapse.css
+ * Collapsible sections (a header bar that folds its content away with a smooth height + fade animation).
+ * Behaviour lives in assets/js/collapse.js. Load it from $pageStyles: 'shared/collapse'.
+ *
+ * Markup:
+ *   <section class="collapse-section" data-collapse="unique-key">
+ *     <h4 class="section-eyebrow collapse-heading">
+ *       <button type="button" class="collapse-toggle" aria-expanded="true" aria-controls="collapse-unique-key" data-collapse-toggle>
+ *         <i class="ph ph-... collapse-icon"></i><span class="collapse-title">Title</span>
+ *         <span class="collapse-count">3</span><i class="ph ph-caret-down collapse-chevron"></i>
+ *       </button>
+ *     </h4>
+ *     <div class="collapse-body" id="collapse-unique-key">
+ *       <div class="collapse-inner"><div class="collapse-content"> ...anything... </div></div>
+ *     </div>
+ *   </section>
+ *
+ * How the animation works: .collapse-body is a one-row grid whose row goes from 1fr to 0fr. A grid row can be
+ * animated even though the content height is "auto", so no JavaScript has to measure anything.
+ */
+
+.collapse-section + .collapse-section { margin-top: 1.5rem; }
+
+.collapse-heading { margin-bottom: 0.75rem; }
+
+/* ---- Header bar ---- */
+.collapse-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06);
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    /* colour changes only: the bar never moves on hover (see UI_GUIDE.md) */
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.collapse-toggle:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: #334155;
+}
+
+.collapse-toggle:focus-visible {
+    outline: 2px solid var(--ring-color, #93c5fd);
+    outline-offset: 2px;
+}
+
+.collapse-icon { flex: 0 0 auto; font-size: 1.1rem; }
+
+.collapse-title { flex: 1 1 auto; min-width: 0; }
+
+.collapse-chevron {
+    flex: 0 0 auto;
+    font-size: 1rem;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Down while open, turned to point right while folded. */
+.collapse-section.is-collapsed .collapse-chevron { transform: rotate(-90deg); }
+
+/* ---- Count badge (stays visible while folded so the person knows what is inside) ---- */
+.collapse-count {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    min-width: 1.4rem;
+    height: 1.4rem;
+    padding: 0 0.4rem;
+    border-radius: 9999px;
+    background: #e0e7ff;
+    color: #3730a3;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+.collapse-count--info    { background: #dbeafe; color: #1e40af; }
+.collapse-count--warning { background: #fef08a; color: #854d0e; }
+.collapse-count--danger  { background: #fee2e2; color: #b91c1c; }
+
+/* ---- The folding part ---- */
+.collapse-body {
+    display: grid;
+    grid-template-rows: 1fr;
+    opacity: 1;
+    transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease 0.05s;
+}
+
+/* min-height:0 + overflow:hidden lets the row shrink all the way to 0 */
+.collapse-inner { min-height: 0; overflow: hidden; }
+
+/* a little padding so card shadows and focus rings are not clipped by the overflow above */
+.collapse-content { padding: 0.25rem; }
+
+.collapse-section.is-collapsed .collapse-body {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    /* visibility flips after the fold finishes: folded content cannot be tabbed into or read by a screen reader */
+    visibility: hidden;
+    transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.2s ease,
+                visibility 0s linear 0.35s;
+}
+
+/* used for one frame on page load, so a section that was left folded does not animate shut when the page opens */
+.collapse-section.no-anim .collapse-body,
+.collapse-section.no-anim .collapse-chevron { transition: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    .collapse-body,
+    .collapse-section.is-collapsed .collapse-body,
+    .collapse-chevron,
+    .collapse-toggle { transition: none; }
+}

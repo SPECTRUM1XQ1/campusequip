@@ -7,7 +7,7 @@ requireRole(['admin', 'staff']);
 requirePermission('can_inspect_returns');
 
 $pageTitle = 'Fines & Penalties';
-$pageStyles = ['pages/manage-fines'];
+$pageStyles = ['shared/collapse', 'pages/manage-fines'];
 
 $fineModel   = new Fine();
 $fines       = $fineModel->listAllDetailed();
@@ -68,8 +68,18 @@ function peso(float $n): string
                 </div>
 
                 <!-- Overdue loans that are still out: fine grows daily, charged on return -->
-                <h4 class="section-eyebrow">Overdue &mdash; Fines Accruing</h4>
-                <div class="table-card manage-fines-s1">
+                <section class="collapse-section" data-collapse="fines-accruing">
+                <h4 class="section-eyebrow collapse-heading">
+                    <button type="button" class="collapse-toggle" aria-expanded="true" aria-controls="collapse-fines-accruing" data-collapse-toggle>
+                        <i class="ph ph-warning-circle collapse-icon" aria-hidden="true"></i>
+                        <span class="collapse-title">Overdue &mdash; Fines Accruing</span>
+                        <span class="collapse-count<?= empty($accruing) ? '' : ' collapse-count--danger' ?>"><?= count($accruing) ?></span>
+                        <i class="ph ph-caret-down collapse-chevron" aria-hidden="true"></i>
+                    </button>
+                </h4>
+                <div class="collapse-body" id="collapse-fines-accruing">
+                <div class="collapse-inner"><div class="collapse-content">
+                <div class="table-card">
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -118,8 +128,21 @@ function peso(float $n): string
                 </div>
                 <div hidden data-list data-items="#accruing-tbody tr[data-row]" data-page-size="10" data-pager="#accruing-pager" data-pager-always></div>
                 <div class="pager" id="accruing-pager"></div>
+                </div></div>
+                </div>
+                </section>
 
-                <h4 class="section-eyebrow">Charged Fines</h4>
+                <section class="collapse-section" data-collapse="fines-charged">
+                <h4 class="section-eyebrow collapse-heading">
+                    <button type="button" class="collapse-toggle" aria-expanded="true" aria-controls="collapse-fines-charged" data-collapse-toggle>
+                        <i class="ph ph-receipt collapse-icon" aria-hidden="true"></i>
+                        <span class="collapse-title">Charged Fines</span>
+                        <span class="collapse-count"><?= count($fines) ?></span>
+                        <i class="ph ph-caret-down collapse-chevron" aria-hidden="true"></i>
+                    </button>
+                </h4>
+                <div class="collapse-body" id="collapse-fines-charged">
+                <div class="collapse-inner"><div class="collapse-content">
                 <div class="requests-toolbar">
                     <p class="results-count">
                         Showing <strong id="visible-count"><?= count($fines) ?></strong> of <strong id="total-count"><?= count($fines) ?></strong> fines
@@ -223,6 +246,9 @@ function peso(float $n): string
                     </table>
                 </div>
                 <div class="pager" id="fines-pager"></div>
+                </div></div>
+                </div>
+                </section>
             </section>
 
             <?php if ($isAdmin): ?>
@@ -240,6 +266,7 @@ function peso(float $n): string
 
     <?php include __DIR__ . '/../../includes/navigation/footer.php'; ?>
     <script src="<?= APP_BASE ?>/public/assets/js/filters.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/filters.js') ?: 1 ?>"></script>
+    <script src="<?= APP_BASE ?>/public/assets/js/collapse.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/collapse.js') ?: 1 ?>"></script>
 
     <?php if ($isAdmin): ?>
     <script src="<?= APP_BASE ?>/public/assets/js/pages/manage-fines.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/pages/manage-fines.js') ?: 1 ?>"></script>
