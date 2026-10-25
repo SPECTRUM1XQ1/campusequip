@@ -49,7 +49,7 @@ function pill(string $text, string $variant): string
 /** $valueHtml is printed AS HTML, so callers must escape any user text first (see htmlspecialchars() at each call). */
 function detailLine(string $label, string $valueHtml): string
 {
-    return '<div><span class="label">' . htmlspecialchars($label) . ':</span> ' . $valueHtml . '</div>';
+    return '<div class="loan-row"><span class="label">' . htmlspecialchars($label) . '</span><span class="value">' . $valueHtml . '</span></div>';
 }
 
 function emptyState(string $icon, string $message): string

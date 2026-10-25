@@ -45,7 +45,7 @@ function pill(string $text, string $variant): string
 // One "Label: value" line inside a card.
 function detailLine(string $label, string $value): string
 {
-    return '<div><span class="label">' . htmlspecialchars($label) . ':</span> ' . htmlspecialchars($value) . '</div>';
+    return '<div class="loan-row"><span class="label">' . htmlspecialchars($label) . '</span><span class="value">' . htmlspecialchars($value) . '</span></div>';
 }
 
 function emptyState(string $icon, string $message): string
@@ -153,12 +153,14 @@ function emptyState(string $icon, string $message): string
                                     <?= detailLine('Serial Number', $r['serial_number'] ?: '—') ?>
                                 <?php endif; ?>
                                 <?= detailLine('Request Code', 'REQ-' . (int) $r['reservation_id']) ?>
-                                <div>
-                                    <span class="label"><?= $isApproved ? 'Pick-Up Window' : 'Pick-Up Window (once approved)' ?>:</span>
-                                    <?= $win['text'] ?>
-                                    <?php if ($isApproved): ?>
-                                        <br><?= pickupCountdownTag($win, '', 'Pick-up window ended — this reservation is cancelled') ?>
-                                    <?php endif; ?>
+                                <div class="loan-row">
+                                    <span class="label">Pick-Up Window<?php if (!$isApproved): ?><small>once approved</small><?php endif; ?></span>
+                                    <span class="value">
+                                        <?= $win['text'] ?>
+                                        <?php if ($isApproved): ?>
+                                            <span class="loan-row-extra"><?= pickupCountdownTag($win, '', 'Pick-up window ended — this reservation is cancelled') ?></span>
+                                        <?php endif; ?>
+                                    </span>
                                 </div>
                                 <?= detailLine('Purpose', $r['purpose'] ?: '—') ?>
                                 <?= detailLine('Status', $isApproved ? 'Approved — bring your ID to the Lab Desk to pick it up' : 'Awaiting Staff Approval') ?>

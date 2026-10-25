@@ -245,7 +245,8 @@ $dueTime = date('g:i A', strtotime(LOAN_DUE_TIME));
 
         <!-- ===== Desk + final call ===== -->
         <section class="lp-section" id="help">
-            <div class="lp-wrap lp-final">
+            <div class="lp-wrap">
+            <div class="lp-final">
                 <div>
                     <p class="lp-kicker">Equipment desk</p>
                     <h2>Ready to borrow?</h2>
@@ -263,6 +264,7 @@ $dueTime = date('g:i A', strtotime(LOAN_DUE_TIME));
                         <?php if ($deskContact !== ''): ?><p><i class="ph ph-headset" aria-hidden="true"></i><?= $h($deskContact) ?></p><?php endif; ?>
                     </aside>
                 <?php endif; ?>
+            </div>
             </div>
         </section>
     </main>
