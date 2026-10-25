@@ -101,7 +101,13 @@
 .collapse-inner { min-height: 0; overflow: hidden; }
 
 /* a little padding so card shadows and focus rings are not clipped by the overflow above */
-.collapse-content { padding: 0.25rem; }
+.collapse-content { padding: 0.5rem 0.5rem 0.75rem; }
+
+/* cards inside a fold lift with a tighter shadow, so the fold's clipping edge does not cut it off */
+@media (hover: hover) {
+    .collapse-content .loan-card:hover,
+    .collapse-content .item-card:hover { box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08); }
+}
 
 .collapse-section.is-collapsed .collapse-body {
     grid-template-rows: 0fr;

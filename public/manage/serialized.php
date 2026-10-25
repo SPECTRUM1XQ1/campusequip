@@ -55,7 +55,7 @@ $statusClasses = [
                     <button type="button" class="btn btn-primary btn-sm btn-rect" data-open-modal="addUnitModal"><i class="ph ph-plus" aria-hidden="true"></i><span class="btn-text">Register New Unit</span></button>
                 </div>
 
-                <div hidden data-list data-items="#serial-tbody tr[data-row]" data-page-size="10" data-pager="#serial-pager"
+                <div hidden data-list data-items="#serial-tbody tr[data-row]" data-page-size="10" data-pager="#serial-pager" data-pager-always
                      data-empty="#filter-empty-row" data-visible="#visible-count" data-total="#total-count"></div>
 
                 <div class="table-card table-card--compact">

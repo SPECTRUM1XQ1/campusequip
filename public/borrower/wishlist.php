@@ -116,7 +116,7 @@ function savedCard(array $item, bool $isAvailable): void
                             <?php if (empty($unavailable)): ?>
                                 <p class="text-muted">Everything you saved is available right now.</p>
                             <?php endif; ?>
-                            <div id="saved-unavailable" data-list data-items="#saved-unavailable .saved-card" data-page-size="4" data-pager="#unavailable-pager">
+                            <div id="saved-unavailable" data-list data-items="#saved-unavailable .saved-card" data-page-size="4" data-pager="#unavailable-pager" data-pager-always>
                                 <?php foreach ($unavailable as $item) { savedCard($item, false); } ?>
                             </div>
                             <div class="pager" id="unavailable-pager"></div>
@@ -127,7 +127,7 @@ function savedCard(array $item, bool $isAvailable): void
                             <?php if (empty($available)): ?>
                                 <p class="text-muted">None of your saved items are available right now.</p>
                             <?php endif; ?>
-                            <div id="saved-available" data-list data-items="#saved-available .saved-card" data-page-size="4" data-pager="#available-pager">
+                            <div id="saved-available" data-list data-items="#saved-available .saved-card" data-page-size="4" data-pager="#available-pager" data-pager-always>
                                 <?php foreach ($available as $item) { savedCard($item, true); } ?>
                             </div>
                             <div class="pager" id="available-pager"></div>

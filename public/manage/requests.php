@@ -32,7 +32,7 @@ $totalPending = count($requests);
                     </p>
 
                     <div class="filter-group" role="group" aria-label="Filter requests by start date"
-                         data-filter-group data-items="#requests-tbody tr[data-tags]" data-page-size="10" data-pager="#requests-pager" data-empty="#filter-empty-row"
+                         data-filter-group data-items="#requests-tbody tr[data-tags]" data-page-size="10" data-pager="#requests-pager" data-pager-always data-empty="#filter-empty-row"
                          data-visible="#visible-count" data-total="#total-count">
                         <span class="filter-label">Filter:</span>
                         <button type="button" class="filter-pill active" data-filter="all">All</button>

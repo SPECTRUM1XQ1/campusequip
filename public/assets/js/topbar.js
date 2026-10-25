@@ -69,7 +69,20 @@ function liveSearch() {
         items.forEach(item => {
             const row = document.createElement(item.href ? 'a' : 'div');
             row.className = 'notif-item notif-' + item.tone + (item.ts > seen ? ' notif-unread' : '');
-            if (item.href) row.href = item.href;
+            if (item.href) {
+                row.href = item.href;
+                // A link that only changes the #part of the page we are already on (e.g. Borrowing & Requests
+                // #pending -> #history) does not load anything, so the browser would do nothing and the panel would
+                // stay open. Handle it here: close the panel and tell the page the #part changed.
+                row.addEventListener('click', e => {
+                    const url = new URL(row.href, location.href);
+                    if (!url.hash || url.pathname !== location.pathname || url.search !== location.search) return;   // other page: normal navigation
+                    e.preventDefault();
+                    window.closeModal('notificationModal');
+                    if (location.hash !== url.hash) location.hash = url.hash;                                       // fires "hashchange"
+                    else window.dispatchEvent(new HashChangeEvent('hashchange'));                                   // same #part: still tell the page
+                });
+            }
 
             const icon = document.createElement('i');
             icon.className = 'ph ' + item.icon + ' notif-icon';

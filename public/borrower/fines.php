@@ -107,7 +107,7 @@ function emptyState(string $icon, string $message): string
                     <?= emptyState('ph-check-circle', 'No overdue items. Nothing is growing right now.') ?>
                 <?php endif; ?>
 
-                <div hidden data-list data-items="#accruing-list .loan-card" data-page-size="6" data-pager="#accruing-pager"></div>
+                <div hidden data-list data-items="#accruing-list .loan-card" data-page-size="6" data-pager="#accruing-pager" data-pager-always></div>
                 <div id="accruing-list" class="loan-grid">
                 <?php foreach ($accruing as $a):
                     $rate = (float) $a['late_fine_rate'];
@@ -148,7 +148,7 @@ function emptyState(string $icon, string $message): string
                     <?= emptyState('ph-receipt', 'You have no charged fines.') ?>
                 <?php endif; ?>
 
-                <div hidden data-list data-items="#charged-list .loan-card" data-page-size="6" data-pager="#charged-pager"></div>
+                <div hidden data-list data-items="#charged-list .loan-card" data-page-size="6" data-pager="#charged-pager" data-pager-always></div>
                 <div id="charged-list" class="loan-grid">
                 <?php foreach ($fines as $f):
                     $statusPill = $f['payment_status'] === 'unpaid' ? pill('Unpaid', 'danger')

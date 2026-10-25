@@ -1,0 +1,158 @@
+/*
+ * shared/motion.css
+ * Movement for the whole system: page entrance, card hover, modal pop, tab fade, and the paging feel
+ * (page dots, swipe hint, slide-in of the new page). Loaded on every page by includes/html-head.php.
+ *
+ * House rules (see docs/UI_GUIDE.md): no gradients; hover never moves a table or a table row; every animation is
+ * switched off for people who asked their system for reduced motion (last block of this file).
+ */
+
+:root {
+    --ce-ease: cubic-bezier(0.22, 1, 0.36, 1);   /* quick start, soft landing */
+}
+
+/* ---------------------------------------------------------------- Page entrance */
+
+@keyframes ce-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* The blocks of a page rise in one after the other. "backwards" means nothing is left applied afterwards, so no
+   leftover transform can trap a fixed-position modal inside a card. */
+:is(.requests-page, .page-body, .stats-grid, .catalog-stats, .fine-summary, .dashboard-grid, .borrower-catalog-s1) > :not(.modal-overlay) {
+    animation: ce-rise 0.5s var(--ce-ease) backwards;
+}
+:is(.requests-page, .page-body, .stats-grid, .catalog-stats, .fine-summary, .dashboard-grid, .borrower-catalog-s1) > :nth-child(2) { animation-delay: 0.06s; }
+:is(.requests-page, .page-body, .stats-grid, .catalog-stats, .fine-summary, .dashboard-grid, .borrower-catalog-s1) > :nth-child(3) { animation-delay: 0.12s; }
+:is(.requests-page, .page-body, .stats-grid, .catalog-stats, .fine-summary, .dashboard-grid, .borrower-catalog-s1) > :nth-child(4) { animation-delay: 0.18s; }
+:is(.requests-page, .page-body, .stats-grid, .catalog-stats, .fine-summary, .dashboard-grid, .borrower-catalog-s1) > :nth-child(5) { animation-delay: 0.24s; }
+:is(.requests-page, .page-body, .stats-grid, .catalog-stats, .fine-summary, .dashboard-grid, .borrower-catalog-s1) > :nth-child(n+6) { animation-delay: 0.3s; }
+
+/* Borrowing & Requests tabs: the tab you switch to fades up. */
+.tabs ~ div[id^="content-"]:not([hidden]) { animation: ce-rise 0.4s var(--ce-ease) backwards; }
+
+/* ---------------------------------------------------------------- Cards: a soft lift on hover (mouse only) */
+
+.item-card.bg-white,
+.loan-card,
+.request-card,
+.stat-card,
+.catalog-item-card,
+.saved-card,
+.fine-stat {
+    transition: transform 0.25s var(--ce-ease), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+@media (hover: hover) {
+    .item-card.bg-white:not(.text-muted):hover,
+    .loan-card:hover,
+    .stat-card:hover,
+    .catalog-item-card:hover,
+    .saved-card:hover,
+    .fine-stat:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+        border-color: #cbd5e1;
+    }
+
+    /* the Handover / Return lists scroll inside a box, so those cards only deepen their shadow (nothing to clip) */
+    .request-card:hover {
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+        border-color: #cbd5e1;
+    }
+}
+
+/* Table rows only change colour on hover; they never move. */
+.data-table tbody tr { transition: background-color 0.15s ease; }
+
+/* ---------------------------------------------------------------- Buttons and pills */
+
+.btn:not(:disabled):active { transform: scale(0.97); }
+
+.filter-pill { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+
+/* ---------------------------------------------------------------- Modals (the notification panel has its own slide-in) */
+
+@keyframes ce-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ce-pop  { from { opacity: 0; transform: translateY(12px) scale(0.96); } to { opacity: 1; transform: none; } }
+
+.modal-overlay.open:not(#notificationModal) { animation: ce-fade 0.2s ease both; }
+.modal-overlay.open:not(#notificationModal) .modal { animation: ce-pop 0.28s var(--ce-ease) both; }
+
+/* ---------------------------------------------------------------- Empty states breathe */
+
+@keyframes ce-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.empty-state i { animation: ce-float 3.2s ease-in-out infinite; }
+
+/* ---------------------------------------------------------------- Paging (filters.js) */
+
+/* The new page slides in from the side you were heading to; cards of one page arrive one after another. */
+@keyframes ce-page-next { from { opacity: 0; transform: translateX(2rem); }  to { opacity: 1; transform: none; } }
+@keyframes ce-page-prev { from { opacity: 0; transform: translateX(-2rem); } to { opacity: 1; transform: none; } }
+@keyframes ce-page-fade { from { opacity: 0; transform: translateY(0.5rem); } to { opacity: 1; transform: none; } }
+
+.ce-in-next { animation: ce-page-next 0.38s var(--ce-ease) backwards; animation-delay: calc(min(var(--ce-i, 0), 6) * 35ms); }
+.ce-in-prev { animation: ce-page-prev 0.38s var(--ce-ease) backwards; animation-delay: calc(min(var(--ce-i, 0), 6) * 35ms); }
+.ce-in-fade { animation: ce-page-fade 0.3s ease backwards;            animation-delay: calc(min(var(--ce-i, 0), 6) * 25ms); }
+
+/* The swipeable area: follows the finger while dragging, springs back when let go. */
+.ce-swipe-zone { transition: transform 0.3s var(--ce-ease); overscroll-behavior-x: contain; }
+.ce-swipe-zone:not(.ce-swipe-zone--table) { touch-action: pan-y; }   /* vertical scroll stays native, sideways is ours */
+.ce-swipe-zone--only { cursor: grab; }
+.ce-swipe-zone--only:focus-visible { outline: 2px solid var(--ring-color, #93c5fd); outline-offset: 4px; border-radius: 0.5rem; }
+.ce-swipe-zone.ce-dragging { transition: none; user-select: none; -webkit-user-select: none; cursor: grabbing; }
+
+/* a gentle one-time shove that says "there is more this way" */
+@keyframes ce-nudge {
+    0%, 100% { transform: translateX(0); }
+    35%      { transform: translateX(-1rem); }
+    60%      { transform: translateX(0.2rem); }
+}
+.ce-swipe-zone.ce-nudge { animation: ce-nudge 1.1s ease 0.3s both; }
+
+.pager .btn { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+/* page dots: the current one stretches into a pill */
+.pager-dots { display: inline-flex; align-items: center; gap: 0.45rem; }
+
+.pager-dot {
+    position: relative;
+    width: 0.5rem;
+    height: 0.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: 9999px;
+    background: #cbd5e1;
+    cursor: pointer;
+    transition: width 0.25s var(--ce-ease), background-color 0.25s ease;
+}
+.pager-dot::after { content: ""; position: absolute; inset: -0.5rem -0.2rem; }   /* bigger tap target than the dot */
+.pager-dot:hover { background: #94a3b8; }
+.pager-dot.is-on { width: 1.4rem; background: var(--primary-brand, #203b8c); }
+.pager-dot:focus-visible { outline: 2px solid var(--ring-color, #93c5fd); outline-offset: 3px; }
+
+/* "Swipe" hint: always on swipe-only lists, on touch screens for the rest */
+.pager-swipe {
+    display: none;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.pager-swipe i { animation: ce-swipe-hint 1.4s ease-in-out 3; }
+.pager--swipe .pager-swipe { display: inline-flex; }
+@media (pointer: coarse) { .pager-swipe { display: inline-flex; } }
+
+@keyframes ce-swipe-hint { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+
+/* ---------------------------------------------------------------- Reduced motion: everything above stops moving */
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

@@ -62,7 +62,7 @@ function userJob(array $u, array $jobs): string
                     </p>
 
                     <div class="filter-group" role="group" aria-label="Filter users by role"
-                         data-filter-group data-items="#users-tbody tr[data-tags]" data-page-size="10" data-pager="#users-pager" data-empty="#filter-empty-row"
+                         data-filter-group data-items="#users-tbody tr[data-tags]" data-page-size="10" data-pager="#users-pager" data-pager-always data-empty="#filter-empty-row"
                          data-visible="#visible-count" data-total="#total-count">
                         <span class="filter-label">Role:</span>
                         <button type="button" class="filter-pill active" data-filter="all">All</button>

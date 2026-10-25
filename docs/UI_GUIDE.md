@@ -67,6 +67,17 @@ Never hand-write an Edit button; call `<?= edit_button(['id' => $id], 'optional-
 Long lists use `data-page-size` + `data-pager` (see `filters.js`): tables 10 rows, card grids 6 (catalog 9, wishlist columns 4).
 Paged lists: all admin/manage tables, Catalog, Borrowing & Requests (all three tabs), Fines, Wishlist (both columns).
 
+Every paged list pages the same way: Previous / Next buttons, tappable page dots, and swipe (a two-finger swipe on a laptop trackpad,
+a finger on a touch screen, or a mouse drag on card lists, not tables). The list follows the finger, resists at the first / last page and springs back; the new page slides in from the
+side you went toward. A "Swipe" hint shows under the list on touch screens, plus a one-time nudge the first time it is on screen.
+The borrower Equipment Catalog is the one exception: `data-pager-style="swipe"` removes Previous / Next (swipe or drag, tap a dot,
+or use the arrow keys). Tables that scroll sideways on a phone keep their own scrolling instead of swiping.
+
+## Motion (`shared/motion.css`, `motion.js`)
+
+Page blocks rise in one after another, cards lift on hover (tables and table rows never move), modals pop in, the Pending tab
+content fades up, big numbers count up. All of it stops when the system asks for reduced motion.
+
 ## Collapsible sections
 
 A section that can fold away uses `shared/collapse.css` + `assets/js/collapse.js` (markup is documented at the top of the CSS file).

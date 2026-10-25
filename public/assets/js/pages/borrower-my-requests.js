@@ -20,6 +20,13 @@ if (['borrowed', 'pending', 'history'].includes(startTab)) {
     switchTab(startTab);
 }
 
+// Follow the #part of the address while the page is open (a notification link such as my_requests.php#history
+// only changes the #part when you are already on this page, so it must switch the tab by itself).
+window.addEventListener('hashchange', () => {
+    const tab = location.hash.replace('#', '');
+    if (['borrowed', 'pending', 'history'].includes(tab)) switchTab(tab);
+});
+
 // Cancel a pending / approved request
 let cancelId = null;
 document.querySelectorAll('.cancel-btn').forEach(btn => {

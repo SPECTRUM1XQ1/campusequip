@@ -31,7 +31,7 @@ $savedIds = (new Wishlist())->savedCatalogIds((int) $_SESSION['user_id']);
                     Browse All Academic Equipment
                 </h3>
 
-                <div hidden data-list data-items="#catalog-grid .item-card" data-page-size="9" data-pager="#catalog-pager" data-pager-always
+                <div hidden data-list data-items="#catalog-grid .item-card" data-page-size="9" data-pager="#catalog-pager" data-pager-always data-pager-style="swipe"
                      data-empty="#catalog-empty"></div>
 
                 <div id="catalog-grid" class="borrower-catalog-s3">

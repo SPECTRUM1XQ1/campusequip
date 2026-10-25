@@ -58,7 +58,7 @@ $logTags = [
                         Showing <strong id="visible-count"><?= min(count($logs), 15) ?></strong> of <strong id="total-count"><?= count($logs) ?></strong> log entries
                     </p>
                     <div class="filter-group" role="group" aria-label="Filter logs by action"
-                         data-filter-group data-items="#logs-tbody tr[data-tags]" data-page-size="15" data-pager="#logs-pager"
+                         data-filter-group data-items="#logs-tbody tr[data-tags]" data-page-size="15" data-pager="#logs-pager" data-pager-always
                          data-empty="#filter-empty-row" data-visible="#visible-count" data-total="#total-count">
                         <span class="filter-label">Action:</span>
                         <button type="button" class="filter-pill active" data-filter="all">All</button>

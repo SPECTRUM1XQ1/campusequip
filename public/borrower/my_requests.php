@@ -133,7 +133,7 @@ function emptyState(string $icon, string $message): string
                 </div>
 
                 <!-- CURRENTLY BORROWED -->
-                <div id="content-borrowed" data-list data-items="#content-borrowed .item-card" data-page-size="6" data-pager="#borrowed-pager">
+                <div id="content-borrowed" data-list data-items="#content-borrowed .item-card" data-page-size="6" data-pager="#borrowed-pager" data-pager-always>
                     <h4 class="section-eyebrow">Currently in Your Possession</h4>
 
                     <?php if (empty($borrowed)): ?>
@@ -198,7 +198,7 @@ function emptyState(string $icon, string $message): string
 
                             <div class="collapse-body" id="collapse-requests-<?= $key ?>">
                                 <div class="collapse-inner"><div class="collapse-content">
-                                    <div class="req-grid" id="req-<?= $key ?>-grid" data-list data-items="#req-<?= $key ?>-grid > .req-cell" data-page-size="6" data-pager="#req-<?= $key ?>-pager">
+                                    <div class="req-grid" id="req-<?= $key ?>-grid" data-list data-items="#req-<?= $key ?>-grid > .req-cell" data-page-size="6" data-pager="#req-<?= $key ?>-pager" data-pager-always>
                                         <?php foreach ($rows as $r): ?>
                                             <div class="req-cell"><?= renderPendingCard($r) ?></div>
                                         <?php endforeach; ?>
@@ -211,7 +211,7 @@ function emptyState(string $icon, string $message): string
                 </div>
 
                 <!-- HISTORY -->
-                <div id="content-history" hidden data-list data-items="#content-history .item-card" data-page-size="6" data-pager="#history-pager">
+                <div id="content-history" hidden data-list data-items="#content-history .item-card" data-page-size="6" data-pager="#history-pager" data-pager-always>
                     <h4 class="section-eyebrow">Past Borrowing History</h4>
 
                     <?php if (empty($history)): ?>
