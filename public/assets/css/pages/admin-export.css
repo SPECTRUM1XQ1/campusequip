@@ -70,11 +70,16 @@
 
 /* ---- Filter panel (Borrower / Equipment / Status / dates) ---- */
 
+/* A grid, so the fields line up and fill the panel with no half-empty row:
+   - wide / laptop screens: all five fields in ONE row (the two name fields a little wider than the rest)
+   - medium screens: 3 selects on top, the two dates sharing the row below (each half the width)
+   - small screens: 2 columns, then 1
+   "Clear" gets its own slot only while a filter is active, so it never leaves a gap behind. */
 .export-filters {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
     gap: 0.75rem 1rem;
-    align-items: flex-end;
+    align-items: end;
     margin-bottom: 1rem;
     padding: 1rem 1.25rem;
     background: var(--card-bg);
@@ -82,14 +87,41 @@
     border-radius: 0.75rem;
 }
 
+.export-filters:has(.export-filter-clear > :not([hidden])) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)) auto;
+}
+
+.export-filter-clear:has(> [hidden]) { display: none; }
+
+@media (max-width: 1199px) {
+    .export-filters,
+    .export-filters:has(.export-filter-clear > :not([hidden])) { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .export-filters > :nth-child(-n+3) { grid-column: span 2; }
+    .export-filters > :nth-child(4),
+    .export-filters > :nth-child(5) { grid-column: span 3; }
+    .export-filter-clear { grid-column: 1 / -1; justify-self: end; }
+}
+
+@media (max-width: 799px) {
+    .export-filters,
+    .export-filters:has(.export-filter-clear > :not([hidden])) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .export-filters > :nth-child(n+1) { grid-column: auto; }
+    .export-filters > :nth-child(3) { grid-column: 1 / -1; }
+    .export-filter-clear { grid-column: 1 / -1; }
+}
+
+@media (max-width: 559px) {
+    .export-filters,
+    .export-filters:has(.export-filter-clear > :not([hidden])) { grid-template-columns: minmax(0, 1fr); }
+    .export-filters > :nth-child(n+1) { grid-column: auto; }
+}
+
 .export-filters[hidden] {
     display: none;
 }
 
 .export-filter-field {
-    flex: 1 1 11rem;
-    min-width: 10rem;
-    max-width: 16rem;
+    min-width: 0;
 }
 
 .export-filter-field .modal-label {
@@ -108,8 +140,7 @@
 }
 
 .export-filter-clear {
-    flex: 0 0 auto;
-    min-width: 0;
+    align-self: end;
 }
 
 .export-filter-clear [hidden] {
@@ -189,7 +220,3 @@ body.export-print-view {
     padding-right: 2rem;
 }
 
-.export-filter-field {
-    flex: 1 1 14rem;
-    max-width: 20rem;
-}

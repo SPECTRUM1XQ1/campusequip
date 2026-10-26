@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/shared/snackbar.css?v=<?= @filemtime(__DIR__ . '/../public/assets/css/shared/snackbar.css') ?: 1 ?>">
 <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/shared/modal.css?v=<?= @filemtime(__DIR__ . '/../public/assets/css/shared/modal.css') ?: 1 ?>">
 <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/shared/motion.css?v=<?= @filemtime(__DIR__ . '/../public/assets/css/shared/motion.css') ?: 1 ?>">
+<link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/shared/truncate.css?v=<?= @filemtime(__DIR__ . '/../public/assets/css/shared/truncate.css') ?: 1 ?>">
 <?php /* Per-page stylesheets: each page lists its own files in $pageStyles before including this head (e.g. ['pages/manage-dashboard']). */ ?>
 <?php foreach (($pageStyles ?? []) as $css): ?>
 <link rel="stylesheet" href="<?= APP_BASE ?>/public/assets/css/<?= $css ?>.css?v=<?= @filemtime(__DIR__ . '/../public/assets/css/' . $css . '.css') ?: 1 ?>">

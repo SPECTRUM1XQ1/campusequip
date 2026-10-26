@@ -32,7 +32,7 @@ $accessoriesByModel = $equipmentModel->listAccessoriesGrouped(); // [catalog_id 
                         Showing <strong id="visible-count"><?= min(count(array_filter($catalog, fn($c) => (int)($c['is_archived'] ?? 0) === 0)), 6) ?></strong> of <strong id="total-count"><?= count(array_filter($catalog, fn($c) => (int)($c['is_archived'] ?? 0) === 0)) ?></strong> models
                     </p>
                     <div class="filter-group" role="group" aria-label="Filter equipment"
-                         data-filter-group data-items="#catalog-card-container .catalog-item-card" data-page-size="6" data-pager="#catalog-pager" data-pager-always
+                         data-filter-group data-items="#catalog-card-container .catalog-item-card" data-page-size="12" data-pager="#catalog-pager" data-pager-always
                          data-empty="#catalog-filter-empty" data-visible="#visible-count" data-total="#total-count" data-total-matches>
                         <span class="filter-label">Filter:</span>
                         <button type="button" class="filter-pill active" data-filter="active">All</button>

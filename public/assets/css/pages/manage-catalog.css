@@ -30,11 +30,22 @@
 
 /* ---- Compact layout pass (Equipment Catalog, Serialize Item, System Settings) ---- */
 
+/* 3 columns x 4 rows = 12 cards per page (data-page-size="12" in manage/catalog.php).
+   Fewer columns on narrower screens. align-content: start keeps a short last page from stretching its cards. */
 .catalog-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-content: start;
     gap: 1rem;
     margin-bottom: 1rem;
+}
+
+@media (max-width: 1279px) {
+    .catalog-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 799px) {
+    .catalog-list { grid-template-columns: minmax(0, 1fr); }
 }
 
 .catalog-list > .card-container { grid-column: 1 / -1; }

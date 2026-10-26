@@ -98,10 +98,12 @@
 
 /* The swipeable area: follows the finger while dragging, springs back when let go. */
 .ce-swipe-zone { transition: transform 0.3s var(--ce-ease); overscroll-behavior-x: contain; }
+/* The area keeps its height on a short last page (filters.js); without this a grid would stretch its rows to fill it,
+   and the few cards left would grow taller than the cards on earlier pages. */
+.ce-swipe-zone { align-content: start; }
 .ce-swipe-zone:not(.ce-swipe-zone--table) { touch-action: pan-y; }   /* vertical scroll stays native, sideways is ours */
-.ce-swipe-zone--only { cursor: grab; }
 .ce-swipe-zone--only:focus-visible { outline: 2px solid var(--ring-color, #93c5fd); outline-offset: 4px; border-radius: 0.5rem; }
-.ce-swipe-zone.ce-dragging { transition: none; user-select: none; -webkit-user-select: none; cursor: grabbing; }
+.ce-swipe-zone.ce-dragging { transition: none; user-select: none; -webkit-user-select: none; }
 
 /* a gentle one-time shove that says "there is more this way" */
 @keyframes ce-nudge {

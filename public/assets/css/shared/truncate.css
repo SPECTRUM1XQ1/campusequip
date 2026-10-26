@@ -1,0 +1,122 @@
+/*
+ * shared/truncate.css
+ * Long text is cut with "..." instead of spilling out of its box. The full text shows as a tooltip when the mouse rests
+ * on a cut piece (assets/js/truncate.js). Loaded on every page by includes/html-head.php.
+ *
+ * Two helpers you can put on any element:
+ *   .text-truncate   one line, then "..."
+ *   .text-clamp-2    up to two lines, then "..."   (.text-clamp-3 for three)
+ * Below they are also applied by class name to the places where names, titles and notes appear.
+ *
+ * Buttons, pills and form controls are never cut; they keep their full size.
+ */
+
+/* ---------------------------------------------------------------- Helpers */
+
+.text-truncate {
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.text-clamp-2,
+.text-clamp-3 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    min-width: 0;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+.text-clamp-2 { -webkit-line-clamp: 2; line-clamp: 2; }
+.text-clamp-3 { -webkit-line-clamp: 3; line-clamp: 3; }
+
+/* ---------------------------------------------------------------- One line: names, short values, amounts */
+
+.meta-value,
+.meta-sub,
+.item-card h5,
+.fine-stat-value,
+.fines-board-amount,
+.fines-board-stat strong,
+.saved-card-info h3,
+.saved-card-info p,
+.borrower-catalog-s8,
+.user-details h4,
+.user-details p,
+.results-count {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- Up to two lines: titles, values, descriptions */
+
+.loan-card-title,
+.loan-row .value,
+.catalog-item-card .section-title,
+.borrower-catalog-s7,
+.borrower-catalog-s9 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    min-width: 0;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+/* a card's text column may shrink below its content, so the cut can happen */
+.fine-stat,
+.fines-board-owed,
+.saved-card-info,
+.user-details,
+.loan-card-head > div,
+.request-card > div {
+    min-width: 0;
+}
+.fine-stat { overflow: hidden; }
+
+/* ---------------------------------------------------------------- Table cells with plain text
+   (cells that hold buttons, links to actions or form fields are left alone) */
+
+.data-table td:not(.col-action):not(.col-action--wide):not(:has(button, .btn, input, select, textarea, form)) {
+    max-width: 20rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* notices and notes keep their full text; they only break very long words */
+.notice span,
+.page-note,
+.notif-item p { overflow-wrap: anywhere; }
+
+/* ---------------------------------------------------------------- Dropdowns (Export filters, forms)
+   A closed <select> cuts a long choice with "..." and always shows the same arrow. */
+
+select.input-field {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    padding-right: 2.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background-color: var(--card-bg, #fff);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 0.75rem;
+    cursor: pointer;
+}
+
+/* Printing: show everything */
+@media print {
+    .data-table td { max-width: none !important; white-space: normal !important; overflow: visible !important; }
+    .loan-card-title, .loan-row .value { display: block; overflow: visible; }
+}

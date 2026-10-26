@@ -86,6 +86,13 @@ The height-and-fade animation is pure CSS (a grid row going from `1fr` to `0fr`)
 Used on Fines & Penalties (Overdue, Charged Fines) and Borrowing & Requests > Pending Request (Approved, Waiting).
 Pending Request cards sit in a 3-column grid (2 rows = 6 per page), dropping to 2 and 1 columns when the group is narrow.
 
+## Long text (`shared/truncate.css`, `truncate.js`)
+
+Long names, titles, values and notes are cut with "..." instead of spilling out of their box: titles and card values keep two
+lines, names and amounts one line, plain-text table cells one line (max 20rem), and closed dropdowns show one line with a
+steady arrow. Buttons, pills and form fields are never cut. The full text appears as a tooltip when the mouse rests on a cut
+piece, and everything prints in full. For new markup use `.text-truncate` (one line) or `.text-clamp-2` / `.text-clamp-3`.
+
 ## Contrast
 
 Status text uses `--success-text` (#15803d) and `--danger-text` (#b91c1c), both at least 4.5:1 on white and on their tinted badge

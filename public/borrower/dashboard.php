@@ -75,6 +75,7 @@ $popularCatalog = array_slice($catalogList, 0, 5);
                         <h3 class="section-title">Penalties &amp; Fines</h3>
                         <a href="<?= APP_BASE ?>/public/borrower/fines.php" class="section-link">View details</a>
                     </div>
+                    <div class="fines-board-host">
                     <div class="fines-board <?= $owedTotal > 0 ? 'fines-board--owing' : 'fines-board--clear' ?>">
                         <div class="fines-board-main">
                             <span class="fines-board-icon"><i class="ph <?= $owedTotal > 0 ? 'ph-warning-circle' : 'ph-check-circle' ?>"></i></span>
@@ -128,6 +129,7 @@ $popularCatalog = array_slice($catalogList, 0, 5);
                         <?php else: ?>
                             <p class="fines-board-notice fines-clear-note">No fines. Return items on time to keep it that way.</p>
                         <?php endif; ?>
+                    </div>
                     </div>
 
                     <!-- Approved Pickups -->
