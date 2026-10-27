@@ -369,3 +369,109 @@
     text-decoration: none;
 }
 .auth-back-home:hover { color: var(--primary-brand); }
+
+/* ---- Motion: the form card slides in, slides out when you switch page, shakes on a mistake, and the button shows progress ---- */
+
+.auth-container {
+    --auth-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --auth-x: 0px;
+    --auth-y: 12px;
+    animation: auth-in 0.42s var(--auth-ease) both;
+}
+/* coming from the other page: Sign In -> Sign Up enters from the right, Sign Up -> Sign In from the left */
+html[data-auth-in="forward"] .auth-container { --auth-x: 32px;  --auth-y: 0px; }
+html[data-auth-in="back"]    .auth-container { --auth-x: -32px; --auth-y: 0px; }
+
+@keyframes auth-in {
+    from { opacity: 0; transform: translate(var(--auth-x), var(--auth-y)); }
+    to   { opacity: 1; transform: none; }
+}
+
+/* leaving: Sign In -> Sign Up goes out to the left, Sign Up -> Sign In to the right, or up after a successful sign in */
+.auth-container.is-leaving {
+    animation: none;
+    opacity: 0;
+    transform: translateX(var(--auth-out, -32px));
+    transition: opacity 0.22s ease, transform 0.26s var(--auth-ease);
+    pointer-events: none;
+}
+.auth-container.is-leaving-up {
+    animation: none;
+    opacity: 0;
+    transform: translateY(-14px) scale(0.985);
+    transition: opacity 0.3s ease, transform 0.35s var(--auth-ease);
+    pointer-events: none;
+}
+
+/* a wrong password or a field that needs fixing */
+.auth-container.is-shaking { animation: auth-shake 0.4s ease both; }
+@keyframes auth-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-7px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(2px); }
+}
+
+/* the button: pressed, working, done */
+.auth-container .btn-primary {
+    position: relative;
+    transition: background-color 0.2s ease, transform 0.12s ease, box-shadow 0.2s ease;
+}
+.auth-container .btn-primary:active:not(:disabled) { transform: scale(0.98); }
+.auth-container .btn-primary:disabled { cursor: progress; }
+
+.auth-container .btn-primary.is-loading,
+.auth-container .btn-primary.is-success { color: transparent; }
+.auth-container .btn-primary.is-loading::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin: -0.55rem 0 0 -0.55rem;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: auth-spin 0.7s linear infinite;
+}
+@keyframes auth-spin { to { transform: rotate(360deg); } }
+
+.auth-container .btn-primary.is-success { background-color: #15803d; }
+.auth-container .btn-primary.is-success::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0.4rem;
+    height: 0.8rem;
+    margin: -0.55rem 0 0 -0.2rem;
+    border: solid #fff;
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+    animation: auth-tick 0.3s var(--auth-ease) both;
+}
+@keyframes auth-tick {
+    from { opacity: 0; transform: rotate(45deg) scale(0.4); }
+    to   { opacity: 1; transform: rotate(45deg) scale(1); }
+}
+
+/* the link that switches page */
+.link-text { transition: color 0.15s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-container,
+    .auth-container.is-shaking { animation: none; }
+    .auth-container.is-leaving,
+    .auth-container.is-leaving-up { transition: opacity 0.15s ease; transform: none; }
+    .auth-container .btn-primary.is-loading::after { animation-duration: 1.6s; }
+}
+
+/* ---- Back to home: the arrow slides out, the brand panel and the card fade as the landing page opens ---- */
+.auth-back-home i { transition: transform 0.2s var(--auth-ease, ease); }
+.auth-back-home:hover i,
+.auth-back-home.is-going i { transform: translateX(-4px); }
+.auth-back-home { transition: color 0.15s ease; }
+.login-left { transition: opacity 0.3s ease; }
+.login-wrapper.is-exiting .login-left { opacity: 0; }

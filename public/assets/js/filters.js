@@ -21,6 +21,8 @@
  *   - swipe the list left / right to change page: a two-finger swipe on a laptop trackpad (the list moves with your
  *     fingers; swipe one way for the next page, the other way for the previous one), a finger on a touch screen, or a
  *     mouse drag on card lists. The list resists at the first / last page and springs back if you let go too early
+ *     On a table wider than its box the swipe scrolls the table first; the page only changes with a NEW swipe made
+ *     once the table is already at its left / right end (a swipe that was scrolling never flips the page itself)
  *   - a small "Swipe" hint under the list (always for swipe-only lists, on touch screens for the others), and a
  *     one-time nudge the first time a swipeable list is on screen
  *   - the new page slides in from the side you swiped toward (CSS: .ce-in-next / .ce-in-prev / .ce-in-fade in shared/motion.css)
@@ -307,9 +309,17 @@
 
         // ---- Two-finger trackpad swipe (horizontal wheel events) ----
         // Swipe one way = next page, the other way = previous page. Mostly-vertical scrolling is left alone.
+        //
+        // A table that is wider than its box scrolls sideways first, so every column can be read. The page only changes
+        // with a NEW swipe that starts when the table is already at its end in that direction. A swipe that was
+        // scrolling the table never carries on into a page change, however far or fast it goes: it stops at the
+        // limit, and the next swipe (fingers lifted, momentum finished) flips the page.
+        //
         // A swipe leaves "momentum" events behind; they are ignored until things go quiet,
-        // so one swipe never skips several pages.  
+        // so one swipe never skips several pages.
         let wAcc = 0, wLocked = false, wLockedAt = 0, wTimer = null;
+        let gLast = 0, gScrolls = false;
+        const GESTURE_GAP = 220;                       // ms of quiet that separates one swipe from the next
 
         // After a page change the swipe is "used up": further events (a long swipe, the momentum tail) are ignored until
         // the trackpad has been quiet for a moment AND the page change has had time to finish.
@@ -329,24 +339,42 @@
             }
         }
 
+        function wheelReset() {
+            if (wAcc !== 0) { wAcc = 0; zone.classList.remove('ce-dragging'); zone.style.transform = ''; }
+        }
+
         zone.addEventListener('wheel', function (e) {
             if ((list.pages || 1) <= 1) return;
             // Only a mostly-sideways gesture counts; up / down scrolling and shift + wheel stay with the browser.
             const dx = e.deltaX;
             if (dx === 0 || Math.abs(dx) <= Math.abs(e.deltaY) || e.shiftKey) return;
 
-            // A table that is wider than its box scrolls sideways first. The page only flips once the table is at its
-            // end in the swipe direction, and it flips in the SAME swipe: keep swiping past the end, no need to lift
-            // the fingers first.
+            // Is this event part of the swipe that is already going on, or the start of a new one?
+            const now = performance.now();
+            const fresh = now - gLast > GESTURE_GAP;
+            gLast = now;
+
             const hiddenWidth = isTable ? zone.scrollWidth - zone.clientWidth : 0;
             const scrollable = hiddenWidth > 2;
-            if (scrollable && !wLocked) {
+            let canScroll = false;
+            if (scrollable) {
                 const atEnd = zone.scrollLeft >= hiddenWidth - 1;
                 const atStart = zone.scrollLeft <= 0;
-                if ((dx > 0 && !atEnd) || (dx < 0 && !atStart)) {
-                    if (wAcc !== 0) { wAcc = 0; zone.classList.remove('ce-dragging'); zone.style.transform = ''; }
-                    return;                                      // let the browser scroll the table
-                }
+                canScroll = dx > 0 ? !atEnd : !atStart;
+                if (fresh) gScrolls = canScroll;               // does this swipe begin by scrolling the table?
+                else if (canScroll) gScrolls = true;
+            } else {
+                gScrolls = false;
+            }
+
+            if (canScroll && !wLocked) {                       // the table still has hidden columns this way:
+                wheelReset();                                   // let the browser scroll it
+                return;
+            }
+            if (scrollable && gScrolls && !wLocked) {          // this swipe just reached the limit:
+                wheelReset();                                   // stop here, do not flip in the same swipe
+                e.preventDefault();                             // (also keeps the browser's back / forward swipe away)
+                return;
             }
 
             e.preventDefault();                                  // also stops the browser's two-finger "back / forward" swipe
@@ -360,7 +388,7 @@
             zone.classList.add('ce-dragging');
             zone.style.transform = 'translateX(' + (-wAcc * (atEdge ? 0.2 : 0.5)) + 'px)';
 
-            // a little more pull is needed when it follows a scroll, so the end of a fast scroll does not flip by accident
+            // a deliberate pull is needed on a table that scrolls, so a stray touch at its end does not flip the page
             const threshold = scrollable ? 140 : Math.min(110, zone.clientWidth * 0.12);
             if (!atEdge && Math.abs(wAcc) > threshold) {
                 const forward = wAcc > 0;

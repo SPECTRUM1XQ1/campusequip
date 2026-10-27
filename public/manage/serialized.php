@@ -7,7 +7,7 @@ requireRole(['admin', 'staff']);
 requirePermission('can_manage_catalog');
 
 $pageTitle = 'Serialize Item';
-$pageStyles = ['shared/dropdown', 'pages/manage-serialized'];
+$pageStyles = ['pages/manage-serialized'];
 $equipmentModel = new Equipment();
 // ?catalog_id=N comes from the "View Serialized Units" button on the catalog page.
 $filterCatalogId = isset($_GET['catalog_id']) ? (int) $_GET['catalog_id'] : 0;
@@ -130,7 +130,6 @@ $statusClasses = [
     <?php include __DIR__ . '/../../includes/navigation/footer.php'; ?>
 
     <script src="<?= APP_BASE ?>/public/assets/js/filters.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/filters.js') ?: 1 ?>"></script>
-    <script src="<?= APP_BASE ?>/public/assets/js/dropdown.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/dropdown.js') ?: 1 ?>"></script>
     <script src="<?= APP_BASE ?>/public/assets/js/pages/manage-serialized.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/pages/manage-serialized.js') ?: 1 ?>"></script>
 </body>
 </html>

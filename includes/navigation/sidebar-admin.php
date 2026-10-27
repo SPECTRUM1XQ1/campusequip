@@ -12,6 +12,10 @@ $initials = strtoupper(substr($nameParts[0] ?? 'U', 0, 1) . substr($nameParts[co
 
 $isStaff = in_array($role, ['staff', 'admin'], true);
 
+// The role shown in the account block (and its colour: see .sidebar[data-role] in shared/sidebar.css).
+$roleLabels = ['admin' => 'Administrator', 'staff' => 'Staff', 'borrower' => 'Borrower'];
+$roleKey = isset($roleLabels[$role]) ? $role : 'borrower';
+
 // Navigation is grouped: each group has a 'title' (the category header)
 // and an 'items' list of links.
 if ($isStaff) {
@@ -80,37 +84,15 @@ foreach ($navGroups as $gi => $group) {
 }
 $navGroups = array_values(array_filter($navGroups, fn($g) => !empty($g['items'])));
 ?>
-<aside class="sidebar" id="sidebar">
-    <div
-        class="ui-sidebar-admin-s1">
+<aside class="sidebar" id="sidebar" data-role="<?= htmlspecialchars($roleKey) ?>">
+    <a class="sidebar-brand" href="<?= htmlspecialchars($navGroups[0]['items'][0]['href'] ?? '#') ?>" aria-label="LendLab home">
         <span class="app-logo">
             <span class="app-logo-mark"></span>
         </span>
-        LendLab
-    </div>
+        <span class="sidebar-brand-name">LendLab</span>
+    </a>
 
-    <div class="user-profile-card">
-        <div class="user-info">
-            <div class="avatar">
-                <?= htmlspecialchars($initials) ?>
-            </div>
-            <div class="user-details">
-                <h4>
-                    <?= htmlspecialchars($fullName) ?>
-                </h4>
-                <p>
-                    <?= htmlspecialchars(ucfirst($role)) ?>
-                </p>
-            </div>
-        </div>
-        <a href="#" class="btn btn-sm ui-sidebar-admin-s2"
-           
-            data-open-modal="logoutModal">
-            <i class="ph ph-sign-out" aria-hidden="true"></i><span class="btn-text">Log Out</span>
-        </a>
-    </div>
-
-    <nav class="nav-section">
+    <nav class="nav-section" aria-label="Main navigation">
         <?php foreach ($navGroups as $group): ?>
             <div class="nav-group">
                 <div class="nav-label">
@@ -119,13 +101,27 @@ $navGroups = array_values(array_filter($navGroups, fn($g) => !empty($g['items'])
                     </p>
                 </div>
                 <?php foreach ($group['items'] as $item): ?>
+                    <?php $isActive = basename($item['href']) === $currentPage; ?>
                     <a href="<?= htmlspecialchars($item['href']) ?>"
-                        class="nav-link <?= basename($item['href']) === $currentPage ? 'active' : '' ?>">
-                        <i class="ph <?= htmlspecialchars($item['icon']) ?>"></i>
-                        <?= htmlspecialchars($item['label']) ?>
+                        class="nav-link <?= $isActive ? 'active' : '' ?>"<?= $isActive ? ' aria-current="page"' : '' ?>>
+                        <i class="ph <?= htmlspecialchars($item['icon']) ?>" aria-hidden="true"></i>
+                        <span><?= htmlspecialchars($item['label']) ?></span>
                     </a>
                 <?php endforeach; ?>
             </div>
         <?php endforeach; ?>
     </nav>
+
+    <div class="sidebar-account">
+        <div class="account-card">
+            <div class="avatar" aria-hidden="true"><?= htmlspecialchars($initials) ?></div>
+            <div class="user-details">
+                <h4><?= htmlspecialchars($fullName) ?></h4>
+                <div class="role-chip"><?= htmlspecialchars($roleLabels[$roleKey]) ?></div>
+            </div>
+        </div>
+        <button type="button" class="logout-btn" data-open-modal="logoutModal">
+            <i class="ph ph-sign-out" aria-hidden="true"></i><span>Log out</span>
+        </button>
+    </div>
 </aside>

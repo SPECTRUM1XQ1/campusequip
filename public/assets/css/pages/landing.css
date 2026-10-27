@@ -153,3 +153,39 @@ body.landing img, body.landing svg { max-width: 100%; }
     .lp-only-mobile { display: block; }
     .lp-links a.lp-mobile-cta { margin-top: .75rem; padding: .75rem 1rem; border: 0; border-radius: .6rem; background: var(--primary-brand); color: #fff; text-align: center; }
 }
+
+/* ---------- Motion: button press, going to Log in / Sign up, and the opening moment ---------- */
+.lp-btn { position: relative; transition: background .15s, color .15s, border-color .15s, transform .15s, box-shadow .2s; }
+.lp-btn i { transition: transform .22s cubic-bezier(.22, 1, .36, 1); }
+.lp-btn:hover i { transform: translateX(3px); }
+.lp-btn-solid:hover, .lp-btn-light:hover { box-shadow: 0 6px 16px rgba(15, 23, 42, .18); }
+.lp-btn:active { transform: translateY(0) scale(.97); box-shadow: none; }
+
+/* clicked: the button shows it is working (spinner in place of the icon) and the page slides away */
+.lp-btn.is-going { pointer-events: none; }
+.lp-btn.is-going i { animation: lp-spin .7s linear infinite; transform: none; }
+.lp-btn.is-going i::before { content: "\e66a"; }   /* ph-spinner */
+@keyframes lp-spin { to { transform: rotate(360deg); } }
+
+#main { transition: opacity .26s ease, transform .3s cubic-bezier(.22, 1, .36, 1); }
+body.landing.is-leaving #main { opacity: 0; transform: translateX(-24px); }
+body.landing.is-leaving .lp-nav { opacity: .0; transition: opacity .26s ease; }
+
+/* opening: the top bar settles, then the hero text arrives line by line (once per visit) */
+@keyframes lp-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes lp-drop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
+.lp-nav { animation: lp-drop .4s ease both; }
+.lp-hero-copy > * { animation: lp-rise .55s cubic-bezier(.22, 1, .36, 1) both; }
+.lp-hero-copy > :nth-child(1) { animation-delay: .05s; }
+.lp-hero-copy > :nth-child(2) { animation-delay: .12s; }
+.lp-hero-copy > :nth-child(3) { animation-delay: .19s; }
+.lp-hero-copy > :nth-child(4) { animation-delay: .26s; }
+.lp-hero-copy > :nth-child(5) { animation-delay: .33s; }
+.lp-hero-copy > :nth-child(6) { animation-delay: .4s; }
+
+@media (prefers-reduced-motion: reduce) {
+    .lp-nav, .lp-hero-copy > * { animation: none; }
+    #main, body.landing.is-leaving #main { transition: opacity .1s; transform: none; }
+    .lp-btn:active { transform: none; }
+    .lp-btn.is-going i { animation: none; }
+}

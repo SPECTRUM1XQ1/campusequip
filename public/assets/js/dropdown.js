@@ -1,7 +1,9 @@
 /**
- * Styled dropdown. Add data-ce-dropdown to a <select> and it becomes a button + a list of choices
- * (with a search box when there are many choices, a tick on the chosen one, keyboard control).
+ * Styled dropdown. Every <select> in the system becomes a button + a list of choices (with a search box when there
+ * are many choices, a tick on the chosen one, keyboard control). Loaded on every page by includes/navigation/footer.php.
  * The <select> stays in the page and keeps the value, so forms and "change" listeners work unchanged.
+ * Choices added or replaced by other scripts, select.value = ... and form.reset() are picked up automatically.
+ * To keep the plain browser dropdown on one <select>, add data-native to it.
  *
  *   CEDropdown.init(root)   turn the selects inside root into dropdowns (done automatically on load)
  *   CEDropdown.sync(root)   re-read the selects (call after setting select.value from code, e.g. after a form reset)
@@ -29,7 +31,7 @@
         if (select._ceDd) return;
         uid++;
 
-        var wrap = make('div', 'ce-dd');
+        var wrap = make('div', 'ce-dd' + (select.closest('.modal-field, .modal-body') ? ' ce-dd--field' : ''));
         select.parentNode.insertBefore(wrap, select);
         wrap.appendChild(select);
         select.classList.add('ce-dd-native');
@@ -71,20 +73,24 @@
         panel.append(list, empty);
 
         var items = [];
-        Array.prototype.forEach.call(select.options, function (opt) {
-            var li = make('li', 'ce-dd-opt' + (opt.value === '' ? ' is-placeholder' : ''));
-            li.setAttribute('role', 'option');
-            li.dataset.value = opt.value;
-            var t = make('span', 'ce-dd-opt-text');
-            t.textContent = textOf(opt);
-            t.title = t.textContent;
-            li.append(t, icon('ph-check ce-dd-check'));
-            li.addEventListener('mousedown', function (e) { e.preventDefault(); });          // keep focus where it is
-            li.addEventListener('click', function () { choose(li.dataset.value); });
-            li.addEventListener('mousemove', function () { setActive(li, false); });
-            list.appendChild(li);
-            items.push(li);
-        });
+        function renderItems() {
+            list.textContent = '';
+            items.length = 0;
+            Array.prototype.forEach.call(select.options, function (opt) {
+                var li = make('li', 'ce-dd-opt' + (opt.value === '' ? ' is-placeholder' : ''));
+                li.setAttribute('role', 'option');
+                li.dataset.value = opt.value;
+                var t = make('span', 'ce-dd-opt-text');
+                t.textContent = textOf(opt);
+                t.title = t.textContent;
+                li.append(t, icon('ph-check ce-dd-check'));
+                li.addEventListener('mousedown', function (e) { e.preventDefault(); });          // keep focus where it is
+                li.addEventListener('click', function () { choose(li.dataset.value); });
+                li.addEventListener('mousemove', function () { setActive(li, false); });
+                list.appendChild(li);
+                items.push(li);
+            });
+        }
 
         wrap.append(btn, panel);
 
@@ -115,6 +121,25 @@
             setActive(shown[0] || null, true);
         }
 
+        // The list is position: fixed, so a modal or a scrolling table never clips it. It opens below the box,
+        // or above it when there is no room below, and follows the box if the page or the modal scrolls.
+        function place() {
+            var r = btn.getBoundingClientRect();
+            panel.style.minWidth = r.width + 'px';
+            var width = panel.offsetWidth;
+            panel.style.left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8)) + 'px';
+            var need = panel.offsetHeight + 16;
+            var up = window.innerHeight - r.bottom < need && r.top > need;
+            wrap.classList.toggle('is-up', up);
+            if (up) { panel.style.top = 'auto'; panel.style.bottom = (window.innerHeight - r.top + 6) + 'px'; }
+            else    { panel.style.bottom = 'auto'; panel.style.top = (r.bottom + 6) + 'px'; }
+        }
+
+        function onMove(e) {
+            if (panel.contains(e.target)) return;      // scrolling the list itself
+            place();
+        }
+
         function open() {
             if (select.disabled || openOne === dd) return;
             if (openOne) openOne.close(false);
@@ -122,10 +147,9 @@
             panel.hidden = false;
             wrap.classList.add('is-open');
             btn.setAttribute('aria-expanded', 'true');
-            // open upward when there is no room below
-            var r = btn.getBoundingClientRect();
-            var need = panel.offsetHeight + 16;
-            wrap.classList.toggle('is-up', window.innerHeight - r.bottom < need && r.top > need);
+            place();
+            window.addEventListener('scroll', onMove, true);
+            window.addEventListener('resize', place);
             var chosen = items.filter(function (li) { return li.dataset.value === select.value; })[0];
             setActive(chosen || visible()[0] || null, true);
             if (search) search.focus();
@@ -135,6 +159,8 @@
         function close(returnFocus) {
             if (panel.hidden) return;
             panel.hidden = true;
+            window.removeEventListener('scroll', onMove, true);
+            window.removeEventListener('resize', place);
             wrap.classList.remove('is-open', 'is-up');
             btn.setAttribute('aria-expanded', 'false');
             if (openOne === dd) openOne = null;
@@ -173,7 +199,30 @@
         select.addEventListener('change', function () { sync(select); });
 
         dd.close = close;
+        renderItems();
         sync(select);
+
+        // Other scripts change selects too: replaced choices, select.value = ..., disabled, form.reset().
+        var vd = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+        var sd = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+        Object.defineProperty(select, 'value', {
+            configurable: true,
+            get: function () { return vd.get.call(this); },
+            set: function (v) { vd.set.call(this, v); sync(this); }
+        });
+        Object.defineProperty(select, 'selectedIndex', {
+            configurable: true,
+            get: function () { return sd.get.call(this); },
+            set: function (v) { sd.set.call(this, v); sync(this); }
+        });
+        new MutationObserver(function (changes) {
+            if (changes.some(function (c) { return c.type === 'childList'; })) {
+                renderItems();
+                if (!panel.hidden && search) filter();
+            }
+            sync(select);
+        }).observe(select, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled'] });
+        if (select.form) select.form.addEventListener('reset', function () { setTimeout(function () { sync(select); }, 0); });
     }
 
     function sync(select) {
@@ -193,7 +242,7 @@
     }
 
     function each(root, fn) {
-        (root || document).querySelectorAll('select[data-ce-dropdown]').forEach(fn);
+        (root || document).querySelectorAll('select:not([data-native]):not([multiple]):not([size])').forEach(fn);
     }
 
     document.addEventListener('pointerdown', function (e) {

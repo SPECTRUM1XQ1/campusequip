@@ -22,3 +22,20 @@
     links.addEventListener('click', e => { if (e.target.closest('a')) setOpen(false); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
 })();
+
+/* Log in / Sign up / Create an account: the button shows it is working, the page slides away, then the form page opens
+   and its card slides in from the right (the direction is read by an inline script in login.php / signup.php). */
+(function () {
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.addEventListener('click', function (e) {
+        var link = e.target.closest('a.lp-btn[href], a.lp-mobile-cta[href], .lp-links a[href*="login.php"], .lp-links a[href*="signup.php"]');
+        if (!link || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+        if (!/(login|signup)\.php/.test(link.getAttribute('href'))) return;
+        e.preventDefault();
+        if (link.classList.contains('is-going')) return;
+        try { sessionStorage.setItem('ce-auth-dir', 'forward'); } catch (err) { /* ignore */ }
+        link.classList.add('is-going');
+        document.body.classList.add('is-leaving');
+        setTimeout(function () { window.location.href = link.href; }, reduce ? 100 : 300);
+    });
+})();

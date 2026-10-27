@@ -7,7 +7,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
   setupFieldRules();
   setupEmailHint();
+  setupPageSwitch();
 });
+
+/*
+ * Motion helpers (styles: pages/auth.css).
+ *   setupPageSwitch  the Sign Up / Sign In link slides the card out, then opens the other page, where the card slides in
+ *   setBusy          the button shows a spinner while the request runs, and a tick when it worked
+ *   shake            the card shakes once when something has to be fixed
+ */
+function setupPageSwitch() {
+  const card = document.getElementById('auth-container');
+  if (!card) return;
+  document.querySelectorAll('a.link-text[href]').forEach(link => {
+    link.addEventListener('click', e => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+      e.preventDefault();
+      const toSignup = /signup\.php/.test(link.getAttribute('href'));
+      try { sessionStorage.setItem('ce-auth-dir', toSignup ? 'forward' : 'back'); } catch (err) { /* ignore */ }
+      card.style.setProperty('--auth-out', toSignup ? '-32px' : '32px');
+      card.classList.add('is-leaving');
+      setTimeout(() => { window.location.href = link.href; }, 230);
+    });
+  });
+
+  // "Back to home": the card slides away, the brand panel fades, and the landing page opens
+  document.querySelectorAll('a.auth-back-home[href]').forEach(link => {
+    link.addEventListener('click', e => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+      e.preventDefault();
+      card.style.setProperty('--auth-out', '32px');
+      card.classList.add('is-leaving');
+      link.classList.add('is-going');
+      const wrapper = document.querySelector('.login-wrapper');
+      if (wrapper) wrapper.classList.add('is-exiting');
+      setTimeout(() => { window.location.href = link.href; }, 300);
+    });
+  });
+}
+
+function setBusy(btn, state) {                         // state: 'loading' | 'success' | null
+  btn.classList.toggle('is-loading', state === 'loading');
+  btn.classList.toggle('is-success', state === 'success');
+  btn.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
+}
+
+function shake() {
+  const card = document.getElementById('auth-container');
+  if (!card) return;
+  card.classList.remove('is-shaking');
+  void card.offsetWidth;                               // restart the animation if it is still running
+  card.classList.add('is-shaking');
+  setTimeout(() => card.classList.remove('is-shaking'), 450);
+}
+
+function leaveUp(then) {
+  const card = document.getElementById('auth-container');
+  if (card) card.classList.add('is-leaving-up');
+  setTimeout(then, 320);
+}
 
 /*
  * Live input rules (the server checks the same things again in src/Validation.php):
@@ -162,10 +220,12 @@ async function handleLogin(e) {
 
   if (/\s/.test(form.password.value)) {
     showToast('Password cannot contain spaces.', 'error');
+    shake();
     form.password.focus();
     return;
   }
   submitBtn.disabled = true;
+  setBusy(submitBtn, 'loading');
 
   const formData = new FormData(form);
   formData.append('action', 'login');
@@ -176,19 +236,25 @@ async function handleLogin(e) {
 
     if (data.success) {
       showToast('Signed in successfully', 'success');
+      setBusy(submitBtn, 'success');
       // Route by role — matches the folders in the project structure.
       const destinations = {
         borrower: APP_BASE + '/public/borrower/dashboard.php',
         staff:    APP_BASE + '/public/manage/dashboard.php',
         admin:    APP_BASE + '/public/manage/dashboard.php',
       };
-      setTimeout(() => { window.location.href = destinations[data.role] || APP_BASE + '/public/index.php'; }, 600);
+      const go = destinations[data.role] || APP_BASE + '/public/index.php';
+      setTimeout(() => leaveUp(() => { window.location.href = go; }), 350);
     } else {
       showToast(data.message, 'error');
+      setBusy(submitBtn, null);
+      shake();
       submitBtn.disabled = false;
     }
   } catch (err) {
     showToast('Could not reach the server. Please try again.', 'error');
+    setBusy(submitBtn, null);
+    shake();
     submitBtn.disabled = false;
   }
 }
@@ -203,10 +269,12 @@ async function handleSignup(e) {
   if (problem) {
     showToast(problem.message, 'error');
     form[problem.field].classList.add('is-invalid');
+    shake();
     form[problem.field].focus();
     return;
   }
   submitBtn.disabled = true;
+  setBusy(submitBtn, 'loading');
 
   const formData = new FormData(form);
   formData.append('action', 'signup');
@@ -217,13 +285,19 @@ async function handleSignup(e) {
 
     if (data.success) {
       showToast(data.message, 'success');
-      setTimeout(() => { window.location.href = APP_BASE + '/public/login/login.php'; }, 1000);
+      setBusy(submitBtn, 'success');
+      try { sessionStorage.setItem('ce-auth-dir', 'back'); } catch (err) { /* ignore */ }
+      setTimeout(() => leaveUp(() => { window.location.href = APP_BASE + '/public/login/login.php'; }), 700);
     } else {
       showToast(data.message, 'error');
+      setBusy(submitBtn, null);
+      shake();
       submitBtn.disabled = false;
     }
   } catch (err) {
     showToast('Could not reach the server. Please try again.', 'error');
+    setBusy(submitBtn, null);
+    shake();
     submitBtn.disabled = false;
   }
 }

@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../src/XlsxWriter.php';
 requireRole('admin');
 
 $pageTitle = 'Export Records';
-$pageStyles = ['shared/dropdown', 'pages/admin-export'];
+$pageStyles = ['pages/admin-export'];
 
 // Accept only real YYYY-MM-DD dates.
 function cleanDate($value): ?string
@@ -213,10 +213,6 @@ if (isset($_GET['print'])) {
         </table>
 
         <table>
-            <colgroup>
-                <col style="width:7%"><col style="width:12%"><col style="width:16%"><col style="width:17%">
-                <col style="width:11%"><col style="width:11%"><col style="width:8%"><col style="width:18%">
-            </colgroup>
             <thead>
                 <tr>
                     <th>Log</th><th>Timestamp</th><th>Borrower</th><th>Equipment</th>
@@ -361,10 +357,6 @@ $badgeStyles = [
 
                     <div class="table-card export-table">
                         <table class="data-table export-log-table">
-                            <colgroup>
-                                <col style="width:8%"><col style="width:11%"><col style="width:16%"><col style="width:16%">
-                                <col style="width:13%"><col style="width:11%"><col style="width:7%"><col style="width:18%">
-                            </colgroup>
                             <thead>
                                 <tr>
                                     <th scope="col">Log</th>
@@ -416,7 +408,6 @@ $badgeStyles = [
 
     <?php include __DIR__ . '/../../includes/navigation/footer.php'; ?>
     <script src="<?= APP_BASE ?>/public/assets/js/filters.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/filters.js') ?: 1 ?>"></script>
-    <script src="<?= APP_BASE ?>/public/assets/js/dropdown.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/dropdown.js') ?: 1 ?>"></script>
     <script src="<?= APP_BASE ?>/public/assets/js/pages/admin-export.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/pages/admin-export.js') ?: 1 ?>"></script>
 </body>
 

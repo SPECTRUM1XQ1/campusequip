@@ -7,3 +7,5 @@
 <script src="<?= APP_BASE ?>/public/assets/js/topbar.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/topbar.js') ?: 1 ?>"></script>
 <script src="<?= APP_BASE ?>/public/assets/js/motion.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/motion.js') ?: 1 ?>"></script>
 <script src="<?= APP_BASE ?>/public/assets/js/truncate.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/truncate.js') ?: 1 ?>"></script>
+<script src="<?= APP_BASE ?>/public/assets/js/dropdown.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/dropdown.js') ?: 1 ?>"></script>
+<script src="<?= APP_BASE ?>/public/assets/js/transitions.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/transitions.js') ?: 1 ?>"></script>

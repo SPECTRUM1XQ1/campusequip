@@ -21,6 +21,7 @@ if (isset($_SESSION['user_id'])) {
     <title>Sign Up — LendLab</title>
     <link rel="icon" type="image/svg+xml" href="<?= APP_BASE ?>/public/assets/images/favicon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="<?= APP_BASE ?>/public/assets/images/favicon-32x32.png">
+    <script>try{var d=sessionStorage.getItem('ce-auth-dir');if(d){document.documentElement.setAttribute('data-auth-in',d);sessionStorage.removeItem('ce-auth-dir');}}catch(e){}</script>
     <meta name="app-base" content="<?= htmlspecialchars(APP_BASE) ?>">
     <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token()) ?>">
     <script src="<?= APP_BASE ?>/public/assets/js/app-core.js?v=<?= @filemtime(__DIR__ . '/../assets/js/app-core.js') ?: 1 ?>"></script>
