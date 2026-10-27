@@ -83,6 +83,14 @@ foreach ($navGroups as $gi => $group) {
     }));
 }
 $navGroups = array_values(array_filter($navGroups, fn($g) => !empty($g['items'])));
+
+// Everyone gets the guide, in its own group at the end of the menu.
+$navGroups[] = [
+    'title' => 'Help',
+    'items' => [
+        ['label' => 'User Guide', 'icon' => 'ph-lifebuoy', 'href' => APP_BASE . '/public/guide.php'],
+    ],
+];
 ?>
 <aside class="sidebar" id="sidebar" data-role="<?= htmlspecialchars($roleKey) ?>">
     <a class="sidebar-brand" href="<?= htmlspecialchars($navGroups[0]['items'][0]['href'] ?? '#') ?>" aria-label="LendLab home">

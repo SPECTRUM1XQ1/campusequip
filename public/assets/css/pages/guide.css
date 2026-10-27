@@ -1,0 +1,134 @@
+/*
+ * pages/guide.css
+ * The User Guide page (public/guide.php): a "on this page" list on the left, task cards on the right.
+ * Loaded after base.css (see $pageStyles in the page).
+ */
+
+.guide-views { margin-bottom: 1.25rem; }
+.guide-views .filter-pill { text-decoration: none; }
+
+.guide-layout {
+    display: grid;
+    grid-template-columns: 14rem minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+}
+
+/* ---- On this page ---- */
+.guide-toc {
+    position: sticky;
+    top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding-left: 0.9rem;
+    border-left: 2px solid var(--border-color);
+}
+.guide-toc-title { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.4rem; }
+.guide-toc a {
+    padding: 0.3rem 0;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.guide-toc a:hover { color: var(--primary-brand); }
+.guide-toc a:focus-visible { outline: 2px solid var(--primary-brand); outline-offset: 2px; border-radius: 0.25rem; }
+
+/* ---- Cards ---- */
+.guide-content { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+
+.guide-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    padding: 1.25rem 1.5rem 1.4rem;
+    scroll-margin-top: 1rem;
+}
+.guide-card:target { border-color: var(--primary-brand); box-shadow: 0 0 0 3px var(--ring-color); }
+
+.guide-card-head { display: flex; align-items: flex-start; gap: 0.9rem; margin-bottom: 1rem; }
+.guide-card-head > div { flex: 1 1 auto; min-width: 0; }
+.guide-card-head h2 { font-size: 1.0625rem; font-weight: 700; margin-bottom: 0.15rem; }
+.guide-card-head p { font-size: 0.875rem; color: var(--text-muted); }
+
+.guide-ico {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.65rem;
+    background: #eef2ff;
+    color: var(--primary-brand);
+    font-size: 1.3rem;
+}
+.guide-open { flex: 0 0 auto; text-decoration: none; white-space: nowrap; }
+
+/* ---- Steps: a real sequence, so they are numbered ---- */
+.guide-steps { list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: 0.7rem; }
+.guide-steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 2.2rem;
+    font-size: 0.875rem;
+    line-height: 1.55;
+}
+.guide-steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0.05rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--primary-brand);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ---- Finding your way around ---- */
+.guide-parts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem 1.5rem; }
+.guide-parts dt { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.2rem; }
+.guide-parts dt i { color: var(--primary-brand); font-size: 1.1rem; }
+.guide-parts dd { font-size: 0.8125rem; line-height: 1.55; color: var(--text-muted); }
+
+/* ---- Words and rules ---- */
+.guide-words { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+.guide-words li { display: flex; align-items: center; gap: 0.9rem; font-size: 0.875rem; }
+.guide-words .status-badge { flex: 0 0 7.5rem; justify-content: center; text-align: center; }
+
+.guide-rules { padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.875rem; line-height: 1.55; }
+.guide-desk {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 1rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: 0.5rem;
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+    font-size: 0.8125rem;
+}
+.guide-desk i { color: var(--primary-brand); font-size: 1.2rem; }
+
+@media (max-width: 960px) {
+    .guide-layout { grid-template-columns: 1fr; gap: 1rem; }
+    .guide-toc { display: none; }
+}
+@media (max-width: 640px) {
+    .guide-card { padding: 1rem; }
+    .guide-card-head { flex-wrap: wrap; }
+    .guide-open { width: 100%; text-align: center; }
+    .guide-parts { grid-template-columns: 1fr; }
+}
+@media print {
+    .guide-toc, .guide-open { display: none; }
+    .guide-layout { grid-template-columns: 1fr; }
+    .guide-card { break-inside: avoid; }
+}
