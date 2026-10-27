@@ -92,9 +92,9 @@ if (isset($_SESSION['user_id'])) {
                         <div class="grid-row grid-cols-2">
                             <div class="form-group auth-signup-s7">
                                 <label class="input-label">Student / Employee ID</label>
-                                <input type="text" name="id_number" class="input-field" placeholder="03-01-2526-049080"
-                                    inputmode="numeric" pattern="[0-9]{2}-[0-9]{2}-[0-9]{4}-[0-9]{6}" maxlength="17"
-                                    data-id-format title="Format: 03-01-2526-049080" autocomplete="off" required>
+                                <input type="text" name="id_number" class="input-field" placeholder="03-01-2526-049080 or 03-1920-03027"
+                                    inputmode="numeric" pattern="([0-9]{2}-[0-9]{2}-[0-9]{4}-[0-9]{6})|([0-9]{2}-[0-9]{4}-[0-9]{5})" maxlength="17"
+                                    data-id-format title="Format: 03-01-2526-049080 or 03-1920-03027" autocomplete="off" required>
                                 <small class="field-hint">Numbers only, the dashes are added for you.</small>
                             </div>
                             <div class="form-group auth-signup-s7">
