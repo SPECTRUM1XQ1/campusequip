@@ -68,8 +68,8 @@ class Validation
         if ($value === '') {
             return 'Student / Employee ID is required.';
         }
-        if (!preg_match('/^\d{2}-\d{2}-\d{4}-\d{6}$/', $value)) {
-            return 'Student / Employee ID must look like 03-01-2526-049080.';
+        if (!preg_match('/^(\d{2}-\d{2}-\d{4}-\d{6}|\d{2}-\d{4}-\d{5})$/', $value)) {
+            return 'Student / Employee ID must look like 03-01-2526-049080 or 03-1920-03027.';
         }
         return null;
     }

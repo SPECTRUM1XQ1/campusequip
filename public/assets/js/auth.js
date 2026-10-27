@@ -77,8 +77,15 @@ function setupFieldRules() {
 }
 
 function formatId(digits) {
-  const parts = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8), digits.slice(8, 14)];
-  return parts.filter(Boolean).join('-');
+    if (digits.length > 11) {
+        // New format (14 digits): 03-01-2526-049080 -> 2-2-4-6
+        const parts = [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8), digits.slice(8, 14)];
+        return parts.filter(Boolean).join('-');
+    } else {
+        // Old format (11 digits): 03-1920-03027 -> 2-4-5
+        const parts = [digits.slice(0, 2), digits.slice(2, 6), digits.slice(6, 11)];
+        return parts.filter(Boolean).join('-');
+    }
 }
 
 function normalizePhone(value) {
@@ -128,8 +135,8 @@ function checkSignup(form) {
     if (required && letterCount(value) < 2) return { field, message: label + ' must have at least 2 letters.' };
   }
 
-  if (!/^\d{2}-\d{2}-\d{4}-\d{6}$/.test(v('id_number'))) {
-    return { field: 'id_number', message: 'Student / Employee ID must look like 03-01-2526-049080.' };
+  if (!/^(\d{2}-\d{2}-\d{4}-\d{6}|\d{2}-\d{4}-\d{5})$/.test(v('id_number'))) {
+    return { field: 'id_number', message: 'Student / Employee ID must look like 03-01-2526-049080 or 03-1920-03027.' };
   }
   if (!/^09\d{9}$/.test(v('phone'))) {
     return { field: 'phone', message: 'Phone number must be a Philippine mobile number like 09171234567.' };
