@@ -93,6 +93,7 @@
         }
 
         wrap.append(btn, panel);
+        if (wrap.classList.contains('ce-dd--field')) panel.classList.add('is-field');
 
         var dd = { select: select, wrap: wrap, btn: btn, panel: panel, list: list, search: search, items: items, text: text, empty: empty };
         select._ceDd = dd;
@@ -131,6 +132,7 @@
             var need = panel.offsetHeight + 16;
             var up = window.innerHeight - r.bottom < need && r.top > need;
             wrap.classList.toggle('is-up', up);
+            panel.classList.toggle('is-up', up);
             if (up) { panel.style.top = 'auto'; panel.style.bottom = (window.innerHeight - r.top + 6) + 'px'; }
             else    { panel.style.bottom = 'auto'; panel.style.top = (r.bottom + 6) + 'px'; }
         }
@@ -145,6 +147,7 @@
             if (openOne) openOne.close(false);
             if (search) { search.value = ''; filter(); }
             panel.hidden = false;
+            document.body.appendChild(panel);        // opens on the page itself: a modal's animation or a scrolling table can not move or clip it
             wrap.classList.add('is-open');
             btn.setAttribute('aria-expanded', 'true');
             place();
@@ -159,6 +162,8 @@
         function close(returnFocus) {
             if (panel.hidden) return;
             panel.hidden = true;
+            wrap.appendChild(panel);                 // back home, so it goes away with its select
+            panel.classList.remove('is-up');
             window.removeEventListener('scroll', onMove, true);
             window.removeEventListener('resize', place);
             wrap.classList.remove('is-open', 'is-up');
@@ -185,7 +190,7 @@
                 var a = items.filter(function (li) { return li.classList.contains('is-active') && !li.hidden; })[0];
                 if (a) choose(a.dataset.value);
             }
-            else if (e.key === 'Escape') { e.preventDefault(); close(true); }
+            else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(true); }   // closes the list, not the modal behind it
             else if (e.key === 'Tab') { close(false); }
         }
 
@@ -246,7 +251,7 @@
     }
 
     document.addEventListener('pointerdown', function (e) {
-        if (openOne && !openOne.wrap.contains(e.target)) openOne.close(false);
+        if (openOne && !openOne.wrap.contains(e.target) && !openOne.panel.contains(e.target)) openOne.close(false);
     });
 
     window.CEDropdown = {

@@ -52,7 +52,8 @@
 .ce-dd-caret { flex: 0 0 auto; font-size: 0.8rem; color: #64748b; transition: transform 0.2s var(--ce-ease, ease); }
 .ce-dd.is-open .ce-dd-caret { transform: rotate(180deg); }
 
-/* ---- The open list ---- */
+/* ---- The open list ----
+   While open it is moved to <body> by dropdown.js (position: fixed), so it is styled by its own classes only. */
 .ce-dd-panel {
     position: fixed;             /* placed by dropdown.js, so modals and scrolling tables never clip it */
     left: 0;
@@ -70,10 +71,10 @@
     animation: ce-dd-in 0.16s var(--ce-ease, ease) both;
 }
 .ce-dd-panel[hidden] { display: none; }
-.ce-dd.is-up .ce-dd-panel { transform-origin: bottom left; }
+.ce-dd-panel.is-up { transform-origin: bottom left; }
 
 @keyframes ce-dd-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
-.ce-dd.is-up .ce-dd-panel { animation-name: ce-dd-in-up; }
+.ce-dd-panel.is-up { animation-name: ce-dd-in-up; }
 @keyframes ce-dd-in-up { from { opacity: 0; transform: translateY(4px) scale(0.98); } to { opacity: 1; transform: none; } }
 
 .ce-dd-search {
@@ -129,10 +130,10 @@
     font-size: 0.875rem;
 }
 .ce-dd--field .ce-dd-caret { font-size: 0.95rem; }
-.ce-dd--field .ce-dd-opt { font-size: 0.875rem; padding: 0.55rem 0.7rem; }
-.ce-dd--field .ce-dd-panel { max-width: min(30rem, 92vw); }
+.ce-dd-panel.is-field .ce-dd-opt { font-size: 0.875rem; padding: 0.55rem 0.7rem; }
+.ce-dd-panel.is-field { max-width: min(30rem, 92vw); }
 .ce-dd--field .ce-dd-text { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.ce-dd--field .ce-dd-opt-text { white-space: normal; }
+.ce-dd-panel.is-field .ce-dd-opt-text { white-space: normal; }
 
 @media (prefers-reduced-motion: reduce) {
     .ce-dd-panel, .ce-dd-caret { animation: none; transition: none; }
