@@ -306,9 +306,9 @@
         zone.addEventListener('pointercancel', end);
 
         // ---- Two-finger trackpad swipe (horizontal wheel events) ----
-        // Swipe one way = next page, the other way = previous page. Mostly-vertical scrolling is left alone, and so is a
-        // table that scrolls sideways. A swipe leaves "momentum" events behind; they are ignored until things go quiet,
-        // so one swipe never skips several pages.
+        // Swipe one way = next page, the other way = previous page. Mostly-vertical scrolling is left alone.
+        // A swipe leaves "momentum" events behind; they are ignored until things go quiet,
+        // so one swipe never skips several pages.  
         let wAcc = 0, wLocked = false, wLockedAt = 0, wTimer = null;
 
         // After a page change the swipe is "used up": further events (a long swipe, the momentum tail) are ignored until
@@ -331,9 +331,24 @@
 
         zone.addEventListener('wheel', function (e) {
             if ((list.pages || 1) <= 1) return;
-            const dx = e.deltaX !== 0 ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
-            if (dx === 0 || (e.deltaX !== 0 && Math.abs(e.deltaX) <= Math.abs(e.deltaY))) return;   // vertical scroll: not ours
-            if (isTable && zone.scrollWidth > zone.clientWidth + 2) return;                          // table with its own sideways scroll
+            // Only a mostly-sideways gesture counts; up / down scrolling and shift + wheel stay with the browser.
+            const dx = e.deltaX;
+            if (dx === 0 || Math.abs(dx) <= Math.abs(e.deltaY) || e.shiftKey) return;
+
+            // A table that is wider than its box scrolls sideways first. The page only flips once the table is at its
+            // end in the swipe direction, and it flips in the SAME swipe: keep swiping past the end, no need to lift
+            // the fingers first.
+            const hiddenWidth = isTable ? zone.scrollWidth - zone.clientWidth : 0;
+            const scrollable = hiddenWidth > 2;
+            if (scrollable && !wLocked) {
+                const atEnd = zone.scrollLeft >= hiddenWidth - 1;
+                const atStart = zone.scrollLeft <= 0;
+                if ((dx > 0 && !atEnd) || (dx < 0 && !atStart)) {
+                    if (wAcc !== 0) { wAcc = 0; zone.classList.remove('ce-dragging'); zone.style.transform = ''; }
+                    return;                                      // let the browser scroll the table
+                }
+            }
+
             e.preventDefault();                                  // also stops the browser's two-finger "back / forward" swipe
 
             clearTimeout(wTimer);
@@ -345,9 +360,11 @@
             zone.classList.add('ce-dragging');
             zone.style.transform = 'translateX(' + (-wAcc * (atEdge ? 0.2 : 0.5)) + 'px)';
 
-            const threshold = Math.min(110, zone.clientWidth * 0.12);
+            // a little more pull is needed when it follows a scroll, so the end of a fast scroll does not flip by accident
+            const threshold = scrollable ? 140 : Math.min(110, zone.clientWidth * 0.12);
             if (!atEdge && Math.abs(wAcc) > threshold) {
-                const target = list.page + (wAcc > 0 ? 1 : -1);
+                const forward = wAcc > 0;
+                const target = list.page + (forward ? 1 : -1);
                 wAcc = 0;
                 wLocked = true;
                 wLockedAt = performance.now();
@@ -355,6 +372,7 @@
                 zone.style.transition = 'none';
                 zone.style.transform = '';
                 goTo(list, target);
+                if (isTable) zone.scrollLeft = forward ? 0 : zone.scrollWidth;   // the new page starts at its near edge
                 requestAnimationFrame(function () { zone.style.transition = ''; });
             }
         }, { passive: false });
@@ -386,13 +404,22 @@
 
     // ---------------------------------------------------------------- init
 
-    function init() {
+    let preselected = false;
+
+    // Set up every list on the page that is not set up yet, and forget lists that were removed from the page.
+    // Runs on load; call CEList.scan() again after a part of the page was replaced (e.g. Export Records results).
+    function scan() {
+        for (let i = lists.length - 1; i >= 0; i--) {
+            if (!lists[i].el.isConnected) lists.splice(i, 1);
+        }
+
         // A link like fines.php?filter=unpaid opens the list with that pill already selected.
         const wanted = new URLSearchParams(window.location.search).get('filter');
-        let preselected = false;
 
         document.querySelectorAll('[data-filter-group], [data-list]').forEach(function (el) {
+            if (el._ceList) return;
             const list = { el: el, page: 1, pages: 1 };
+            el._ceList = list;
             lists.push(list);
 
             if (wanted && !preselected) {
@@ -417,10 +444,11 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', scan);
 
     window.CEList = {
         count: function () { return lists.length; },
+        scan: scan,
         setSearch: function (text) {
             searchText = (text || '').toLowerCase().trim();
             lists.forEach(function (list) { list.page = 1; apply(list, 'fade'); });

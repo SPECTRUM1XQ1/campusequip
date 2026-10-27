@@ -1,7 +1,8 @@
 <?php
-// Admin "Export Records": filter the borrowing records (borrower, equipment, status, dates), look at them
-// page by page, then print them or download them as an Excel file. There is no table picker on purpose:
-// the page only ever receives filter values, never database table or column names.
+// Admin "Export Records": the transaction log (every request, approval, handover, return and fine entry).
+// Filter it by borrower, equipment, status and dates, look at it page by page, then print it or download it as an
+// Excel file. There is no table picker on purpose: the page only ever receives filter values, never database
+// table or column names.
 define('APP_INIT', true);
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../includes/auth_check.php';
@@ -10,7 +11,7 @@ require_once __DIR__ . '/../../src/XlsxWriter.php';
 requireRole('admin');
 
 $pageTitle = 'Export Records';
-$pageStyles = ['pages/admin-export'];
+$pageStyles = ['shared/dropdown', 'pages/admin-export'];
 
 // Accept only real YYYY-MM-DD dates.
 function cleanDate($value): ?string
@@ -58,11 +59,11 @@ $filterText[] = $rangeText;
 
 // ---- Excel download (.xlsx): every row that matches the filters, not just the current page ----
 if (($_GET['format'] ?? '') === 'xlsx') {
-    $all = $export->report($filters, 1, 0);
-    $filename = 'campusequip-borrowing-records-' . date('Ymd-His') . '.xlsx';
+    $all = $export->report($filters);
+    $filename = 'campusequip-transaction-log-' . date('Ymd-His') . '.xlsx';
     try {
         $bytes = XlsxWriter::build(
-            'Borrowing Records',
+            'Transaction Log',
             $all['headers'],
             $all['rows'],
             ['Fine (PHP)'] // written as real numbers so Excel can total them
@@ -78,21 +79,16 @@ if (($_GET['format'] ?? '') === 'xlsx') {
 // ---- Printable report (?print=1): a clean A4 landscape document. The page opens the browser's print
 // dialog by itself; choose "Save as PDF" there to get a PDF file. Every matching row is included. ----
 if (isset($_GET['print'])) {
-    $all  = $export->report($filters, 1, 0);
+    $all  = $export->report($filters);
     $rows = $all['rows'];
 
-    // Column positions in Export::HEADERS
     $nice = fn($v) => $v === '' ? '—' : date('M j, Y g:i A', strtotime($v));
-    $statusCounts = [];
+    $actionCounts = [];
     $fineTotal = 0.0;
-    $fineUnpaid = 0.0;
     foreach ($rows as $r) {
-        $statusCounts[$r[5]] = ($statusCounts[$r[5]] ?? 0) + 1;
-        if ($r[13] !== '') {
-            $fineTotal += (float) $r[13];
-            if ($r[14] === 'Unpaid') {
-                $fineUnpaid += (float) $r[13];
-            }
+        $actionCounts[$r[Export::COL_ACTION]] = ($actionCounts[$r[Export::COL_ACTION]] ?? 0) + 1;
+        if ($r[Export::COL_FINE] !== '') {
+            $fineTotal += (float) $r[Export::COL_FINE];
         }
     }
     $rangeLabel = ($from || $to)
@@ -111,7 +107,7 @@ if (isset($_GET['print'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Borrowing Records Report - <?= $h(date('Y-m-d')) ?></title>
+    <title>Transaction Log Report - <?= $h(date('Y-m-d')) ?></title>
     <style>
         @page { size: A4 landscape; margin: 12mm; }
         * { box-sizing: border-box; }
@@ -191,7 +187,7 @@ if (isset($_GET['print'])) {
         <div class="rule"></div>
 
         <div class="title">
-            <h1>Borrowing Records Report</h1>
+            <h1>Transaction Log Report</h1>
             <p><?= $h($rangeLabel) ?></p>
         </div>
 
@@ -208,39 +204,38 @@ if (isset($_GET['print'])) {
 
         <table class="summary" aria-label="Summary">
             <tr>
-                <td><span>Total records</span><strong><?= (int) $all['total'] ?></strong></td>
-                <?php foreach ($statusCounts as $label => $n): ?>
+                <td><span>Total entries</span><strong><?= (int) $all['total'] ?></strong></td>
+                <?php foreach ($actionCounts as $label => $n): ?>
                     <td><span><?= $h($label) ?></span><strong><?= (int) $n ?></strong></td>
                 <?php endforeach; ?>
-                <td><span>Fines charged</span><strong>&#8369;<?= number_format($fineTotal, 2) ?></strong></td>
-                <td><span>Still unpaid</span><strong>&#8369;<?= number_format($fineUnpaid, 2) ?></strong></td>
+                <td><span>Fines in log</span><strong>&#8369;<?= number_format($fineTotal, 2) ?></strong></td>
             </tr>
         </table>
 
         <table>
             <colgroup>
-                <col style="width:6%"><col style="width:16%"><col style="width:17%"><col style="width:9%">
-                <col style="width:16%"><col style="width:13%"><col style="width:13%"><col style="width:10%">
+                <col style="width:7%"><col style="width:12%"><col style="width:16%"><col style="width:17%">
+                <col style="width:11%"><col style="width:11%"><col style="width:8%"><col style="width:18%">
             </colgroup>
             <thead>
                 <tr>
-                    <th>Request</th><th>Borrower</th><th>Equipment</th><th>Status</th>
-                    <th>Borrow period</th><th>Checked out</th><th>Returned</th><th class="num">Fine (PHP)</th>
+                    <th>Log</th><th>Timestamp</th><th>Borrower</th><th>Equipment</th>
+                    <th>Action</th><th>Performed by</th><th class="num">Fine (PHP)</th><th>Remarks</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (!$rows): ?>
-                    <tr><td colspan="8" class="empty">No records match these filters.</td></tr>
+                    <tr><td colspan="8" class="empty">No log entries match these filters.</td></tr>
                 <?php else: foreach ($rows as $r): ?>
                     <tr>
-                        <td><?= $h($r[0]) ?></td>
-                        <td><?= $h($r[1]) ?><br><small><?= $h($r[2]) ?></small></td>
-                        <td><?= $h($r[3]) ?><?php if ($r[4] !== ''): ?><br><small><?= $h($r[4]) ?></small><?php endif; ?></td>
-                        <td class="st st-<?= $h(strtok($r[5], ' ')) ?>"><?= $h($r[5]) ?></td>
-                        <td><?= $h($nice($r[7])) ?><br><small>to <?= $h($nice($r[8])) ?></small></td>
-                        <td><?= $h($nice($r[9])) ?></td>
-                        <td><?= $h($nice($r[11])) ?></td>
-                        <td class="num"><?= $r[13] !== '' ? $h(number_format((float) $r[13], 2)) . '<br><small>' . $h($r[14]) . '</small>' : '—' ?></td>
+                        <td><?= $h($r[Export::COL_LOG]) ?><?php if ($r[Export::COL_REQ] !== ''): ?><br><small><?= $h($r[Export::COL_REQ]) ?></small><?php endif; ?></td>
+                        <td><?= $h($nice($r[Export::COL_TIME])) ?></td>
+                        <td><?= $h($r[Export::COL_BORROWER] !== '' ? $r[Export::COL_BORROWER] : '—') ?><?php if ($r[Export::COL_ID] !== ''): ?><br><small><?= $h($r[Export::COL_ID]) ?></small><?php endif; ?></td>
+                        <td><?= $h($r[Export::COL_EQUIPMENT] !== '' ? $r[Export::COL_EQUIPMENT] : '—') ?><?php if ($r[Export::COL_SERIAL] !== ''): ?><br><small><?= $h($r[Export::COL_SERIAL]) ?></small><?php endif; ?></td>
+                        <td><?= $h($r[Export::COL_ACTION]) ?></td>
+                        <td><?= $h($r[Export::COL_ACTOR]) ?></td>
+                        <td class="num"><?= $r[Export::COL_FINE] !== '' ? $h(number_format((float) $r[Export::COL_FINE], 2)) : '—' ?></td>
+                        <td><?= $h($r[Export::COL_REMARKS] !== '' ? $r[Export::COL_REMARKS] : '—') ?></td>
                     </tr>
                 <?php endforeach; endif; ?>
             </tbody>
@@ -250,7 +245,7 @@ if (isset($_GET['print'])) {
             <div>Prepared by: <?= $h($preparedBy) ?></div>
             <div>Noted by</div>
         </div>
-        <p class="foot">End of report &middot; <?= (int) $all['total'] ?> record<?= $all['total'] === 1 ? '' : 's' ?> &middot; <?= $h(APP_NAME) ?></p>
+        <p class="foot">End of report &middot; <?= (int) $all['total'] ?> entr<?= $all['total'] === 1 ? 'y' : 'ies' ?> &middot; <?= $h(APP_NAME) ?></p>
     </main>
 
     <script>
@@ -264,15 +259,16 @@ if (isset($_GET['print'])) {
     exit;
 }
 
-// ---- Normal page: one page of results ----
-$data = $export->report($filters, max(1, (int) ($_GET['page'] ?? 1)), Export::PER_PAGE);
-$page  = $data['page'];
-$pages = $data['pages'];
+// ---- Normal page: every matching entry; the page cuts them into pages in the browser (filters.js) ----
+$data  = $export->report($filters);
 $total = $data['total'];
-$start = $total === 0 ? 0 : ($page - 1) * Export::PER_PAGE + 1;
-$end   = min($page * Export::PER_PAGE, $total);
 
-$pageUrl = fn(int $p) => '?' . http_build_query($filters + ($p > 1 ? ['page' => $p] : []));
+// Badge colour of each action (same colours as the Transaction Log page).
+$badgeStyles = [
+    'Requested' => 'pending', 'Approved' => 'approved', 'Declined' => 'declined', 'Cancelled' => 'declined',
+    'Handover' => 'approved', 'Returned' => 'approved', 'Returned late' => 'returned',
+    'Fine charged' => 'declined', 'Fine paid' => 'approved', 'Fine waived' => 'pending',
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -291,13 +287,14 @@ $pageUrl = fn(int $p) => '?' . http_build_query($filters + ($p > 1 ? ['page' => 
             <?php include __DIR__ . '/../../includes/navigation/topbar.php'; ?>
 
             <section class="requests-page" id="exportPage">
-                <p class="page-note no-print">Set the filters you need &mdash; the table updates by itself. Then print it or download it as an Excel file (everything that matches, not just this page).</p>
+                <p class="page-note no-print">The transaction log. Set the filters you need &mdash; the table updates by itself. Then print it or download it as an Excel file (everything that matches, not just this page).</p>
 
-                <!-- Toolbar: filters toggle + actions -->
+                <!-- Toolbar: filters toggle (same look as the filter choices on other pages) + actions -->
                 <div class="requests-toolbar no-print">
-                    <button type="button" class="btn btn-outline btn-sm btn-rect" id="exportFilterToggle" aria-expanded="true" aria-controls="exportFilters">
-                        <i class="ph ph-funnel" aria-hidden="true"></i><span class="btn-text">Filters</span>
+                    <button type="button" class="filter-pill export-filter-toggle" id="exportFilterToggle" aria-expanded="true" aria-controls="exportFilters">
+                        <i class="ph ph-funnel" aria-hidden="true"></i><span>Filters</span>
                         <span class="export-filter-count" id="exportFilterCount"<?= $activeCount ? '' : ' hidden' ?>><?= (int) $activeCount ?></span>
+                        <i class="ph ph-caret-down export-filter-caret" aria-hidden="true"></i>
                     </button>
 
                     <div class="admin-export-s3">
@@ -312,7 +309,7 @@ $pageUrl = fn(int $p) => '?' . http_build_query($filters + ($p > 1 ? ['page' => 
                 <form method="get" class="export-filters no-print" id="exportFilters" autocomplete="off">
                     <div class="export-filter-field">
                         <label class="modal-label" for="f-borrower">Borrower</label>
-                        <select class="input-field" id="f-borrower" name="borrower">
+                        <select class="input-field" id="f-borrower" name="borrower" data-ce-dropdown>
                             <option value="">All borrowers</option>
                             <?php foreach ($options['borrowers'] as $id => $label): ?>
                                 <option value="<?= (int) $id ?>"<?= $id === $borrower ? ' selected' : '' ?>><?= $h($label) ?></option>
@@ -321,19 +318,10 @@ $pageUrl = fn(int $p) => '?' . http_build_query($filters + ($p > 1 ? ['page' => 
                     </div>
                     <div class="export-filter-field">
                         <label class="modal-label" for="f-equipment">Equipment</label>
-                        <select class="input-field" id="f-equipment" name="equipment">
+                        <select class="input-field" id="f-equipment" name="equipment" data-ce-dropdown>
                             <option value="">All equipment</option>
                             <?php foreach ($options['equipment'] as $id => $label): ?>
                                 <option value="<?= (int) $id ?>"<?= $id === $equipment ? ' selected' : '' ?>><?= $h($label) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="export-filter-field">
-                        <label class="modal-label" for="f-status">Status</label>
-                        <select class="input-field" id="f-status" name="status">
-                            <option value="">All statuses</option>
-                            <?php foreach ($options['statuses'] as $key => $label): ?>
-                                <option value="<?= $h($key) ?>"<?= $key === $status ? ' selected' : '' ?>><?= $h($label) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -345,68 +333,90 @@ $pageUrl = fn(int $p) => '?' . http_build_query($filters + ($p > 1 ? ['page' => 
                         <label class="modal-label" for="f-to">Requested to</label>
                         <input type="date" class="input-field date-compact" id="f-to" name="to" value="<?= $h($to) ?>">
                     </div>
-                    <div class="export-filter-field export-filter-clear">
-                        <a class="btn btn-outline btn-sm btn-rect admin-export-s1" id="exportClear" href="?"<?= $activeCount ? '' : ' hidden' ?>><i class="ph ph-eraser" aria-hidden="true"></i><span class="btn-text">Clear filters</span></a>
+
+                    <!-- Status: a few short choices, so they are pills like the filters on the other pages -->
+                    <div class="export-filter-field export-filter-status">
+                        <span class="modal-label" id="f-status-label">Status</span>
+                        <div class="export-status-row">
+                            <div class="export-status-pills" role="group" aria-labelledby="f-status-label" id="exportStatusPills">
+                                <button type="button" class="filter-pill<?= $status === '' ? ' active' : '' ?>" data-value="">All</button>
+                                <?php foreach ($options['statuses'] as $key => $label): ?>
+                                    <button type="button" class="filter-pill<?= $key === $status ? ' active' : '' ?>" data-value="<?= $h($key) ?>" title="<?= $h($label) ?>"><?= $h(trim(explode(' (', $label)[0])) ?></button>
+                                <?php endforeach; ?>
+                            </div>
+                            <input type="hidden" id="f-status" name="status" value="<?= $h($status) ?>">
+                            <a class="btn btn-outline btn-sm btn-rect admin-export-s1 export-clear" id="exportClear" href="?"<?= $activeCount ? '' : ' hidden' ?>><i class="ph ph-eraser" aria-hidden="true"></i><span class="btn-text">Clear filters</span></a>
+                        </div>
                     </div>
                 </form>
 
-                <!-- Results: this block is swapped in place when a filter changes or a page is chosen -->
+                <!-- Results: this block is swapped in place when a filter changes -->
                 <div id="exportResults" aria-live="polite">
                     <p class="results-count no-print">
-                        <strong><?= (int) $total ?></strong> record<?= $total === 1 ? '' : 's' ?> &middot; <?= $h(implode(' · ', $filterText)) ?>
+                        <strong><?= (int) $total ?></strong> log entr<?= $total === 1 ? 'y' : 'ies' ?> &middot; <?= $h(implode(' · ', $filterText)) ?>
                     </p>
 
+                    <div hidden data-list data-items="#exportBody tr[data-row]" data-page-size="10" data-pager="#exportPager" data-pager-always
+                         data-empty="#exportEmptyRow"></div>
+
                     <div class="table-card export-table">
-                        <table class="data-table">
+                        <table class="data-table export-log-table">
+                            <colgroup>
+                                <col style="width:8%"><col style="width:11%"><col style="width:16%"><col style="width:16%">
+                                <col style="width:13%"><col style="width:11%"><col style="width:7%"><col style="width:18%">
+                            </colgroup>
                             <thead>
                                 <tr>
-                                    <?php foreach ($data['headers'] as $title): ?>
-                                        <th scope="col"><?= $h($title) ?></th>
-                                    <?php endforeach; ?>
+                                    <th scope="col">Log</th>
+                                    <th scope="col">Timestamp</th>
+                                    <th scope="col">Borrower</th>
+                                    <th scope="col">Equipment</th>
+                                    <th scope="col">Action</th>
+                                    <th scope="col">Performed by</th>
+                                    <th scope="col">Fine</th>
+                                    <th scope="col">Remarks / Notes</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="exportBody">
                                 <?php if (empty($data['rows'])): ?>
                                     <tr>
-                                        <td colspan="<?= count($data['headers']) ?>" class="text-muted admin-export-s4">
-                                            No records match these filters.
+                                        <td colspan="8" class="text-muted admin-export-s4">
+                                            No log entries match these filters.
                                         </td>
                                     </tr>
-                                <?php else: foreach ($data['rows'] as $row): ?>
-                                    <tr>
-                                        <?php foreach ($row as $cell): ?>
-                                            <td><?= $h($cell !== '' ? $cell : '—') ?></td>
-                                        <?php endforeach; ?>
+                                <?php else: foreach ($data['rows'] as $r): ?>
+                                    <tr data-row>
+                                        <td class="cell-strong"><?= $h($r[Export::COL_LOG]) ?><?php if ($r[Export::COL_REQ] !== ''): ?><br><small class="export-sub"><?= $h($r[Export::COL_REQ]) ?></small><?php endif; ?></td>
+                                        <td><?= $h(substr($r[Export::COL_TIME], 0, 10)) ?><br><small class="export-sub"><?= $h(substr($r[Export::COL_TIME], 11)) ?></small></td>
+                                        <td><?= $h($r[Export::COL_BORROWER] !== '' ? $r[Export::COL_BORROWER] : '—') ?><?php if ($r[Export::COL_ID] !== ''): ?><br><small class="export-sub"><?= $h($r[Export::COL_ID]) ?></small><?php endif; ?></td>
+                                        <td><?= $h($r[Export::COL_EQUIPMENT] !== '' ? $r[Export::COL_EQUIPMENT] : '—') ?><?php if ($r[Export::COL_SERIAL] !== ''): ?><br><small class="export-sub"><?= $h($r[Export::COL_SERIAL]) ?></small><?php endif; ?></td>
+                                        <td>
+                                            <span class="status-badge <?= $badgeStyles[$r[Export::COL_ACTION]] ?? 'pending' ?>"><?= $h($r[Export::COL_ACTION]) ?></span>
+                                            <?php if ($r[Export::COL_REQ_STATUS] !== ''): ?><br><small class="export-sub">Request: <?= $h($r[Export::COL_REQ_STATUS]) ?></small><?php endif; ?>
+                                        </td>
+                                        <td><?= $h($r[Export::COL_ACTOR]) ?></td>
+                                        <td class="cell-strong"><?= $r[Export::COL_FINE] !== '' ? '&#8369;' . $h(number_format((float) $r[Export::COL_FINE], 2)) : '—' ?></td>
+                                        <td><?= $h($r[Export::COL_REMARKS] !== '' ? $r[Export::COL_REMARKS] : '—') ?></td>
                                     </tr>
                                 <?php endforeach; endif; ?>
+                                <tr id="exportEmptyRow" style="display:none;">
+                                    <td colspan="8" class="text-muted admin-export-s4">
+                                        No log entries match your search.
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <?php if ($total > 0): ?>
-                        <div class="pager no-print" id="exportPager">
-                            <span class="pager-info">Showing <?= (int) $start ?>&ndash;<?= (int) $end ?> of <?= (int) $total ?></span>
-                            <div class="pager-nav">
-                                <?php if ($page > 1): ?>
-                                    <a class="btn btn-outline btn-sm btn-rect admin-export-s1" href="<?= $h($pageUrl($page - 1)) ?>" data-page="<?= $page - 1 ?>">Previous</a>
-                                <?php else: ?>
-                                    <button type="button" class="btn btn-outline btn-sm btn-rect" disabled>Previous</button>
-                                <?php endif; ?>
-                                <span class="pager-page">Page <?= (int) $page ?> of <?= (int) $pages ?></span>
-                                <?php if ($page < $pages): ?>
-                                    <a class="btn btn-outline btn-sm btn-rect admin-export-s1" href="<?= $h($pageUrl($page + 1)) ?>" data-page="<?= $page + 1 ?>">Next</a>
-                                <?php else: ?>
-                                    <button type="button" class="btn btn-outline btn-sm btn-rect" disabled>Next</button>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
+                    <div class="pager no-print" id="exportPager"></div>
                 </div>
             </section>
         </main>
     </div>
 
     <?php include __DIR__ . '/../../includes/navigation/footer.php'; ?>
+    <script src="<?= APP_BASE ?>/public/assets/js/filters.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/filters.js') ?: 1 ?>"></script>
+    <script src="<?= APP_BASE ?>/public/assets/js/dropdown.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/dropdown.js') ?: 1 ?>"></script>
     <script src="<?= APP_BASE ?>/public/assets/js/pages/admin-export.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/pages/admin-export.js') ?: 1 ?>"></script>
 </body>
 

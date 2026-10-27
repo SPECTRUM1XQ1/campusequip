@@ -56,34 +56,34 @@ function renderPendingCard(array $r): string
     ob_start();
 ?>
 <div class="item-card loan-card">
-                            <div class="loan-card-head">
-                                <h3 class="loan-card-title"><?= htmlspecialchars($r['model_name']) ?></h3>
-                                <?= $isApproved ? pill('Approved — Ready for Pickup', 'info') : pill('Pending Request', 'warning') ?>
-                            </div>
-                            <div class="loan-card-body">
-                                <?php if ($isApproved): ?>
-                                    <?= detailLine('Serial Number', $r['serial_number'] ?: '—') ?>
-                                <?php endif; ?>
-                                <?= detailLine('Request Code', 'REQ-' . (int) $r['reservation_id']) ?>
-                                <div class="loan-row">
-                                    <span class="label">Pick-Up Window<?php if (!$isApproved): ?><small>once approved</small><?php endif; ?></span>
-                                    <span class="value">
-                                        <?= $win['text'] ?>
-                                        <?php if ($isApproved): ?>
-                                            <span class="loan-row-extra"><?= pickupCountdownTag($win, '', 'Pick-up window ended — this reservation is cancelled') ?></span>
-                                        <?php endif; ?>
-                                    </span>
-                                </div>
-                                <?= detailLine('Purpose', $r['purpose'] ?: '—') ?>
-                                <?= detailLine('Status', $isApproved ? 'Approved — bring your ID to the Lab Desk to pick it up' : 'Awaiting Staff Approval') ?>
-                            </div>
-                            <div class="loan-card-foot">
-                                <span class="loan-card-hint">ID validation required at pickup. Not collected in time = reservation cancelled.</span>
-                                <button type="button" class="btn btn-sm btn-outline-danger btn-rect cancel-btn"
-                                    data-id="<?= (int) $r['reservation_id'] ?>"
-                                    data-model="<?= htmlspecialchars($r['model_name'], ENT_QUOTES) ?>"><i class="ph ph-x-circle" aria-hidden="true"></i><span class="btn-text">Cancel Request</span></button>
-                            </div>
-                        </div>
+    <div class="loan-card-head">
+            <h3 class="loan-card-title"><?= htmlspecialchars($r['model_name']) ?></h3>
+        <?= $isApproved ? pill('Approved — Ready for Pickup', 'info') : pill('Pending Request', 'warning') ?>
+    </div>
+    <div class="loan-card-body">
+            <?php if ($isApproved): ?>
+                <?= detailLine('Serial Number', $r['serial_number'] ?: '—') ?>
+            <?php endif; ?>
+            <?= detailLine('Request Code', 'REQ-' . (int) $r['reservation_id']) ?>
+            <div class="loan-row">
+                <span class="label">Pick-Up Window<?php if (!$isApproved): ?><small>once approved</small><?php endif; ?></span>
+                <span class="value">
+                    <?= $win['text'] ?>
+                    <?php if ($isApproved): ?>
+                        <span class="loan-row-extra"><?= pickupCountdownTag($win, '', 'Pick-up window ended — this reservation is cancelled') ?></span>
+                    <?php endif; ?>
+            </span>
+        </div>
+            <?= detailLine('Purpose', $r['purpose'] ?: '—') ?>
+            <?= detailLine('Status', $isApproved ? 'Approved — bring your ID to the Lab Desk to pick it up' : 'Awaiting Staff Approval') ?>
+    </div>
+    <div class="loan-card-foot">
+        <span class="loan-card-hint">ID validation required at pickup. Not collected in time = reservation cancelled.</span>
+        <button type="button" class="btn btn-sm btn-outline-danger btn-rect cancel-btn" 
+        data-id="<?= (int) $r['reservation_id'] ?>"
+        data-model="<?= htmlspecialchars($r['model_name'], ENT_QUOTES) ?>"><i class="ph ph-x-circle" aria-hidden="true"></i><span class="btn-text">Cancel Request</span></button>
+    </div>
+</div>
 <?php
     return (string) ob_get_clean();
 }

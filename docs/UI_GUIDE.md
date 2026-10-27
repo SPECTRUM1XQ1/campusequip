@@ -78,6 +78,20 @@ or use the arrow keys). Tables that scroll sideways on a phone keep their own sc
 Page blocks rise in one after another, cards lift on hover (tables and table rows never move), modals pop in, the Pending tab
 content fades up, big numbers count up. All of it stops when the system asks for reduced motion.
 
+## Styled dropdown (`shared/dropdown.css`, `dropdown.js`)
+
+Add `data-ce-dropdown` to a `<select>` to get a styled choice list (search box from 8 choices, tick on the chosen one, arrow keys,
+opens upward near the bottom of the screen). The `<select>` stays in the page and keeps the value, so forms and `change` listeners are
+untouched; after setting `select.value` from code call `CEDropdown.sync(form)`. Used on Export Records (Borrower, Equipment) and the
+Serialized Items model filter. A filter with only a few short choices (Status on Export Records) uses pills like the other pages.
+
+## Export Records
+
+Exports the **transaction log** (one row per log entry: request, approval, handover, return, fine ...), not the reservations. The filters
+(borrower, equipment, status, requested from / to) act on the request a log entry belongs to. The page lists every match and pages it
+in the browser with the shared pager; Excel and Print always contain every match. Two-finger swipe changes the page on tables too, even
+when the table scrolls sideways (scroll such a table with its scroll bar or shift + wheel).
+
 ## Collapsible sections
 
 A section that can fold away uses `shared/collapse.css` + `assets/js/collapse.js` (markup is documented at the top of the CSS file).

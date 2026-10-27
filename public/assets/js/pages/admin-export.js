@@ -1,9 +1,12 @@
 /**
- * Admin > Export Records.
+ * Admin > Export Records (the transaction log).
  *  - Filters apply by themselves (no Apply button): the results block is reloaded in place with fetch(),
  *    so the filter panel never closes or resets while the admin is working.
+ *  - Borrower and Equipment are styled dropdowns (dropdown.js); Status is a row of choices (pills), like the
+ *    filters on the other pages.
  *  - The panel's open/closed state is remembered for this browser tab.
- *  - Pagination links reload the results block the same way.
+ *  - The table is cut into pages in the browser by the shared pager (filters.js): Previous / Next, page dots,
+ *    swipe. After each reload the new table is handed to CEList.scan().
  *  - Print opens the printable report in a new tab; Excel always downloads every match.
  * Without JavaScript the page still works: changing a filter is just a normal GET request.
  */
@@ -17,9 +20,10 @@
     const clearBtn = document.getElementById('exportClear');
     const excelBtn = document.getElementById('exportExcel');
     const printBtn = document.getElementById('exportPrint');
+    const statusInput = document.getElementById('f-status');
+    const statusPills = document.getElementById('exportStatusPills');
     const OPEN_KEY = 'ce_export_filters_open';
     let controller = null;
-    let page = 1;
 
     // ---------- Filter panel open / close (remembered) ----------
     function setOpen(open) {
@@ -32,15 +36,22 @@
     setOpen(saved !== '0');
     toggle.addEventListener('click', () => setOpen(form.hidden));
 
-    // Closed dropdowns cut long names with "..."; show the full name as a tooltip.
-    function setTitles() {
-        form.querySelectorAll('select').forEach(sel => {
-            const opt = sel.options[sel.selectedIndex];
-            sel.title = opt ? opt.text : '';
+    // ---------- Status choices (pills) ----------
+    function showStatus() {
+        statusPills.querySelectorAll('.filter-pill').forEach(p => {
+            const on = p.dataset.value === statusInput.value;
+            p.classList.toggle('active', on);
+            p.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
     }
-    setTitles();
-    form.addEventListener('change', setTitles);
+    statusPills.addEventListener('click', e => {
+        const pill = e.target.closest('.filter-pill');
+        if (!pill || pill.dataset.value === statusInput.value) return;
+        statusInput.value = pill.dataset.value;
+        showStatus();
+        statusInput.dispatchEvent(new Event('change', { bubbles: true }));   // same path as every other filter
+    });
+    showStatus();
 
     // ---------- Build the query string from the form ----------
     function query(extra) {
@@ -62,16 +73,15 @@
         const n = activeCount();
         countBadge.textContent = n;
         countBadge.hidden = n === 0;
+        toggle.classList.toggle('has-filters', n > 0);
         clearBtn.hidden = n === 0;
         excelBtn.href = '?' + query({ format: 'xlsx' }).toString();
         printBtn.href = '?' + query({ print: '1' }).toString();
     }
 
     // ---------- Reload the results block in place ----------
-    async function load(pageNo) {
-        page = pageNo || 1;
-        const params = query(page > 1 ? { page: page } : {});
-        const url = '?' + params.toString();
+    async function load() {
+        const url = '?' + query().toString();
 
         if (controller) controller.abort();
         controller = new AbortController();
@@ -86,6 +96,7 @@
             results.innerHTML = fresh.innerHTML;
             history.replaceState(null, '', url === '?' ? location.pathname : url);
             syncChrome();
+            if (window.CEList) window.CEList.scan();      // the new table gets its pager, dots and swipe
         } catch (e) {
             if (e.name === 'AbortError') return;
             window.location.href = url; // fall back to a normal page load
@@ -101,25 +112,17 @@
             const t = from.value; from.value = to.value; to.value = t;
         }
     }
-    form.addEventListener('change', () => { swapDatesIfBackwards(); syncChrome(); load(1); });
-    form.addEventListener('submit', e => { e.preventDefault(); load(1); });
+    form.addEventListener('change', () => { swapDatesIfBackwards(); syncChrome(); load(); });
+    form.addEventListener('submit', e => { e.preventDefault(); load(); });
 
     clearBtn.addEventListener('click', e => {
         e.preventDefault();
         form.reset();
         Array.from(form.elements).forEach(el => { if (el.name) el.value = ''; });
+        showStatus();
+        if (window.CEDropdown) window.CEDropdown.sync(form);
         syncChrome();
-        load(1);
-    });
-
-    // ---------- Pagination ----------
-    results.addEventListener('click', e => {
-        const link = e.target.closest('a[data-page]');
-        if (!link) return;
-        e.preventDefault();
-        load(parseInt(link.dataset.page, 10) || 1);
-        const top = document.getElementById('exportPage');
-        if (top) top.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        load();
     });
 
     syncChrome();

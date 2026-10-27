@@ -7,18 +7,21 @@ if (!defined('APP_INIT')) {
 require_once __DIR__ . '/../config/Database.php';
 
 /**
- * Read-only borrowing report for the admin Export page.
+ * Read-only transaction-log report for the admin Export page.
  *
- * One row = one reservation, with its checkout (handover / return) and any fines joined in, so the
- * admin never has to pick a database table. Raw ids are replaced by names, and the page only ever
- * sends filter VALUES (borrower id, equipment id, status, dates), never table or column names.
+ * One row = one entry of the transaction log (a request made, approved, declined, a handover, a return, a fine
+ * charged / paid / waived ...), with the borrower, the equipment model, the serial number, who did it and the
+ * fine amount joined in, so the admin never has to pick a database table. Raw ids are replaced by names, and the
+ * page only ever sends filter VALUES (borrower id, equipment id, status, dates), never table or column names.
  *
- * report() returns ['headers' => string[], 'rows' => string[][], 'total' => int, 'page' => int, 'pages' => int].
+ * The filters work on the request a log entry belongs to: its borrower, its equipment model, its current status
+ * and the date it was requested. Entries that belong to no request are only shown when no filter is set.
+ *
+ * report() returns ['headers' => string[], 'rows' => string[][], 'total' => int]. Every matching row is returned;
+ * the page cuts them into pages in the browser (assets/js/filters.js).
  */
 class Export
 {
-    public const PER_PAGE = 10;
-
     /** Status dropdown: key sent by the page => label shown. "overdue" is worked out from the due date. */
     public const STATUSES = [
         'pending'     => 'Pending',
@@ -30,10 +33,13 @@ class Export
         'cancelled'   => 'Cancelled',
     ];
 
+    /** Column positions in every row (the page and the printable report use these). */
+    public const COL_LOG = 0, COL_TIME = 1, COL_REQ = 2, COL_BORROWER = 3, COL_ID = 4, COL_EQUIPMENT = 5,
+                 COL_SERIAL = 6, COL_ACTION = 7, COL_ACTOR = 8, COL_FINE = 9, COL_REQ_STATUS = 10, COL_REMARKS = 11;
+
     public const HEADERS = [
-        'Request', 'Borrower', 'Student / Employee ID', 'Equipment', 'Serial #', 'Status',
-        'Requested At', 'Start', 'End', 'Checked Out', 'Due', 'Returned', 'Return Condition',
-        'Fine (PHP)', 'Fine Status', 'Reviewed By', 'Decline Reason',
+        'Log ID', 'Timestamp', 'Request', 'Borrower', 'Student / Employee ID', 'Equipment', 'Serial #',
+        'Action', 'Performed By', 'Fine (PHP)', 'Request Status', 'Remarks / Notes',
     ];
 
     private PDO $db;
@@ -43,7 +49,7 @@ class Export
         $this->db = Database::getConnection();
     }
 
-    /** Options for the three dropdown filters. */
+    /** Options for the three filters. */
     public function filterOptions(): array
     {
         $borrowers = [];
@@ -71,15 +77,14 @@ class Export
 
     private static function dt($value): string
     {
-        return $value ? date('Y-m-d H:i', strtotime($value)) : '';
+        return $value ? date('Y-m-d H:i:s', strtotime($value)) : '';
     }
 
     /**
      * $filters: borrower (user id), equipment (catalog id), status (key of STATUSES),
      *           from / to ("YYYY-MM-DD", compared with the date the request was made).
-     * $page / $perPage: pass $perPage = 0 to get every matching row (Excel export, printing).
      */
-    public function report(array $filters, int $page = 1, int $perPage = self::PER_PAGE): array
+    public function report(array $filters): array
     {
         $where  = [];
         $params = [];
@@ -89,7 +94,8 @@ class Export
             $params[':borrower'] = (int) $filters['borrower'];
         }
         if (!empty($filters['equipment'])) {
-            $where[] = 'r.catalog_id = :equipment';
+            // the request's model, or (for an entry about a unit only) the unit's model
+            $where[] = 'COALESCE(r.catalog_id, si.catalog_id) = :equipment';
             $params[':equipment'] = (int) $filters['equipment'];
         }
         if (!empty($filters['status']) && isset(self::STATUSES[$filters['status']])) {
@@ -110,82 +116,52 @@ class Export
         }
         $whereSql = $where ? 'WHERE ' . implode(' AND ', $where) : '';
 
-        $from = "FROM reservations r
-                 JOIN users b ON b.user_id = r.borrower_id
-                 JOIN equipment_catalog ec ON ec.catalog_id = r.catalog_id
-                 LEFT JOIN serialized_items si ON si.item_id = r.item_id
-                 LEFT JOIN checkouts c ON c.reservation_id = r.reservation_id
-                 LEFT JOIN users rv ON rv.user_id = r.reviewed_by
-                 LEFT JOIN (
-                     SELECT checkout_id,
-                            SUM(CASE WHEN payment_status <> 'waived' THEN amount_due ELSE 0 END) AS fine_total,
-                            SUM(payment_status = 'unpaid') AS n_unpaid,
-                            SUM(payment_status = 'paid')   AS n_paid,
-                            SUM(payment_status = 'waived') AS n_waived
-                     FROM fines GROUP BY checkout_id
-                 ) fn ON fn.checkout_id = c.checkout_id";
-
-        $count = $this->db->prepare("SELECT COUNT(*) $from $whereSql");
-        $count->execute($params);
-        $total = (int) $count->fetchColumn();
-
-        $perPage = max(0, $perPage);
-        $pages   = $perPage > 0 ? max(1, (int) ceil($total / $perPage)) : 1;
-        $page    = min(max(1, $page), $pages);
-
-        $sql = "SELECT r.reservation_id, CONCAT(b.last_name, ', ', b.first_name) AS borrower, b.id_number,
-                       ec.model_name, si.serial_number, r.status, r.requested_at, r.start_at, r.end_at,
-                       r.decline_reason, r.reviewed_at,
-                       CONCAT(rv.first_name, ' ', rv.last_name) AS reviewer,
-                       c.checked_out_at, c.due_at, c.returned_at, c.return_condition,
-                       fn.fine_total, fn.n_unpaid, fn.n_paid, fn.n_waived,
+        $sql = "SELECT tl.log_id, tl.action_timestamp, tl.reservation_id, tl.action_type, tl.remarks,
+                       COALESCE(tl.serial_snapshot, si.serial_number) AS serial_number,
+                       COALESCE(CONCAT(a.first_name, ' ', a.last_name), 'System') AS actor,
+                       CONCAT(b.last_name, ', ', b.first_name) AS borrower, b.id_number,
+                       ec.model_name, r.status AS req_status, f.amount_due AS fine_amount,
                        (r.status = 'checked_out' AND c.due_at < NOW() AND c.returned_at IS NULL) AS is_overdue
-                $from $whereSql
-                ORDER BY r.reservation_id DESC";
-        if ($perPage > 0) {
-            $sql .= ' LIMIT ' . $perPage . ' OFFSET ' . (($page - 1) * $perPage);
-        }
+                FROM transaction_logs tl
+                LEFT JOIN users a ON a.user_id = tl.actor_id
+                LEFT JOIN reservations r ON r.reservation_id = tl.reservation_id
+                LEFT JOIN users b ON b.user_id = r.borrower_id
+                LEFT JOIN serialized_items si ON si.item_id = tl.item_id
+                LEFT JOIN equipment_catalog ec ON ec.catalog_id = COALESCE(r.catalog_id, si.catalog_id)
+                LEFT JOIN checkouts c ON c.reservation_id = r.reservation_id
+                LEFT JOIN fines f ON f.fine_id = tl.fine_id
+                $whereSql
+                ORDER BY tl.action_timestamp DESC, tl.log_id DESC";
         $stm = $this->db->prepare($sql);
         $stm->execute($params);
 
         $rows = [];
         foreach ($stm->fetchAll(PDO::FETCH_ASSOC) as $r) {
-            $status = !empty($r['is_overdue']) ? 'Overdue' : ucfirst(str_replace('_', ' ', $r['status']));
-
-            $fineStatus = '';
-            if ($r['fine_total'] !== null) {
-                if ((int) $r['n_unpaid'] > 0)      $fineStatus = 'Unpaid';
-                elseif ((int) $r['n_paid'] > 0)    $fineStatus = 'Paid';
-                elseif ((int) $r['n_waived'] > 0)  $fineStatus = 'Waived';
+            $reqStatus = '';
+            if ($r['req_status'] !== null) {
+                $reqStatus = !empty($r['is_overdue']) ? 'Overdue' : ucfirst(str_replace('_', ' ', $r['req_status']));
             }
 
             $rows[] = [
-                'REQ-' . (int) $r['reservation_id'],
-                $r['borrower'],
+                'LOG-' . (int) $r['log_id'],
+                self::dt($r['action_timestamp']),
+                $r['reservation_id'] ? 'REQ-' . (int) $r['reservation_id'] : '',
+                (string) $r['borrower'],
                 (string) $r['id_number'],
-                $r['model_name'],
+                (string) $r['model_name'],
                 (string) $r['serial_number'],
-                $status,
-                self::dt($r['requested_at']),
-                self::dt($r['start_at']),
-                self::dt($r['end_at']),
-                self::dt($r['checked_out_at']),
-                self::dt($r['due_at']),
-                self::dt($r['returned_at']),
-                $r['return_condition'] ? ucfirst(str_replace('_', ' ', $r['return_condition'])) : '',
-                $r['fine_total'] !== null ? number_format((float) $r['fine_total'], 2, '.', '') : '',
-                $fineStatus,
-                (string) $r['reviewer'],
-                (string) $r['decline_reason'],
+                ucfirst(str_replace('_', ' ', $r['action_type'])),
+                (string) $r['actor'],
+                $r['fine_amount'] !== null ? number_format((float) $r['fine_amount'], 2, '.', '') : '',
+                $reqStatus,
+                (string) $r['remarks'],
             ];
         }
 
         return [
             'headers' => self::HEADERS,
             'rows'    => $rows,
-            'total'   => $total,
-            'page'    => $page,
-            'pages'   => $pages,
+            'total'   => count($rows),
         ];
     }
 }

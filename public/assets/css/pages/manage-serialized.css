@@ -16,3 +16,8 @@
     text-align: center;
     padding: 2rem;
 }
+
+/* the styled dropdown (shared/dropdown.css) sits in the filter row at a sensible width */
+.filter-group .ce-dd {
+    width: 14rem;
+}
