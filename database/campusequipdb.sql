@@ -326,24 +326,3 @@ INSERT INTO system_settings (setting_key, setting_value) VALUES
   ('announcement_staff', ''),
   ('desk_hours', ''),
   ('desk_contact', '');
-
--- ---------------------------------------------------------
--- Example queries your PHP layer will actually run
--- ---------------------------------------------------------
-
--- (a) Date-overlap check before saving a new reservation.
---     Run inside a transaction with FOR UPDATE if two staff
---     could approve at nearly the same time.
--- SELECT reservation_id FROM reservations
--- WHERE item_id = ?
---   AND status IN ('approved','checked_out')
---   AND start_at < ?   -- new end_at
---   AND end_at   > ?   -- new start_at
--- FOR UPDATE;
-
--- (b) Currently overdue items for the staff dashboard.
---     "Overdue" is never stored — it's always computed live.
--- SELECT c.*, i.serial_number
--- FROM checkouts c
--- JOIN serialized_items i ON i.item_id = c.item_id
--- WHERE c.returned_at IS NULL AND c.due_at < NOW();
