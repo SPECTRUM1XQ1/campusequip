@@ -216,12 +216,11 @@
 .borrower-dashboard-s1 {
     margin-bottom: 0.5rem;
 }
-.pager.pager--dots-only {
+#pending-pager {
     justify-content: center;
     margin: 0 0 1.5rem;
 }
-.pager.pager--dots-only .pager-info,
-.pager.pager--dots-only .pager-swipe {
+#pending-pager .pager-info {
     display: none;
 }
 .borrower-dashboard-s2 {

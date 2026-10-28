@@ -53,7 +53,7 @@ $popularCatalog = array_slice($catalogList, 0, 5);
 
                     <?php if (!empty($myPending)): ?>
                         <div hidden data-list data-items="#pending-grid > .item-card" data-page-size="4"
-                             data-pager="#pending-pager" data-pager-style="swipe"></div>
+                             data-pager="#pending-pager" data-pager-always data-pager-style="swipe"></div>
                     <?php endif; ?>
                     <div class="pending-grid borrower-dashboard-s1" id="pending-grid">
                         <?php if (empty($myPending)): ?>
@@ -73,7 +73,7 @@ $popularCatalog = array_slice($catalogList, 0, 5);
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
-                    <div class="pager pager--dots-only" id="pending-pager"></div>
+                    <div class="pager" id="pending-pager"></div>
 
                     <!-- Fines & penalties summary -->
                     <div class="section-header">
