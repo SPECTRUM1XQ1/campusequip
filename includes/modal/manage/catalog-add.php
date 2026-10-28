@@ -26,12 +26,12 @@
                     </div>
                     <div class="modal-field">
                         <label class="modal-label">Max Loan Days *</label>
-                        <input type="number" class="input-field" name="max_loan_days" value="3" min="1" required>
+                        <input type="number" class="input-field" name="max_loan_days" value="3" min="1" max="65535" step="1" inputmode="numeric" required>
                     </div>
                 </div>
                 <div class="modal-field">
                     <label class="modal-label">Daily Late Fine Rate (&#8369;) *</label>
-                    <input type="number" step="0.50" class="input-field" name="late_fine_rate" value="5.00" min="0" required>
+                    <input type="number" step="0.50" class="input-field" name="late_fine_rate" value="5.00" min="0" max="99999999.99" required>
                 </div>
                 <div class="modal-field">
                     <label class="modal-label">Description</label>

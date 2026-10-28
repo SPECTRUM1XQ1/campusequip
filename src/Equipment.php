@@ -98,7 +98,8 @@ class Equipment
         return $stm->fetch(PDO::FETCH_ASSOC) ?: null;
     }
 
-    public function getAvailabilityBreakdown(): array
+    /** Models with units, biggest first. $limit keeps the old default of 5; the dashboard asks for more and pages them. */
+    public function getAvailabilityBreakdown(int $limit = 5): array
     {
         $sql = "SELECT ec.catalog_id, ec.model_name,
                        COUNT(si.item_id) AS total_units,
@@ -110,7 +111,7 @@ class Equipment
                 WHERE ec.is_archived = 0
                 GROUP BY ec.catalog_id, ec.model_name
                 HAVING total_units > 0
-                ORDER BY total_units DESC LIMIT 5";
+                ORDER BY total_units DESC LIMIT " . max(1, $limit);
         return $this->db->query($sql)->fetchAll(PDO::FETCH_ASSOC);
     }
     

@@ -43,8 +43,8 @@ $equipmentModel   = new Equipment();
 $logModel         = new TransactionLog();
 
 $pendingItems     = $reservationModel->listPendingDetailed();
-$recentPending    = array_slice($pendingItems, 0, 3);
-$breakdown        = $equipmentModel->getAvailabilityBreakdown();
+$recentPending    = $pendingItems;      // all of them: the list shows 3 per page (see data-page-size below)
+$breakdown        = $equipmentModel->getAvailabilityBreakdown(50);   // shown 5 per page
 $recentLogs       = $logModel->listRecent(5);
 ?>
 <!DOCTYPE html>
@@ -124,6 +124,10 @@ $recentLogs       = $logModel->listRecent(5);
                         <span class="section-subtitle"><?= count($pendingItems) ?> waiting review</span>
                     </div>
 
+                    <?php if (!empty($recentPending)): ?>
+                        <div hidden data-list data-items="#dashboard-requests-container .request-card" data-page-size="3"
+                             data-pager="#dashboard-requests-pager" data-pager-style="swipe"></div>
+                    <?php endif; ?>
                     <div id="dashboard-requests-container">
                         <?php if (empty($recentPending)): ?>
                             <div class="card-container text-muted manage-dashboard-s4">
@@ -161,6 +165,7 @@ $recentLogs       = $logModel->listRecent(5);
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
+                    <div class="pager pager--dots-only" id="dashboard-requests-pager"></div>
 
                     <!-- Equipment Availability Breakdown -->
                     <div class="card-container">
@@ -168,20 +173,40 @@ $recentLogs       = $logModel->listRecent(5);
                         <?php if (empty($breakdown)): ?>
                             <p class="text-muted">No inventory tracked yet.</p>
                         <?php else: ?>
-                            <?php foreach ($breakdown as $item): 
-                                $total = max(1, (int)$item['total_units']);
-                                $availPct = round(((int)$item['available_units'] / $total) * 100);
+                            <p class="availability-legend" aria-hidden="true">
+                                <span><i class="seg-dot seg--available"></i>Available</span>
+                                <span><i class="seg-dot seg--out"></i>Borrowed</span>
+                                <span><i class="seg-dot seg--maint"></i>Maintenance</span>
+                            </p>
+                            <div hidden data-list data-items="#availability-list .availability-row" data-page-size="5"
+                                 data-pager="#availability-pager" data-pager-style="swipe"></div>
+                            <div id="availability-list">
+                            <?php foreach ($breakdown as $item):
+                                $total  = max(1, (int)$item['total_units']);
+                                $avail  = (int)$item['available_units'];
+                                $out    = (int)$item['checked_out_units'];
+                                $maint  = (int)$item['maintenance_units'];
+                                $pct    = fn(int $n): float => round($n / $total * 100, 2);
                             ?>
                                 <div class="availability-row">
                                     <div class="availability-head">
                                         <span class="availability-name"><?= htmlspecialchars($item['model_name']) ?></span>
-                                        <span class="availability-meta">Available: <?= (int)$item['available_units'] ?>/<?= $total ?> • Maint: <?= (int)$item['maintenance_units'] ?></span>
+                                        <span class="availability-meta">
+                                            Available: <?= $avail ?>/<?= $total ?>
+                                            <?php if ($out > 0): ?> &bull; <span class="meta-out">Borrowed: <?= $out ?></span><?php endif; ?>
+                                            <?php if ($maint > 0): ?> &bull; <span class="meta-maint">Maintenance: <?= $maint ?></span><?php endif; ?>
+                                        </span>
                                     </div>
-                                    <div class="progress-track">
-                                        <div class="progress-fill" style="width: <?= $availPct ?>%;"></div>
+                                    <div class="progress-track progress-track--stack" role="img"
+                                         aria-label="<?= $avail ?> available, <?= $out ?> borrowed, <?= $maint ?> in maintenance, out of <?= $total ?>">
+                                        <span class="seg seg--available" style="width: <?= $pct($avail) ?>%;"></span>
+                                        <span class="seg seg--out" style="width: <?= $pct($out) ?>%;"></span>
+                                        <span class="seg seg--maint" style="width: <?= $pct($maint) ?>%;"></span>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
+                            </div>
+                            <div class="pager pager--dots-only" id="availability-pager"></div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -211,5 +236,6 @@ $recentLogs       = $logModel->listRecent(5);
     </div>
 
     <?php include __DIR__ . '/../../includes/navigation/footer.php'; ?>
+    <script src="<?= APP_BASE ?>/public/assets/js/filters.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/filters.js') ?: 1 ?>"></script>
 </body>
 </html>

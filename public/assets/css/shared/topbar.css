@@ -116,7 +116,8 @@
 
 /* ---- Notifications (bell, badge, list) ---- */
 
-.bell-btn {
+.bell-btn,
+.tour-btn {
     position: relative;
     background-color: #f8fafc;
     border: none;
@@ -131,11 +132,13 @@
     transition: background-color 0.2s;
 }
 
-.bell-btn:hover {
+.bell-btn:hover,
+.tour-btn:hover {
     background-color: #e2e8f0;
 }
 
-.bell-btn i {
+.bell-btn i,
+.tour-btn i {
     font-size: 1.25rem;
 }
 

@@ -1092,3 +1092,18 @@ select option {
         padding: 0.75rem 1rem 0;
     }
 }
+
+/* ---- Field limit indicator (assets/js/char-counter.js) ---- */
+.char-counter {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.6875rem;
+    line-height: 1.2;
+    text-align: right;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+    transition: color 0.15s ease;
+}
+.char-counter--hint { text-align: left; }
+.char-counter.is-near { color: var(--warning-text); }
+.char-counter.is-full { color: var(--danger-text); font-weight: 600; }

@@ -149,6 +149,7 @@ if (isset($_SESSION['user_id'])) {
 
     <script src="<?= APP_BASE ?>/public/assets/js/snackbar.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/snackbar.js') ?: 1 ?>"></script>
     <script src="<?= APP_BASE ?>/public/assets/js/password-toggle.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/password-toggle.js') ?: 1 ?>"></script>
+    <script src="<?= APP_BASE ?>/public/assets/js/char-counter.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/char-counter.js') ?: 1 ?>"></script>
     <script src="<?= APP_BASE ?>/public/assets/js/auth.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/auth.js') ?: 1 ?>"></script>
 </body>
 

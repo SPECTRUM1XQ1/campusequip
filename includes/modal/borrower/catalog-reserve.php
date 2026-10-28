@@ -36,7 +36,7 @@
                         <label class="modal-label" for="res_days">Days to Borrow *</label>
                         <div class="day-stepper">
                             <button type="button" id="res_days_minus" aria-label="One day less">&minus;</button>
-                            <input type="number" class="input-field" name="days" id="res_days" min="1" value="1" inputmode="numeric" required>
+                            <input type="number" class="input-field" name="days" id="res_days" min="1" max="65535" value="1" inputmode="numeric" required>
                             <button type="button" id="res_days_plus" aria-label="One day more">+</button>
                         </div>
                     </div>

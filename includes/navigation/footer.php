@@ -9,3 +9,6 @@
 <script src="<?= APP_BASE ?>/public/assets/js/truncate.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/truncate.js') ?: 1 ?>"></script>
 <script src="<?= APP_BASE ?>/public/assets/js/dropdown.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/dropdown.js') ?: 1 ?>"></script>
 <script src="<?= APP_BASE ?>/public/assets/js/transitions.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/transitions.js') ?: 1 ?>"></script>
+<script src="<?= APP_BASE ?>/public/assets/js/tour-steps.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/tour-steps.js') ?: 1 ?>"></script>
+<script src="<?= APP_BASE ?>/public/assets/js/tour.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/tour.js') ?: 1 ?>"></script>
+<script src="<?= APP_BASE ?>/public/assets/js/char-counter.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/char-counter.js') ?: 1 ?>"></script>

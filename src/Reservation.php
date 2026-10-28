@@ -21,16 +21,22 @@ class Reservation
     public const EXPIRED_REASON = 'Pick-up window expired';
 
     /**
-     * When a borrower may collect an approved item: from the reservation start for
-     * PICKUP_WINDOW_DAYS, but never later than the loan's end date.
+     * When a borrower may collect an approved item: from the reservation start (or from the moment it was
+     * approved, if that is later) for PICKUP_WINDOW_DAYS, but never later than the loan's end date.
+     * So a request can be approved at any time: the window starts counting when the staff approve it.
+     * $reviewedAt is the reservation's reviewed_at (leave it null for a request that is not approved yet).
      * Returns unix timestamps ['start' => ..., 'end' => ...].
      * (expireLapsedPickups() below uses the same rule in SQL - keep them in sync.)
      */
-    public static function pickupWindow(string $startAt, string $endAt): array
+    public static function pickupWindow(string $startAt, string $endAt, ?string $reviewedAt = null): array
     {
-        $days  = defined('PICKUP_WINDOW_DAYS') ? (int) PICKUP_WINDOW_DAYS : 3;
-        $start = strtotime($startAt);
-        return ['start' => $start, 'end' => min(strtotime('+' . $days . ' days', $start), strtotime($endAt))];
+        $days   = defined('PICKUP_WINDOW_DAYS') ? (int) PICKUP_WINDOW_DAYS : 3;
+        $start  = strtotime($startAt);
+        $anchor = $start;
+        if ($reviewedAt !== null && $reviewedAt !== '' && ($rev = strtotime($reviewedAt)) !== false) {
+            $anchor = max($start, $rev);
+        }
+        return ['start' => $start, 'end' => min(strtotime('+' . $days . ' days', $anchor), strtotime($endAt))];
     }
 
     /**
@@ -50,7 +56,7 @@ class Reservation
             $ids = $this->db->query(
                 "SELECT reservation_id FROM reservations
                  WHERE status = 'approved'
-                   AND NOW() >= LEAST(DATE_ADD(start_at, INTERVAL {$days} DAY), end_at)"
+                   AND NOW() >= LEAST(DATE_ADD(GREATEST(start_at, COALESCE(reviewed_at, start_at)), INTERVAL {$days} DAY), end_at)"
             )->fetchAll(PDO::FETCH_COLUMN);
 
             foreach ($ids as $id) {
@@ -240,7 +246,7 @@ class Reservation
     public function listForBorrowerDetailed(int $borrowerId): array
     {
         $stm = $this->db->prepare(
-            "SELECT r.reservation_id, r.status, r.purpose, r.start_at, r.end_at,
+            "SELECT r.reservation_id, r.status, r.purpose, r.start_at, r.end_at, r.reviewed_at,
                     r.decline_reason, r.requested_at,
                     ec.model_name, ec.max_loan_days, ec.late_fine_rate,
                     CASE WHEN c.checkout_id IS NOT NULL AND c.returned_at IS NULL AND NOW() > c.due_at
@@ -318,7 +324,7 @@ class Reservation
     {
         $stm = $this->db->query(
             "SELECT r.reservation_id, r.catalog_id, r.borrower_id, r.status, r.purpose,
-                    r.start_at, r.end_at, r.requested_at,
+                    r.start_at, r.end_at, r.reviewed_at, r.requested_at,
                     ec.model_name, ec.max_loan_days,
                     CONCAT(u.first_name, ' ', COALESCE(CONCAT(u.middle_name, ' '), ''), u.last_name) AS borrower_name,
                     u.email AS borrower_email, u.phone AS borrower_phone, u.id_number AS borrower_id_number
@@ -451,11 +457,18 @@ class Reservation
                 return ['success' => false, 'message' => 'Reservation is not in pending status.'];
             }
 
-            // A request whose pick-up window is already over would be cancelled again straight away.
-            $window = self::pickupWindow($reservation['start_at'], $reservation['end_at']);
-            if (time() >= $window['end']) {
-                $this->db->rollBack();
-                return ['success' => false, 'message' => 'The pick-up window for this request has already ended, so it can no longer be approved. Please decline it.'];
+            // A request can be approved at any time: the pick-up window counts from the approval (see pickupWindow()).
+            // If the whole loan period has already passed while it waited, the same number of days is moved
+            // to start today, so the borrower does not get an item that is overdue the moment it is handed over.
+            $startAt = $reservation['start_at'];
+            $endAt   = $reservation['end_at'];
+            $shifted = false;
+            if (time() >= strtotime($endAt)) {
+                $days    = max(1, (int) (new DateTime(date('Y-m-d', strtotime($startAt))))->diff(new DateTime(date('Y-m-d', strtotime($endAt))))->days);
+                $today   = date('Y-m-d');
+                $startAt = $today . ' 00:00:00';
+                $endAt   = date('Y-m-d', strtotime("+{$days} days", strtotime($today))) . ' ' . (defined('LOAN_DUE_TIME') ? LOAN_DUE_TIME : '17:00:00');
+                $shifted = true;
             }
 
             $stm = $this->db->prepare('SELECT catalog_id, serial_number, status FROM serialized_items WHERE item_id = :id FOR UPDATE');
@@ -471,23 +484,28 @@ class Reservation
                 return ['success' => false, 'message' => 'That unit is under maintenance or retired and cannot be assigned.'];
             }
 
-            if ($this->hasDateConflict($itemId, $reservation['start_at'], $reservation['end_at'])) {
+            if ($this->hasDateConflict($itemId, $startAt, $endAt)) {
                 $this->db->rollBack();
                 return ['success' => false, 'message' => 'That unit is already booked for an overlapping date range.'];
             }
 
             $stm = $this->db->prepare(
                 "UPDATE reservations
-                 SET status = 'approved', item_id = :item_id, reviewed_by = :reviewed_by, reviewed_at = NOW()
+                 SET status = 'approved', item_id = :item_id, reviewed_by = :reviewed_by, reviewed_at = NOW(),
+                     start_at = :start_at, end_at = :end_at
                  WHERE reservation_id = :id"
             );
             $stm->execute([
                 ':item_id'     => $itemId,
                 ':reviewed_by' => $reviewerId,
+                ':start_at'    => $startAt,
+                ':end_at'      => $endAt,
                 ':id'          => $reservationId,
             ]);
 
-            $this->logger->record($reservationId, $itemId, null, $reviewerId, 'approved', null, $item['serial_number']);
+            $this->logger->record($reservationId, $itemId, null, $reviewerId, 'approved',
+                $shifted ? 'Approved late: the loan was moved to ' . date('M j', strtotime($startAt)) . ' - ' . date('M j', strtotime($endAt)) . '.' : null,
+                $item['serial_number']);
 
             $this->db->commit();
             return ['success' => true];

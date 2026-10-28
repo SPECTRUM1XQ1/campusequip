@@ -46,7 +46,7 @@ class Notification
         // Things staff did with the borrower's requests (last 30 days).
         $stm = $this->db->prepare(
             "SELECT tl.log_id, tl.action_type, tl.remarks, UNIX_TIMESTAMP(tl.action_timestamp) AS ts,
-                    ec.model_name, f.amount_due, r.start_at, r.end_at
+                    ec.model_name, f.amount_due, r.start_at, r.end_at, r.reviewed_at
              FROM transaction_logs tl
              JOIN reservations r ON r.reservation_id = tl.reservation_id
              JOIN equipment_catalog ec ON ec.catalog_id = r.catalog_id
@@ -66,10 +66,11 @@ class Notification
             $amount = $row['amount_due'] !== null ? '₱' . number_format((float) $row['amount_due'], 2) : '';
             switch ($row['action_type']) {
                 case 'approved':
-                    $item = ['success', 'ph-check-circle', 'Request Approved', "Your request for {$model} was approved. Bring your ID to the lab desk to pick it up.", APP_BASE . '/public/borrower/my_requests.php#pending'];
+                    $moved = trim((string) $row['remarks']);
+                    $item = ['success', 'ph-check-circle', 'Request Approved', "Your request for {$model} was approved. Bring your ID to the lab desk to pick it up." . ($moved !== '' ? " {$moved}" : ''), APP_BASE . '/public/borrower/my_requests.php#pending'];
                     break;
                 case 'cancelled': // only the automatic "pick-up window expired" ones get here
-                    $window = Reservation::pickupWindow($row['start_at'], $row['end_at']);
+                    $window = Reservation::pickupWindow($row['start_at'], $row['end_at'], $row['reviewed_at'] ?? null);
                     $ts     = $window['end'];
                     $item = ['danger', 'ph-timer', 'Pick-Up Window Expired', "You can no longer pick up {$model}: the pick-up window ended " . date('M j, g:i A', $window['end']) . ' and the reservation was cancelled. You can submit a new request from the catalog.', APP_BASE . '/public/borrower/my_requests.php#history'];
                     break;
@@ -81,10 +82,23 @@ class Notification
                     $item = ['info', 'ph-package', 'Equipment Handed Over', "{$model} is now checked out to you.", APP_BASE . '/public/borrower/my_requests.php#borrowed'];
                     break;
                 case 'returned':
-                    $item = ['success', 'ph-arrow-u-down-left', 'Return Recorded', "{$model} was returned. Thank you!", APP_BASE . '/public/borrower/my_requests.php#history'];
-                    break;
                 case 'returned_late':
-                    $item = ['warning', 'ph-arrow-u-down-left', 'Late Return Recorded', "{$model} was returned after its due date.", APP_BASE . '/public/borrower/my_requests.php#history'];
+                    // The staff's inspection note is stored in the log remarks ("Damaged: ..." / "Missing accessories: ...").
+                    $late    = ($row['action_type'] === 'returned_late');
+                    $note    = trim(explode(' | ', (string) $row['remarks'])[0]);
+                    $fineUrl = APP_BASE . '/public/borrower/fines.php';
+                    $lateTxt = $late ? ' It was also returned after its due date.' : '';
+                    if (strpos($note, 'Damaged:') === 0) {
+                        $item = ['danger', 'ph-warning', 'Damage Reported', "{$model} was returned, but the staff found damage ("
+                            . trim(substr($note, strlen('Damaged:'))) . ").{$lateTxt} A fine may be charged after inspection: check Penalties & Fines.", $fineUrl];
+                    } elseif (strpos($note, 'Missing accessories:') === 0) {
+                        $item = ['danger', 'ph-puzzle-piece', 'Missing Accessories', "{$model} was returned without: "
+                            . trim(substr($note, strlen('Missing accessories:'))) . ".{$lateTxt} A fine may be charged after inspection: check Penalties & Fines.", $fineUrl];
+                    } elseif ($late) {
+                        $item = ['warning', 'ph-arrow-u-down-left', 'Late Return Recorded', "{$model} was returned after its due date.", APP_BASE . '/public/borrower/my_requests.php#history'];
+                    } else {
+                        $item = ['success', 'ph-arrow-u-down-left', 'Return Recorded', "{$model} was returned. Thank you!", APP_BASE . '/public/borrower/my_requests.php#history'];
+                    }
                     break;
                 case 'fine_charged':
                     $item = ['warning', 'ph-receipt', 'Fine Charged', "A fine" . ($amount ? " of {$amount}" : '') . " was charged for {$model}. Please settle it at the lab desk.", APP_BASE . '/public/borrower/my_requests.php#history'];
@@ -100,14 +114,14 @@ class Notification
 
         // Approved items whose pick-up window closes within 24 hours.
         $stm = $this->db->prepare(
-            "SELECT r.reservation_id, r.start_at, r.end_at, ec.model_name
+            "SELECT r.reservation_id, r.start_at, r.end_at, r.reviewed_at, ec.model_name
              FROM reservations r
              JOIN equipment_catalog ec ON ec.catalog_id = r.catalog_id
              WHERE r.borrower_id = :uid AND r.status = 'approved'"
         );
         $stm->execute([':uid' => $userId]);
         foreach ($stm->fetchAll(PDO::FETCH_ASSOC) as $row) {
-            $window = Reservation::pickupWindow($row['start_at'], $row['end_at']);
+            $window = Reservation::pickupWindow($row['start_at'], $row['end_at'], $row['reviewed_at'] ?? null);
             if ($window['start'] <= time() && $window['end'] - time() <= 24 * 3600) {
                 $items[] = $this->make('pickup-' . $row['reservation_id'],
                     ['warning', 'ph-timer', 'Pick-Up Reminder', "Pick up {$row['model_name']} before " . date('M j, g:i A', $window['end']) . ' or the reservation will be cancelled.', APP_BASE . '/public/borrower/my_requests.php#pending'],

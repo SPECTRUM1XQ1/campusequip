@@ -10,7 +10,7 @@ if (!function_exists('pickupWindowFor')) {
      */
     function pickupWindowFor(array $row, string $format = 'M d, Y g:i A'): array
     {
-        $w = Reservation::pickupWindow($row['start_at'], $row['end_at']);
+        $w = Reservation::pickupWindow($row['start_at'], $row['end_at'], $row['reviewed_at'] ?? null);
         return [
             'start' => $w['start'],
             'end'   => $w['end'],

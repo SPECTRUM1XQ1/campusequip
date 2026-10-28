@@ -75,18 +75,18 @@ $topics = [
         ['id' => 'handover', 'icon' => 'ph-package', 'title' => 'Hand over equipment', 'page' => 'Handover', 'href' => "$base/staff/handover.php", 'perm' => 'can_confirm_pickup',
          'intro' => 'When an approved borrower comes to the desk.',
          'steps' => ['Open <strong>Handover</strong>. <em>Ready for Handover</em> lists approved requests.',
-                     'Check the borrower\'s Student ID, then press <strong>Handover</strong> on their request.',
+                     'Check the borrower\'s Student ID, then press <strong>Hand Over</strong> on their request.',
                      'Confirm in the <strong>Confirm Handover</strong> window. The loan starts and the due date is set.']],
         ['id' => 'return', 'icon' => 'ph-arrow-u-down-left', 'title' => 'Process a return', 'page' => 'Process Return', 'href' => "$base/staff/return.php", 'perm' => 'can_inspect_returns',
          'intro' => 'Inspect the item before you record it as returned.',
          'steps' => ['Open <strong>Process Return</strong>. <em>Active Returns</em> lists items that are out.',
-                     'Press <strong>Return</strong> and record the condition: good, damaged, or missing accessories.',
+                     'Press <strong>Process Return</strong> and record the condition: good, damaged, or missing accessories.',
                      'Late returns are charged automatically. For damage or missing parts, add a fine in <strong>Fines &amp; Penalties</strong>.']],
         ['id' => 'fines', 'icon' => 'ph-receipt', 'title' => 'Manage fines', 'page' => 'Fines & Penalties', 'href' => "$base/manage/fines.php", 'perm' => 'can_inspect_returns',
          'intro' => 'Charge, collect or forgive.',
          'steps' => ['<strong>Charge Fine</strong>: choose the loan, the type, the amount and the reason.',
-                     '<strong>Record Payment</strong> when a borrower pays at the desk.',
-                     '<strong>Waive Fine</strong> when it should not be collected. Everything is written to the Transaction Logs.']],
+                     '<strong>Mark Paid</strong> when a borrower pays at the desk.',
+                     '<strong>Waive</strong> when it should not be collected. Everything is written to the Transaction Logs.']],
         ['id' => 'catalog', 'icon' => 'ph-book-open', 'title' => 'Maintain the equipment catalog', 'page' => 'Equipment Catalog', 'href' => "$base/manage/catalog.php", 'perm' => 'can_manage_catalog',
          'intro' => 'The list of equipment models borrowers can reserve.',
          'steps' => ['<strong>Add New Item</strong> creates an equipment model. <strong>Add Category</strong> creates a new group for it.',
@@ -116,13 +116,13 @@ $topics = [
                      'To refuse: press <strong>Decline</strong> and give the reason. The borrower is notified either way.']],
         ['id' => 'checkouts', 'icon' => 'ph-arrows-left-right', 'title' => 'Hand over and take back equipment', 'page' => 'Check-In & Return', 'href' => "$base/manage/checkouts.php",
          'intro' => 'Administrators have both desk jobs on one page.',
-         'steps' => ['<em>Ready for Handover</em>: check the Student ID, then press <strong>Handover</strong> and confirm.',
-                     '<em>Active Returns</em>: press <strong>Return</strong> and record the condition of the item.',
+         'steps' => ['<em>Ready for Handover</em>: check the Student ID, then press <strong>Hand Over</strong> and confirm.',
+                     '<em>Active Returns</em>: press <strong>Process Return</strong> and record the condition of the item.',
                      'Staff members see these as two separate pages, <strong>Handover</strong> and <strong>Process Return</strong>.']],
         ['id' => 'fines', 'icon' => 'ph-receipt', 'title' => 'Manage fines', 'page' => 'Fines & Penalties', 'href' => "$base/manage/fines.php",
          'intro' => 'Charge, collect or forgive.',
          'steps' => ['<strong>Charge Fine</strong>: loan, type, amount and reason.',
-                     '<strong>Record Payment</strong> when a borrower pays. <strong>Waive Fine</strong> when it should not be collected.']],
+                     '<strong>Mark Paid</strong> when a borrower pays. <strong>Waive</strong> when it should not be collected.']],
         ['id' => 'catalog', 'icon' => 'ph-book-open', 'title' => 'Equipment Catalog and Serialized Items', 'page' => 'Equipment Catalog', 'href' => "$base/manage/catalog.php",
          'intro' => 'Models are what borrowers reserve. Units are the physical items with serial numbers.',
          'steps' => ['In <strong>Equipment Catalog</strong>: <strong>Add New Item</strong>, <strong>Add Category</strong>, edit a model or manage its accessories.',
@@ -189,6 +189,13 @@ $statuses = [
                     <?php endif; ?>
                 </p>
 
+                <div class="guide-tour-cta">
+                    <i class="ph ph-cursor-click" aria-hidden="true"></i>
+                    <p><strong>Prefer to be shown?</strong> The guided tour points at each button on the screen and says what it is for.
+                        Press <strong>Show me on screen</strong> on any topic below, or use the <i class="ph ph-question" aria-hidden="true"></i> button at the top of any page.</p>
+                    <button type="button" class="btn btn-outline btn-sm" data-start-tour="shell">Tour the menu</button>
+                </div>
+
                 <?php if ($role === 'admin'): ?>
                     <div class="filter-group guide-views" role="group" aria-label="Choose a guide">
                         <span class="filter-label">Guide for:</span>
@@ -242,7 +249,7 @@ $statuses = [
                                     </div>
                                     <?php $canOpen = $view === $role || ($role === 'admin' && $view === 'staff' && !in_array($t['id'], ['handover', 'return'], true)); ?>
                                     <?php if ($canOpen): ?>
-                                        <a class="btn btn-outline btn-sm guide-open" href="<?= $h($t['href']) ?>">Open <?= $h($t['page']) ?></a>
+                                        <a class="btn btn-primary btn-sm guide-open" href="<?= $h($t['href']) ?>?tour=1"><i class="ph ph-cursor-click" aria-hidden="true"></i>Show me on screen</a>
                                     <?php endif; ?>
                                 </header>
                                 <ol class="guide-steps">

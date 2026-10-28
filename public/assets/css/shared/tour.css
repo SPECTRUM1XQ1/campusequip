@@ -1,0 +1,98 @@
+/*
+ * shared/tour.css
+ * The guided tour: a dimmed screen with a light on one element and a small card that says what it is for.
+ * Behaviour: assets/js/tour.js. Words: assets/js/tour-steps.js. Loaded on every page by includes/html-head.php.
+ */
+
+/* the question-mark button in the top bar */
+#tourBtn { position: relative; }
+#tourBtn:focus-visible { outline: 2px solid var(--primary-brand); outline-offset: 2px; }
+
+.ce-tour { position: fixed; inset: 0; z-index: 450; display: none; }
+.ce-tour.is-open { display: block; }
+
+/* catches clicks, so nothing on the page is pressed by accident during the tour */
+.ce-tour-block { position: absolute; inset: 0; }
+
+/* the light: it has no fill; its huge shadow is what dims everything else. It glides from one step to the next. */
+.ce-tour-spot {
+    position: fixed;
+    border-radius: 0.65rem;
+    box-shadow: 0 0 0 100vmax rgba(15, 23, 42, 0.62), 0 0 0 3px rgba(255, 255, 255, 0.9) inset;
+    pointer-events: none;
+    transition: left 0.3s var(--ce-ease, cubic-bezier(0.22, 1, 0.36, 1)), top 0.3s var(--ce-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+                width 0.3s var(--ce-ease, cubic-bezier(0.22, 1, 0.36, 1)), height 0.3s var(--ce-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.ce-tour-card {
+    position: fixed;
+    width: min(22rem, calc(100vw - 20px));
+    padding: 1rem 1.1rem 0.9rem;
+    background: var(--card-bg, #fff);
+    color: var(--text-main, #0f172a);
+    border-radius: 0.85rem;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.3);
+    outline: none;
+    transition: left 0.3s var(--ce-ease, cubic-bezier(0.22, 1, 0.36, 1)), top 0.3s var(--ce-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.ce-tour-card.is-in .ce-tour-title,
+.ce-tour-card.is-in .ce-tour-text { animation: ce-tour-text 0.28s ease both; }
+@keyframes ce-tour-text { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+.ce-tour-count { font-size: 0.75rem; font-weight: 600; color: var(--text-muted, #64748b); margin-bottom: 0.3rem; }
+.ce-tour-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+.ce-tour-text { font-size: 0.875rem; line-height: 1.55; color: #334155; }
+
+.ce-tour-actions { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.9rem; }
+.ce-tour-spacer { flex: 1 1 auto; }
+
+.ce-tour-btn {
+    padding: 0.45rem 0.95rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: #fff;
+    color: var(--text-main, #0f172a);
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+.ce-tour-btn:hover { background: #f8fafc; }
+.ce-tour-btn:active { transform: scale(0.97); }
+.ce-tour-next { background: var(--primary-brand, #203b8c); border-color: var(--primary-brand, #203b8c); color: #fff; }
+.ce-tour-next:hover { background: var(--primary-hover, #152a6b); }
+.ce-tour-btn[hidden] { display: none; }
+
+.ce-tour-skip {
+    padding: 0.35rem 0.1rem;
+    border: 0;
+    background: none;
+    color: var(--text-muted, #64748b);
+    font: inherit;
+    font-size: 0.8125rem;
+    cursor: pointer;
+}
+.ce-tour-skip:hover { color: var(--text-main, #0f172a); text-decoration: underline; }
+.ce-tour-skip:focus-visible,
+.ce-tour-btn:focus-visible { outline: 2px solid var(--primary-brand, #203b8c); outline-offset: 2px; }
+
+/* the pointer: a small square turned on its corner, on the side that faces the highlighted element */
+.ce-tour-arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--card-bg, #fff);
+    transform: translate(-50%, -50%) rotate(45deg);
+    display: none;
+}
+.ce-tour-card[data-side="bottom"] .ce-tour-arrow { display: block; top: 0; }
+.ce-tour-card[data-side="top"] .ce-tour-arrow { display: block; top: 100%; }
+.ce-tour-card[data-side="right"] .ce-tour-arrow { display: block; left: 0; transform: translate(-50%, -50%) rotate(45deg); }
+.ce-tour-card[data-side="left"] .ce-tour-arrow { display: block; left: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+    .ce-tour-spot, .ce-tour-card { transition: none; }
+    .ce-tour-card.is-in .ce-tour-title, .ce-tour-card.is-in .ce-tour-text { animation: none; }
+}
+@media print { .ce-tour { display: none !important; } }

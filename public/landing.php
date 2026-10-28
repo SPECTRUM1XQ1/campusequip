@@ -202,7 +202,7 @@ $dueTime = date('g:i A', strtotime(LOAN_DUE_TIME));
                     </li>
                     <li>
                         <i class="ph ph-hand-arrow-up" aria-hidden="true"></i>
-                        <div><strong>Pick up within <?= (int) PICKUP_WINDOW_DAYS ?> days</strong><span>Collect an approved item within <?= (int) PICKUP_WINDOW_DAYS ?> days of your start date, or the reservation expires.</span></div>
+                        <div><strong>Pick up within <?= (int) PICKUP_WINDOW_DAYS ?> days</strong><span>Collect an approved item within <?= (int) PICKUP_WINDOW_DAYS ?> days of its approval (or of your start date, if that is later), or the reservation expires.</span></div>
                     </li>
                     <li>
                         <i class="ph ph-identification-card" aria-hidden="true"></i>
