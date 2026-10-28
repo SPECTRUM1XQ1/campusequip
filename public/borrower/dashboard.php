@@ -51,7 +51,11 @@ $popularCatalog = array_slice($catalogList, 0, 5);
                         <span class="section-subtitle">Awaiting staff sign-off</span>
                     </div>
 
-                    <div class="pending-grid borrower-dashboard-s1">
+                    <?php if (!empty($myPending)): ?>
+                        <div hidden data-list data-items="#pending-grid > .item-card" data-page-size="4"
+                             data-pager="#pending-pager" data-pager-style="swipe"></div>
+                    <?php endif; ?>
+                    <div class="pending-grid borrower-dashboard-s1" id="pending-grid">
                         <?php if (empty($myPending)): ?>
                             <div class="item-card bg-white text-muted borrower-dashboard-s2">
                                 No pending equipment requests.
@@ -69,6 +73,7 @@ $popularCatalog = array_slice($catalogList, 0, 5);
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
+                    <div class="pager pager--dots-only" id="pending-pager"></div>
 
                     <!-- Fines & penalties summary -->
                     <div class="section-header">
@@ -213,5 +218,6 @@ $popularCatalog = array_slice($catalogList, 0, 5);
     <script src="<?= APP_BASE ?>/public/assets/js/countdown.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/countdown.js') ?: 1 ?>"></script>
 
     <script src="<?= APP_BASE ?>/public/assets/js/pages/borrower-dashboard.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/pages/borrower-dashboard.js') ?: 1 ?>"></script>
+    <script src="<?= APP_BASE ?>/public/assets/js/filters.js?v=<?= @filemtime(__DIR__ . '/../../public/assets/js/filters.js') ?: 1 ?>"></script>
 </body>
 </html>

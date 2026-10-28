@@ -20,6 +20,7 @@ async function cancelReservation(reservationId) {
             showToast('Reservation request cancelled', 'info');
             const el = document.getElementById('borrower-req-' + reservationId);
             if (el) el.remove();
+            if (window.refreshFilters) window.refreshFilters();
         } else {
             showToast(data.message || 'Could not cancel reservation', 'error');
         }
